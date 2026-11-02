@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1d6fe0">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<title>محاسبة محل الاتصالات</title>
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--text:#1b2433;--mut:#6b7686;--line:#e2e7ef;--pri:#1d6fe0;--ok:#14915a;--bad:#d63c3c;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10141c;--card:#1a212d;--text:#eaeff7;--mut:#93a0b4;--line:#2a3445;--pri:#5b9bff;--ok:#3ecf8e;--bad:#ff6b6b}}
+:root[data-theme="dark"]{--bg:#10141c;--card:#1a212d;--text:#eaeff7;--mut:#93a0b4;--line:#2a3445;--pri:#5b9bff;--ok:#3ecf8e;--bad:#ff6b6b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI",Tahoma,Arial,sans-serif;padding:12px;max-width:640px;margin-inline:auto}
+h1{font-size:19px;margin:6px 0 10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}
+.stat small{color:var(--mut);display:block;font-size:12px}
+.stat b{font-size:18px}
+.net{grid-column:1/-1;text-align:center}.net b{font-size:26px}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+.tabs{display:flex;gap:6px;margin-bottom:10px}
+.tabs button{flex:1;padding:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:10px;font:inherit;cursor:pointer}
+.tabs button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+label{display:block;font-size:12px;color:var(--mut);margin:8px 0 3px}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font:inherit;font-size:16px}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.add{width:100%;margin-top:12px;padding:12px;border:0;border-radius:10px;background:var(--pri);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.item{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);gap:8px}
+.item:last-child{border:0}
+.item small{color:var(--mut);display:block}
+.del{border:0;background:none;color:var(--bad);font-size:18px;cursor:pointer}
+.empty{color:var(--mut);text-align:center;padding:12px}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:7px 4px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--mut);font-weight:600}
+h2{font-size:15px;margin:0 0 8px}
+.qb{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:8px;width:32px;height:32px;font-size:18px;cursor:pointer}
+.low{color:var(--bad)}.ctl{display:flex;align-items:center;gap:6px}.hint{color:var(--mut);font-size:12px;margin:8px 0 0}
+#navTabs button{padding:10px 2px;font-size:13px}
+.add.sec{background:var(--bg);color:var(--text);border:1px solid var(--line)}.add.dng{background:var(--bad)}
+</style>
+</head>
+<body>
+<h1>📱 محاسبة محل الاتصالات</h1>
+<div class="tabs" id="navTabs"><button id="nS" class="on">🧾 المبيعات</button><button id="nI">📦 المخزون</button><button id="nR">📊 الجرد</button><button id="nB">💾 النسخ</button></div>
+<div id="vSales">
+
+<div class="card"><label style="margin-top:0">التاريخ</label><input type="date" id="day"></div>
+
+<div class="grid" style="margin-bottom:12px">
+  <div class="stat"><small>المبيعات</small><b id="sSales">0</b></div>
+  <div class="stat"><small>تكلفة البضاعة</small><b id="sCost">0</b></div>
+  <div class="stat"><small>الربح الإجمالي</small><b id="sGross">0</b></div>
+  <div class="stat"><small>المصاريف</small><b id="sExp">0</b></div>
+  <div class="stat"><small>المرتجعات (مبلغ مردود)</small><b id="sRet">0</b></div>
+  <div class="stat"><small>التالف (بالتكلفة)</small><b id="sDmg">0</b></div>
+  <div class="stat net"><small>صافي الربح اليوم</small><b id="sNet">0</b></div>
+</div>
+
+<div class="card">
+  <div class="tabs"><button id="tSale" class="on">+ عملية بيع</button><button id="tExp">+ مصروف</button><button id="tRet">↩ مرتجع</button></div>
+  <label>الاسم / الوصف</label><input id="name" placeholder="مثال: شريحة، شاحن، شحن رصيد">
+  <div id="catWrap"><label>من المخزون (اختياري)</label><select id="stockSel"></select><label>الفئة</label>
+    <select id="cat"><option>جهاز</option><option>شريحة</option><option>بطاقة شحن / رصيد</option><option>إكسسوار</option><option>صيانة</option><option>أخرى</option></select></div>
+  <div id="retWrap" style="display:none"><label>نوع المرتجع</label><select id="kind"><option value="back">مرتجع — يعود للمخزون</option><option value="dmg">تالف — لا يعود للمخزون</option></select><label>رقم الفاتورة / السبب (اختياري)</label><input id="inote"></div>
+  <div class="row" id="saleRow">
+    <div><label>سعر البيع</label><input id="price" type="number" inputmode="decimal" min="0"></div>
+    <div><label>سعر الشراء</label><input id="cost" type="number" inputmode="decimal" min="0"></div>
+    <div><label>الكمية</label><input id="qty" type="number" inputmode="numeric" min="1" value="1"></div>
+  </div>
+  <div id="expRow" style="display:none"><label>المبلغ</label><input id="amt" type="number" inputmode="decimal" min="0"></div>
+  <button class="add" id="addBtn">إضافة</button>
+</div>
+
+<div class="card"><h2>عمليات اليوم</h2><div id="list"></div></div>
+
+<div class="card"><h2>آخر 7 أيام</h2><div class="scroll"><table id="hist"></table></div></div>
+</div>
+
+<div id="vInv" style="display:none">
+<div class="grid" style="margin-bottom:12px">
+  <div class="stat net"><small>إجمالي رأس المال (سعر الجملة × الكمية)</small><b id="iCap">0</b></div>
+  <div class="stat"><small>قيمة البيع المتوقعة (مفرق)</small><b id="iVal">0</b></div>
+  <div class="stat"><small>الربح المتوقع</small><b id="iProf" class="ok">0</b></div>
+  <div class="stat"><small>عدد القطع</small><b id="iCnt">0</b></div>
+  <div class="stat"><small>عدد الأصناف</small><b id="iKinds">0</b></div>
+</div>
+<div class="card"><h2>إضافة قطع للمخزون</h2>
+  <label style="margin-top:0">اسم القطعة</label><input id="iname" placeholder="مثال: شاحن سامسونج">
+  <label>الفئة</label><select id="icat"></select>
+  <div class="row">
+    <div><label>الكمية</label><input id="iqty" type="number" inputmode="numeric" min="0" value="1"></div>
+    <div><label>سعر الجملة</label><input id="iwhole" type="number" inputmode="decimal" min="0"></div>
+    <div><label>سعر المفرق</label><input id="iretail" type="number" inputmode="decimal" min="0"></div>
+  </div>
+  <button class="add" id="iAdd">إضافة للمخزون</button>
+  <p class="hint">إذا كانت القطعة موجودة بنفس الاسم والفئة، تُضاف الكمية وتتحدّث الأسعار.</p>
+</div>
+<div class="card"><h2>المخزون الحالي</h2><div id="iList"></div></div>
+<div class="card"><h2>🗑 التالف (خارج المخزون ورأس المال) <span id="dTot" class="bad"></span></h2><div id="dList"></div></div>
+</div>
+
+<div id="vRep" style="display:none">
+<div class="tabs" id="pTabs"><button data-p="d" class="on">يومي</button><button data-p="w">أسبوعي</button><button data-p="m">شهري</button><button data-p="y">سنوي</button></div>
+<div class="card"><label style="margin-top:0">التاريخ المرجعي (الفترة تُحسب حوله)</label><input type="date" id="rday"><p class="hint" id="rRange"></p></div>
+<div class="grid" style="margin-bottom:12px">
+  <div class="stat"><small>المبيعات</small><b id="rSales">0</b></div>
+  <div class="stat"><small>المرتجعات</small><b id="rRet">0</b></div>
+  <div class="stat"><small>تكلفة البضاعة</small><b id="rCost">0</b></div>
+  <div class="stat"><small>الربح الإجمالي</small><b id="rGross">0</b></div>
+  <div class="stat"><small>المصاريف</small><b id="rExp">0</b></div>
+  <div class="stat"><small>التالف (بالتكلفة)</small><b id="rDmg">0</b></div>
+  <div class="stat net"><small>صافي الربح للفترة</small><b id="rNet">0</b></div>
+</div>
+<div class="card"><h2>حسب الفئة</h2><div class="scroll"><table id="rCat"></table></div></div>
+<div class="card"><h2>الأكثر مبيعاً</h2><div id="rTop"></div></div>
+<div class="card" id="rBreakCard"><h2>التفصيل</h2><div class="scroll"><table id="rBreak"></table></div></div>
+<div class="card"><h2>جرد المخزون الحالي</h2>
+  <div class="grid">
+    <div class="stat"><small>رأس المال (جملة)</small><b id="rCap">0</b></div>
+    <div class="stat"><small>قيمة المفرق</small><b id="rVal">0</b></div>
+    <div class="stat"><small>عدد القطع</small><b id="rCnt">0</b></div>
+    <div class="stat"><small>قاربت على النفاد (≤ 2)</small><b id="rLowN" class="bad">0</b></div>
+  </div>
+  <div id="rLow" style="margin-top:8px"></div>
+</div>
+</div>
+
+<div id="vBak" style="display:none">
+<p id="bkMsg" class="hint" style="font-size:14px;margin:0 0 10px"></p>
+<div class="card"><h2>💾 نسخة احتياطية</h2>
+  <p class="hint" style="margin-top:0">بياناتك محفوظة على هذا الجهاز فقط. احفظ نسخة بشكل دوري حتى لا تضيع عند مسح بيانات المتصفح.</p>
+  <p id="bkLast" style="margin:8px 0"></p>
+  <button class="add" id="bkSave">💾 حفظ ملف نسخة احتياطية</button>
+  <button class="add sec" id="bkTxt">📋 نسخ البيانات كنص</button>
+  <textarea id="bkOut" rows="4" readonly style="display:none;margin-top:10px;direction:ltr;font-size:12px"></textarea>
+</div>
+<div class="card"><h2>🔄 مزامنة بين الجوال والحاسوب / استعادة</h2>
+  <p class="hint" style="margin-top:0">من الجهاز الأول: احفظ الملف أو انسخ النص وأرسله لنفسك (واتساب، تيليجرام، بريد). على الجهاز الثاني: اختر الملف أو الصق النص ثم اضغط «دمج».</p>
+  <label>ملف نسخة احتياطية</label><input type="file" id="impFile" accept=".json,application/json,text/plain">
+  <label>أو الصق النص هنا</label><textarea id="bkIn" rows="4" style="direction:ltr;font-size:12px"></textarea>
+  <button class="add" id="impMerge">🔄 دمج مع بياناتي (مزامنة)</button>
+  <button class="add dng" id="impRep">⚠ استبدال كل بياناتي بالنسخة</button>
+  <p class="hint">«دمج» يضيف العمليات الناقصة عندك ويحتفظ بما عندك. كمية كل صنف تُأخذ من الجهاز الذي عدّلها آخراً. لذلك الأفضل أن تزامن قبل البدء بالعمل على جهاز آخر، ولا تعدّل المخزون على جهازين بالوقت نفسه.</p>
+</div>
+</div>
+
+<div class="card" style="border-color:var(--bad)">
+  <button class="add dng" id="rstBtn" style="margin-top:0">🗑 ضبط المصنع (مسح كل البيانات)</button>
+  <div id="rstBox" style="display:none">
+    <p style="margin:0 0 8px">سيتم حذف كل المبيعات والمصاريف والمرتجعات والمخزون من هذا الجهاز، ولا يمكن التراجع. هل أنت متأكد؟</p>
+    <div class="row" style="grid-template-columns:1fr 1fr"><button class="add dng" id="rstYes" style="margin-top:0">نعم، امسح كل شيء</button><button class="add sec" id="rstNo" style="margin-top:0">إلغاء</button></div>
+  </div>
+  <p class="hint" id="rstMsg"></p>
+</div>
+
+<script>
+var KEY="telecom_acc_v1", data=[], mode="sale";
+var INV="telecom_inv_v1", inv=[];
+try{ data=JSON.parse(localStorage.getItem(KEY)||"[]"); }catch(e){ data=[]; }
+try{ inv=JSON.parse(localStorage.getItem(INV)||"[]"); }catch(e){ inv=[]; }
+function save(){ stamp(); try{ localStorage.setItem(KEY,JSON.stringify(data)); localStorage.setItem(INV,JSON.stringify(inv)); localStorage.setItem(TOMB,JSON.stringify(tomb)); }catch(e){} }
+function today(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function fmt(n){ return Number(n||0).toLocaleString("en-US",{maximumFractionDigits:2}); }
+function $(id){ return document.getElementById(id); }
+$("day").value=today();
+
+function sums(day){
+  var s=0,c=0,x=0,rt=0,dm=0;
+  data.forEach(function(e){ if(e.date!==day) return;
+    if(e.type==="sale"){ s+=e.price*e.qty; c+=e.cost*e.qty; }
+    else if(e.type==="ret"){ rt+=e.price*e.qty; if(e.kind==="back") c-=e.cost*e.qty; else dm+=e.cost*e.qty; }
+    else x+=e.amt; });
+  return {s:s,rt:rt,dm:dm,c:c,g:s-rt-c,x:x,n:s-rt-c-x};
+}
+function setMode(m){
+  mode=m; $("tSale").className=m==="sale"?"on":""; $("tExp").className=m==="exp"?"on":""; $("tRet").className=m==="ret"?"on":"";
+  $("saleRow").style.display=m!=="exp"?"":"none"; $("catWrap").style.display=m!=="exp"?"":"none"; $("expRow").style.display=m==="exp"?"":"none"; $("retWrap").style.display=m==="ret"?"":"none"; $("addBtn").textContent=m==="ret"?"تسجيل المرتجع":"إضافة"; renderInv();
+}
+$("tSale").onclick=function(){setMode("sale")}; $("tExp").onclick=function(){setMode("exp")}; $("tRet").onclick=function(){setMode("ret")};
+
+$("addBtn").onclick=function(){
+  var name=$("name").value.trim(), day=$("day").value||today();
+  if(mode==="ret"){
+    var p=parseFloat($("price").value), c=parseFloat($("cost").value)||0, q=parseInt($("qty").value)||1, k=$("kind").value;
+    if(isNaN(p)){ $("price").focus(); return; }
+    var sid=$("stockSel").value, it=sid?inv.filter(function(i){return String(i.id)===sid})[0]:null;
+    if(it){ if(k==="back") it.qty+=q; else it.dmg=(it.dmg||0)+q; }
+    data.push({id:Date.now(),date:day,type:"ret",name:name||$("cat").value,cat:$("cat").value,price:p,cost:c,qty:q,kind:k,note:$("inote").value.trim(),sid:it?it.id:null});
+    $("stockSel").value=""; $("inote").value="";
+  } else if(mode==="sale"){
+    var p=parseFloat($("price").value), c=parseFloat($("cost").value)||0, q=parseInt($("qty").value)||1;
+    if(isNaN(p)){ $("price").focus(); return; }
+    var sid=$("stockSel").value, it=null, tk=0;
+    if(sid){ it=inv.filter(function(i){return String(i.id)===sid})[0];
+      if(it&&it.qty<q&&!confirm("الكمية المتوفرة "+it.qty+" فقط. متابعة؟")) return; }
+    if(it){ tk=Math.min(q,it.qty); it.qty-=tk; }
+    data.push({id:Date.now(),date:day,type:"sale",name:name||$("cat").value,cat:$("cat").value,price:p,cost:c,qty:q,sid:it?it.id:null,tk:tk});
+    $("stockSel").value="";
+  } else {
+    var a=parseFloat($("amt").value);
+    if(isNaN(a)){ $("amt").focus(); return; }
+    data.push({id:Date.now(),date:day,type:"exp",name:name||"مصروف",amt:a});
+  }
+  save(); ["name","price","cost","amt"].forEach(function(i){$(i).value=""}); $("qty").value=1; render();
+};
+
+function del(id){ if(!confirm("حذف هذه العملية؟")) return;
+  var e=data.filter(function(x){return x.id===id})[0];
+  if(e&&e.sid){ var it=inv.filter(function(i){return i.id===e.sid})[0];
+    if(it){ if(e.type==="ret"){ if(e.kind==="back") it.qty=Math.max(0,it.qty-e.qty); else it.dmg=Math.max(0,(it.dmg||0)-e.qty); } else it.qty+=e.tk||0; } }
+  data=data.filter(function(x){return x.id!==id}); tomb[id]=Date.now(); save(); render(); }
+
+function render(){
+  var day=$("day").value||today(), t=sums(day);
+  $("sSales").textContent=fmt(t.s); $("sCost").textContent=fmt(t.c); $("sGross").textContent=fmt(t.g); $("sExp").textContent=fmt(t.x); $("sRet").textContent=fmt(t.rt); $("sDmg").textContent=fmt(t.dm);
+  $("sNet").textContent=fmt(t.n); $("sNet").className=t.n>=0?"ok":"bad";
+  var items=data.filter(function(e){return e.date===day}).reverse();
+  $("list").innerHTML=items.length?"":'<div class="empty">لا توجد عمليات في هذا اليوم</div>';
+  items.forEach(function(e){
+    var d=document.createElement("div"); d.className="item";
+    var left=e.type==="ret"
+      ? '<div><b>↩ '+esc(e.name)+'</b><small>'+(e.kind==="back"?"مرتجع — عاد للمخزون":"تالف — لم يعد للمخزون")+' · '+e.qty+' × '+fmt(e.price)+(e.note?' · '+esc(e.note):'')+'</small></div><b class="bad">-'+fmt(e.price*e.qty)+'</b>'
+      : e.type==="sale"
+      ? '<div><b>'+esc(e.name)+'</b><small>'+esc(e.cat)+' · '+e.qty+' × '+fmt(e.price)+' · ربح '+fmt((e.price-e.cost)*e.qty)+'</small></div><b class="ok">'+fmt(e.price*e.qty)+'</b>'
+      : '<div><b>'+esc(e.name)+'</b><small>مصروف</small></div><b class="bad">-'+fmt(e.amt)+'</b>';
+    d.innerHTML=left+'<button class="del" aria-label="حذف">✕</button>';
+    d.querySelector(".del").onclick=function(){del(e.id)};
+    $("list").appendChild(d);
+  });
+  var h='<tr><th>اليوم</th><th>مبيعات</th><th>مصاريف</th><th>الصافي</th></tr>', d0=new Date();
+  for(var i=0;i<7;i++){
+    var d=new Date(d0.getFullYear(),d0.getMonth(),d0.getDate()-i);
+    var k=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    var r=sums(k);
+    h+='<tr><td>'+k.slice(5)+'</td><td>'+fmt(r.s-r.rt)+'</td><td>'+fmt(r.x)+'</td><td class="'+(r.n>=0?"ok":"bad")+'">'+fmt(r.n)+'</td></tr>';
+  }
+  $("hist").innerHTML=h;
+}
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]}); }
+/* ===== المخزون ===== */
+function setView(v){ [["s","vSales","nS"],["i","vInv","nI"],["r","vRep","nR"],["b","vBak","nB"]].forEach(function(a){ $(a[1]).style.display=v===a[0]?"":"none"; $(a[2]).className=v===a[0]?"on":""; }); }
+$("nS").onclick=function(){setView("s")}; $("nI").onclick=function(){setView("i")}; $("nR").onclick=function(){setView("r")}; $("nB").onclick=function(){setView("b")};
+$("icat").innerHTML=$("cat").innerHTML;
+$("iAdd").onclick=function(){
+  var n=$("iname").value.trim(), q=parseInt($("iqty").value), w=parseFloat($("iwhole").value), r=parseFloat($("iretail").value);
+  if(!n){ $("iname").focus(); return; }
+  if(isNaN(q)||q<0){ $("iqty").focus(); return; }
+  if(isNaN(w)){ $("iwhole").focus(); return; }
+  if(isNaN(r)){ $("iretail").focus(); return; }
+  var c=$("icat").value, ex=inv.filter(function(i){return i.name===n&&i.cat===c})[0];
+  if(ex){ ex.qty+=q; ex.whole=w; ex.retail=r; } else inv.push({id:Date.now(),name:n,cat:c,qty:q,whole:w,retail:r});
+  save(); ["iname","iwhole","iretail"].forEach(function(i){$(i).value=""}); $("iqty").value=1; render();
+};
+function stk(id,d){ var it=inv.filter(function(i){return i.id===id})[0]; if(!it) return; it.qty=Math.max(0,it.qty+d); save(); render(); }
+function delItem(id){ if(!confirm("حذف هذه القطعة من المخزون؟")) return; inv=inv.filter(function(i){return i.id!==id}); tomb[id]=Date.now(); save(); render(); }
+$("stockSel").onchange=function(){
+  var it=inv.filter(function(i){return String(i.id)===$("stockSel").value})[0]; if(!it) return;
+  $("name").value=it.name; $("price").value=it.retail; $("cost").value=it.whole; $("cat").value=it.cat;
+};
+function renderInv(){
+  var cap=0,val=0,cnt=0;
+  inv.forEach(function(i){ cap+=i.qty*i.whole; val+=i.qty*i.retail; cnt+=i.qty; });
+  $("iCap").textContent=fmt(cap); $("iVal").textContent=fmt(val); $("iProf").textContent=fmt(val-cap); $("iCnt").textContent=fmt(cnt); $("iKinds").textContent=inv.length;
+  var L=$("iList"); L.innerHTML=inv.length?"":'<div class="empty">المخزون فارغ</div>';
+  inv.slice().reverse().forEach(function(i){
+    var d=document.createElement("div"); d.className="item";
+    d.innerHTML='<div><b>'+esc(i.name)+'</b><small>'+esc(i.cat)+' · جملة '+fmt(i.whole)+' · مفرق '+fmt(i.retail)+(i.dmg?' · تالف '+i.dmg:'')+'</small></div>'
+      +'<div class="ctl"><button class="qb" data-d="-1">−</button><b class="'+(i.qty<=2?"low":"")+'">'+i.qty+'</b><button class="qb" data-d="1">+</button><button class="del" aria-label="حذف">✕</button></div>';
+    d.querySelectorAll(".qb").forEach(function(b){ b.onclick=function(){ stk(i.id,parseInt(b.getAttribute("data-d"))); }; });
+    d.querySelector(".del").onclick=function(){ delItem(i.id); };
+    L.appendChild(d);
+  });
+  var dl=data.filter(function(e){return e.type==="ret"&&e.kind==="dmg"}), dt=0, D=$("dList");
+  dl.forEach(function(e){ dt+=e.cost*e.qty; });
+  $("dTot").textContent=dl.length?"— "+fmt(dt):"";
+  D.innerHTML=dl.length?"":'<div class="empty">لا يوجد تالف</div>';
+  dl.slice().reverse().forEach(function(e){ var r=document.createElement("div"); r.className="item"; r.innerHTML='<div><b>'+esc(e.name)+'</b><small>'+e.date+' · '+e.qty+(e.note?' · '+esc(e.note):'')+'</small></div><b class="bad">'+fmt(e.cost*e.qty)+'</b>'; D.appendChild(r); });
+  var cur=$("stockSel").value, h='<option value="">— بدون —</option>';
+  inv.forEach(function(i){ if(mode==="ret"||i.qty>0) h+='<option value="'+i.id+'">'+esc(i.name)+' ('+i.qty+')</option>'; });
+  $("stockSel").innerHTML=h; $("stockSel").value=cur;
+}
+/* ===== الجرد ===== */
+var per="d";
+$("rday").value=today();
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function range(p,ref){
+  var r=ref.split("-"), y=+r[0], m=+r[1]-1, d=+r[2], a, b;
+  if(p==="d"){ a=new Date(y,m,d); b=a; }
+  else if(p==="w"){ var off=(new Date(y,m,d).getDay()+1)%7; a=new Date(y,m,d-off); b=new Date(y,m,d-off+6); }
+  else if(p==="m"){ a=new Date(y,m,1); b=new Date(y,m+1,0); }
+  else { a=new Date(y,0,1); b=new Date(y,11,31); }
+  return [ymd(a),ymd(b)];
+}
+function calc(list){
+  var s=0,c=0,x=0,rt=0,dm=0;
+  list.forEach(function(e){
+    if(e.type==="sale"){ s+=e.price*e.qty; c+=e.cost*e.qty; }
+    else if(e.type==="ret"){ rt+=e.price*e.qty; if(e.kind==="back") c-=e.cost*e.qty; else dm+=e.cost*e.qty; }
+    else x+=e.amt; });
+  return {s:s,rt:rt,c:c,x:x,dm:dm,g:s-rt-c,n:s-rt-c-x};
+}
+function renderRep(){
+  var rg=range(per,$("rday").value||today()), lo=rg[0], hi=rg[1];
+  var L=data.filter(function(e){return e.date>=lo&&e.date<=hi}), t=calc(L);
+  $("rRange").textContent=lo===hi?lo:"من "+lo+" إلى "+hi+(per==="w"?" (الأسبوع يبدأ السبت)":"");
+  $("rSales").textContent=fmt(t.s); $("rRet").textContent=fmt(t.rt); $("rCost").textContent=fmt(t.c); $("rGross").textContent=fmt(t.g);
+  $("rExp").textContent=fmt(t.x); $("rDmg").textContent=fmt(t.dm); $("rNet").textContent=fmt(t.n); $("rNet").className=t.n>=0?"ok":"bad";
+  var cats={}, tops={};
+  L.forEach(function(e){ if(e.type==="exp") return;
+    var c=cats[e.cat]=cats[e.cat]||{s:0,rt:0,c:0};
+    if(e.type==="sale"){ c.s+=e.price*e.qty; c.c+=e.cost*e.qty; var o=tops[e.name]=tops[e.name]||{q:0,v:0}; o.q+=e.qty; o.v+=e.price*e.qty; }
+    else { c.rt+=e.price*e.qty; if(e.kind==="back") c.c-=e.cost*e.qty; } });
+  var h='<tr><th>الفئة</th><th>مبيعات</th><th>مرتجع</th><th>ربح</th></tr>', ks=Object.keys(cats);
+  ks.forEach(function(k){ var c=cats[k], p=c.s-c.rt-c.c; h+='<tr><td>'+esc(k)+'</td><td>'+fmt(c.s)+'</td><td>'+fmt(c.rt)+'</td><td class="'+(p>=0?"ok":"bad")+'">'+fmt(p)+'</td></tr>'; });
+  $("rCat").innerHTML=ks.length?h:'<tr><td class="empty">لا توجد بيانات في هذه الفترة</td></tr>';
+  var tk=Object.keys(tops).sort(function(a,b){return tops[b].q-tops[a].q}).slice(0,5), T=$("rTop");
+  T.innerHTML=tk.length?"":'<div class="empty">لا توجد مبيعات</div>';
+  tk.forEach(function(k){ var d=document.createElement("div"); d.className="item"; d.innerHTML='<div><b>'+esc(k)+'</b><small>الكمية: '+tops[k].q+'</small></div><b class="ok">'+fmt(tops[k].v)+'</b>'; T.appendChild(d); });
+  $("rBreakCard").style.display=per==="d"?"none":"";
+  if(per!=="d"){
+    var grp={}; L.forEach(function(e){ var k=per==="y"?e.date.slice(0,7):e.date; (grp[k]=grp[k]||[]).push(e); });
+    var bh='<tr><th>'+(per==="y"?"الشهر":"اليوم")+'</th><th>مبيعات</th><th>مصاريف</th><th>الصافي</th></tr>', gk=Object.keys(grp).sort();
+    gk.forEach(function(k){ var r=calc(grp[k]); bh+='<tr><td>'+k+'</td><td>'+fmt(r.s-r.rt)+'</td><td>'+fmt(r.x)+'</td><td class="'+(r.n>=0?"ok":"bad")+'">'+fmt(r.n)+'</td></tr>'; });
+    $("rBreak").innerHTML=gk.length?bh:'<tr><td class="empty">لا توجد بيانات</td></tr>';
+  }
+  var cap=0,val=0,cnt=0,low=inv.filter(function(i){return i.qty<=2});
+  inv.forEach(function(i){ cap+=i.qty*i.whole; val+=i.qty*i.retail; cnt+=i.qty; });
+  $("rCap").textContent=fmt(cap); $("rVal").textContent=fmt(val); $("rCnt").textContent=fmt(cnt); $("rLowN").textContent=low.length;
+  $("rLow").innerHTML=low.map(function(i){ return '<div class="item"><b>'+esc(i.name)+'</b><b class="low">'+i.qty+'</b></div>'; }).join("");
+}
+document.querySelectorAll("#pTabs button").forEach(function(b){ b.onclick=function(){ per=b.getAttribute("data-p"); document.querySelectorAll("#pTabs button").forEach(function(x){ x.className=x===b?"on":""; }); renderRep(); }; });
+$("rday").onchange=renderRep;
+/* ===== النسخ الاحتياطي والمزامنة ===== */
+var TOMB="telecom_tomb_v1", LB="telecom_lastbackup", tomb={}, snap={};
+try{ tomb=JSON.parse(localStorage.getItem(TOMB)||"{}"); }catch(e){ tomb={}; }
+function inv1(i){ var u=i.upd; delete i.upd; var j=JSON.stringify(i); if(u) i.upd=u; return j; }
+function fresh(){ inv.forEach(function(i){ snap[i.id]=inv1(i); }); }
+function stamp(){ inv.forEach(function(i){ var j=inv1(i); if(snap[i.id]!==j){ snap[i.id]=j; i.upd=Date.now(); } }); }
+fresh();
+function bmsg(t){ $("bkMsg").textContent=t; }
+function pack(){ return JSON.stringify({app:"telecom-acc",v:1,exported:new Date().toISOString(),data:data,inv:inv,tomb:tomb}); }
+function bkInfo(){
+  var t=null; try{ t=localStorage.getItem(LB); }catch(e){}
+  var el=$("bkLast");
+  if(!t){ el.textContent="لم تحفظ أي نسخة احتياطية بعد."; el.className="low"; return; }
+  var days=Math.floor((Date.now()-new Date(t).getTime())/864e5);
+  el.textContent="آخر نسخة: "+t.slice(0,10)+(days>0?" (قبل "+days+" يوم)":" (اليوم)"); el.className=days>7?"low":"";
+}
+function markBackup(){ try{ localStorage.setItem(LB,new Date().toISOString()); }catch(e){} bkInfo(); }
+bkInfo();
+$("bkSave").onclick=function(){
+  try{
+    var b=new Blob([pack()],{type:"application/json"}), u=URL.createObjectURL(b), a=document.createElement("a");
+    a.href=u; a.download="telecom-backup-"+today()+".json"; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(u); },2000);
+    markBackup(); bmsg("تم حفظ الملف ✓ ابحث عنه في التنزيلات.");
+  }catch(e){ bmsg("تعذّر الحفظ، جرّب «نسخ البيانات كنص»."); }
+};
+$("bkTxt").onclick=function(){
+  var t=pack(), a=$("bkOut"), ok=false; a.style.display=""; a.value=t; a.focus(); a.select();
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ ok=true; navigator.clipboard.writeText(t).then(function(){ bmsg("تم نسخ النص ✓ الصقه في رسالة لنفسك."); },function(){ bmsg("حدّد النص في المربع وانسخه يدوياً."); }); } }catch(e){}
+  if(!ok) bmsg("حدّد النص في المربع وانسخه يدوياً.");
+  markBackup();
+};
+$("impFile").onchange=function(){
+  var f=this.files&&this.files[0]; if(!f) return;
+  var r=new FileReader(); r.onload=function(){ $("bkIn").value=r.result; bmsg("تم تحميل الملف. اختر دمج أو استبدال."); }; r.readAsText(f);
+};
+function readIn(){
+  try{ var o=JSON.parse($("bkIn").value.trim()); if(!o||o.app!=="telecom-acc"||!Array.isArray(o.data)||!Array.isArray(o.inv)) throw 0; o.tomb=o.tomb||{}; return o; }
+  catch(e){ bmsg("النص أو الملف غير صالح. تأكد أنه نسخة من هذا البرنامج."); return null; }
+}
+$("impMerge").onclick=function(){
+  var o=readIn(); if(!o) return;
+  if(!confirm("دمج "+o.data.length+" عملية و"+o.inv.length+" صنف مع بياناتك الحالية؟")) return;
+  Object.keys(o.tomb).forEach(function(k){ tomb[k]=Math.max(tomb[k]||0,o.tomb[k]); });
+  var have={}; data.forEach(function(e){ have[e.id]=1; });
+  var add=0; o.data.forEach(function(e){ if(!have[e.id]&&!tomb[e.id]){ data.push(e); add++; } });
+  data=data.filter(function(e){ return !tomb[e.id]; }); data.sort(function(a,b){ return a.id-b.id; });
+  var im={}; inv.forEach(function(i){ im[i.id]=i; });
+  var addi=0, upd=0;
+  o.inv.forEach(function(i){
+    if(tomb[i.id]) return; var l=im[i.id];
+    if(!l){ inv.push(i); addi++; }
+    else if((i.upd||0)>(l.upd||0)){ Object.keys(l).forEach(function(k){ delete l[k]; }); Object.keys(i).forEach(function(k){ l[k]=i[k]; }); upd++; }
+  });
+  inv=inv.filter(function(i){ return !tomb[i.id]; });
+  fresh(); save(); render();
+  bmsg("تمت المزامنة ✓ أُضيفت "+add+" عملية و"+addi+" صنف جديد، وحُدّث "+upd+" صنف.");
+};
+$("impRep").onclick=function(){
+  var o=readIn(); if(!o) return;
+  if(!confirm("سيتم حذف كل بياناتك الحالية على هذا الجهاز واستبدالها بالنسخة ("+o.data.length+" عملية، "+o.inv.length+" صنف). إن لم تحفظ نسخة من بياناتك الحالية فالغِ واحفظها أولاً. متأكد؟")) return;
+  data=o.data; inv=o.inv; tomb=o.tomb; fresh(); save(); render(); bmsg("تم استبدال البيانات ✓");
+};
+/* ===== ضبط المصنع ===== */
+$("rstBtn").onclick=function(){ $("rstBox").style.display=""; $("rstBtn").style.display="none"; $("rstMsg").textContent=""; };
+$("rstNo").onclick=function(){ $("rstBox").style.display="none"; $("rstBtn").style.display=""; };
+$("rstYes").onclick=function(){
+  [KEY,INV,TOMB,LB].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+  data=[]; inv=[]; tomb={}; snap={};
+  ["name","price","cost","amt","inote","iname","iwhole","iretail","bkIn","bkOut"].forEach(function(i){ $(i).value=""; });
+  $("qty").value=1; $("iqty").value=1; $("bkOut").style.display="none"; $("stockSel").value="";
+  $("day").value=today(); $("rday").value=today();
+  setMode("sale"); setView("s"); bkInfo(); bmsg("");
+  $("rstBox").style.display="none"; $("rstBtn").style.display=""; render();
+  $("rstMsg").textContent="تم مسح كل البيانات والعودة للبداية ✓";
+};
+var _r=render; render=function(){ _r(); renderInv(); renderRep(); };
+$("day").onchange=render;
+render();
+try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+if("serviceWorker" in navigator){ window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
+</script>
+</body>
+</html>
