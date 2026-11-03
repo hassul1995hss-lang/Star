@@ -193,6 +193,15 @@ body.ro #addBtn,body.ro #iAdd{opacity:.45}
   <button class="add sec" id="bkTxt">📋 نسخ البيانات كنص</button>
   <textarea id="bkOut" rows="4" readonly style="display:none;margin-top:10px;direction:ltr;font-size:12px"></textarea>
 </div>
+<div class="card" id="schCard"><h2>⏰ نسخ احتياطي مجدول</h2>
+  <p class="hint" style="margin-top:0">يحفظ لقطة بتاريخ ووقت في Documents/TelecomBackup ويحتفظ بآخر 60 لقطة، ولا يحفظ إلا إذا تغيّرت البيانات. يعمل أثناء فتح التطبيق، وإذا كان مغلقاً يحفظ فور فتحه إن فات الموعد.</p>
+  <label>التكرار</label>
+  <select id="schMode"><option value="off">بدون (النسخ بعد كل تعديل فقط)</option><option value="h1">كل ساعة</option><option value="h3">كل 3 ساعات</option><option value="h6">كل 6 ساعات</option><option value="d">يومياً في وقت محدد</option></select>
+  <div id="schTimeWrap" style="display:none"><label>الوقت</label><input type="time" id="schTime" value="23:00"></div>
+  <p class="hint" id="schInfo"></p>
+  <button class="add sec" id="schNow">حفظ لقطة الآن</button>
+  <label>آخر اللقطات (اضغط استعادة للرجوع إليها)</label><div id="schList"></div>
+</div>
 <div class="card"><h2>🔄 مزامنة بين الجوال والحاسوب / استعادة</h2>
   <p class="hint" style="margin-top:0">من الجهاز الأول: احفظ الملف أو انسخ النص وأرسله لنفسك (واتساب، تيليجرام، بريد). على الجهاز الثاني: اختر الملف أو الصق النص ثم اضغط «دمج».</p>
   <label>ملف نسخة احتياطية</label><input type="file" id="impFile" accept=".json,application/json,text/plain">
@@ -512,6 +521,73 @@ if(FS){
   }
 } else { $("autoInfo").style.display="none"; }
 $("rsBtn").onclick=function(){ var o=window._rs; if(!o) return; data=o.data; inv=o.inv; rep=o.rep||[]; tomb=o.tomb||{}; fresh(); save(); render(); $("rsBar").style.display="none"; bmsg("تمت الاستعادة ✓"); };
+/* ===== نسخ مجدول (أندرويد) ===== */
+var SK="telecom_sched", SL="telecom_snap_last", SH="telecom_snap_hash", SNAPKEEP=60, sched={mode:"off",time:"23:00"};
+try{ var _sc=JSON.parse(localStorage.getItem(SK)||"null"); if(_sc&&_sc.mode) sched=_sc; }catch(e){}
+function pad(n){ return String(n).padStart(2,"0"); }
+function fmtT(ms){ var d=new Date(ms); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+":"+pad(d.getMinutes()); }
+function stampName(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"_"+pad(d.getHours())+"-"+pad(d.getMinutes()); }
+function hashStr(s){ var h=5381; for(var i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))|0; return s.length+":"+h; }
+function snapBody(){ return JSON.stringify({data:data,inv:inv,rep:rep,tomb:tomb}); }
+function lastSnap(){ var v=0; try{ v=parseInt(localStorage.getItem(SL))||0; }catch(e){} return v; }
+function setLast(){ try{ localStorage.setItem(SL,String(Date.now())); }catch(e){} schPaint(); }
+function nextDue(){
+  var l=lastSnap(), iv={h1:36e5,h3:108e5,h6:216e5}[sched.mode];
+  if(sched.mode==="off") return null;
+  if(sched.mode==="d"){ var p=(sched.time||"23:00").split(":"), t=new Date(); t.setHours(+p[0],+p[1],0,0); if(t.getTime()<=l) t.setDate(t.getDate()+1); return t.getTime(); }
+  return l?l+iv:Date.now();
+}
+function snapNames(r){ return (r.files||[]).map(function(f){ return f.name||f; }).filter(function(x){ return /^telecom-snap-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}\.json$/.test(x); }).sort(); }
+function pruneSnaps(){
+  FS.readdir({path:BDIR,directory:bLoc}).then(function(r){
+    var n=snapNames(r); n.slice(0,Math.max(0,n.length-SNAPKEEP)).forEach(function(x){ FS.deleteFile({path:BDIR+"/"+x,directory:bLoc}).catch(function(){}); });
+  }).catch(function(){});
+}
+function snapNow(manual){
+  if(!FS) return Promise.resolve(false);
+  if(!manual&&!data.length&&!inv.length&&!rep.length){ setLast(); return Promise.resolve(false); }
+  var h=hashStr(snapBody()), prev=null; try{ prev=localStorage.getItem(SH); }catch(e){}
+  if(!manual&&prev===h){ setLast(); return Promise.resolve(false); }
+  var name="telecom-snap-"+stampName(new Date())+".json";
+  return askPerm().then(function(){ return fsWrite(name,pack()); })
+    .then(function(){ try{ localStorage.setItem(SH,h); }catch(e){} setLast(); pruneSnaps(); return true; })
+    .catch(function(){ $("schInfo").textContent="تعذّر حفظ اللقطة في ذاكرة الهاتف."; return false; });
+}
+function schPaint(){
+  var m=sched.mode, n=nextDue(), l=lastSnap(), x;
+  $("schMode").value=m; $("schTimeWrap").style.display=m==="d"?"":"none"; $("schTime").value=sched.time||"23:00";
+  x=m==="off"?"التكرار متوقف، والنسخ بعد كل تعديل يعمل كالمعتاد.":"الموعد القادم: "+(n<=Date.now()?"عند أول فحص (خلال دقيقة)":fmtT(n))+".";
+  if(l) x+=" آخر فحص أو لقطة: "+fmtT(l)+".";
+  $("schInfo").textContent=x;
+}
+function listSnaps(){
+  if(!FS) return;
+  FS.readdir({path:BDIR,directory:bLoc}).then(function(r){
+    var n=snapNames(r).reverse().slice(0,8), L=$("schList"); L.innerHTML=n.length?"":'<div class="empty">لا توجد لقطات بعد</div>';
+    n.forEach(function(x){
+      var m=x.match(/telecom-snap-(\d{4}-\d{2}-\d{2})_(\d{2})-(\d{2})/), d=document.createElement("div"); d.className="item";
+      d.innerHTML='<b>'+m[1]+' '+m[2]+':'+m[3]+'</b><button class="qb" style="width:auto;padding:0 10px;font-size:13px">استعادة</button>';
+      d.querySelector("button").onclick=function(){ restoreSnap(x); }; L.appendChild(d);
+    });
+  }).catch(function(){ $("schList").innerHTML='<div class="empty">لا توجد لقطات بعد</div>'; });
+}
+function restoreSnap(name){
+  FS.readFile({path:BDIR+"/"+name,directory:bLoc,encoding:"utf8"}).then(function(r){
+    var o=JSON.parse(r.data); if(!o||o.app!=="telecom-acc"||!Array.isArray(o.data)||!Array.isArray(o.inv)) throw 0;
+    if(!confirm("استبدال بياناتك الحالية بنسخة "+name.slice(11,27).replace("_"," ")+"؟ ستُحفظ لقطة من وضعك الحالي أولاً.")) return;
+    return snapNow(true).then(function(){ data=o.data; inv=o.inv; rep=Array.isArray(o.rep)?o.rep:[]; tomb=o.tomb||{}; fresh(); save(); render(); listSnaps(); bmsg("تمت الاستعادة ✓"); });
+  }).catch(function(){ bmsg("تعذّرت قراءة هذه النسخة."); });
+}
+function schTick(){ var n=nextDue(); if(n!==null&&Date.now()>=n) snapNow(false).then(listSnaps); else schPaint(); }
+function saveSched(){ try{ localStorage.setItem(SK,JSON.stringify(sched)); }catch(e){} schTick(); }
+if(FS){
+  $("schMode").onchange=function(){ sched.mode=this.value; saveSched(); };
+  $("schTime").onchange=function(){ sched.time=this.value||"23:00"; saveSched(); };
+  $("schNow").onclick=function(){ snapNow(true).then(function(ok){ bmsg(ok?"تم حفظ لقطة ✓":"تعذّر الحفظ."); listSnaps(); }); };
+  setInterval(schTick,60000);
+  document.addEventListener("visibilitychange",function(){ if(!document.hidden) schTick(); });
+  schPaint(); listSnaps(); schTick();
+} else { $("schCard").style.display="none"; }
 /* ===== الصيانة ===== */
 var mEdit=null, mDelId=null;
 function mNum(v){ var n=parseFloat(v); return isNaN(n)?0:n; }
@@ -653,7 +729,7 @@ $("licGo").onclick=function(){
   }).catch(function(e){ $("licMsg").textContent=e==="nocrypto"?"هذا المتصفح لا يدعم التحقق من الكود.":"الكود غير صحيح. تأكد من نسخه كاملاً."; });
 };
 ["addBtn","iAdd","impMerge","impRep","rstYes","rsBtn"].forEach(function(id){ var f=$(id).onclick; $(id).onclick=function(ev){ if(guard()) return; return f.call(this,ev); }; });
-["del","stk","delItem","repAdd","repStatus","repDeliver","repDel"].forEach(function(n){ var f=window[n]; window[n]=function(){ if(guard()) return; return f.apply(this,arguments); }; });
+["del","stk","delItem","repAdd","repStatus","repDeliver","repDel","restoreSnap"].forEach(function(n){ var f=window[n]; window[n]=function(){ if(guard()) return; return f.apply(this,arguments); }; });
 </script>
 </body>
 </html>
