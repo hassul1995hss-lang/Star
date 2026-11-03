@@ -5,6 +5,9 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,6 +26,18 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+
+      - name: Ensure Permanent Keystore Exists
+        run: |
+          # إذا لم يكن ملف المفتاح موجوداً في المستودع يتم إنشاؤه وحفظه تلقائياً
+          if [ ! -f "starphone.keystore" ]; then
+            keytool -genkeypair -v -keystore starphone.keystore -alias starphone -keyalg RSA -keysize 2048 -validity 10000 -storepass "StarPhone123" -keypass "StarPhone123" -dname "CN=StarPhone"
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git add starphone.keystore
+            git commit -m "Add permanent release keystore [skip ci]" || true
+            git push || true
+          fi
 
       - name: Prepare Web Directory & Capacitor
         run: |
@@ -101,27 +116,27 @@ jobs:
               f.write(c)
           '
 
-      - name: Setup Fixed Keystore & Increase Version
+      - name: Bind Fixed Keystore & Increase Version
         run: |
-          # زيادة رقم الإصدار تلقائياً حتى يقبل أندرويد التحديث
+          # نسخ المفتاح الثابت إلى داخل مشروع أندرويد
+          cp starphone.keystore android/app/starphone.keystore
+          
+          # زيادة رقم الإصدار تلقائياً مع كل بناء
           BUILD_GRADLE="android/app/build.gradle"
           sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/g" "$BUILD_GRADLE"
           sed -i "s/versionName \"1.0\"/versionName \"1.${{ github.run_number }}\"/g" "$BUILD_GRADLE"
           
-          # إنشاء مفتاح موحد ثابت بنفس الكلمات دائماً
-          keytool -genkeypair -v -keystore android/app/fixed.keystore -alias starphone -keyalg RSA -keysize 2048 -validity 10000 -storepass "123456" -keypass "123456" -dname "CN=StarPhone"
-          
-          # ربط المفتاح بالبناء
+          # ربط التوقيع الرسمي الدائم
           python3 -c '
           with open("android/app/build.gradle", "r") as f:
               text = f.read()
           cfg = """
               signingConfigs {
                   debug {
-                      storeFile file("fixed.keystore")
-                      storePassword "123456"
+                      storeFile file("starphone.keystore")
+                      storePassword "StarPhone123"
                       keyAlias "starphone"
-                      keyPassword "123456"
+                      keyPassword "StarPhone123"
                   }
               }
           """
