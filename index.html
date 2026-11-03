@@ -55,6 +55,10 @@ body.ro #addBtn,body.ro #iAdd{opacity:.45}
 .wk:not(.wk-stk) #iList .qb,.wk:not(.wk-stk) #iList .del,.wk:not(.wk-stk) #iAddCard{display:none!important}
 input[type=checkbox]{width:auto;padding:0;margin:0}
 .chk{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text);margin:10px 0}
+.stock-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:bold;margin-right:auto}
+.stock-avail-box{background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:8px 12px;margin-top:6px;display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.wa-link{display:inline-flex;align-items:center;gap:4px;color:#25d366;font-weight:600;text-decoration:none;padding:2px 6px;border-radius:6px;background:rgba(37,211,102,0.1)}
+.wa-link:hover{background:rgba(37,211,102,0.2)}
 </style>
 </head>
 <body>
@@ -80,13 +84,30 @@ input[type=checkbox]{width:auto;padding:0;margin:0}
 <div class="card">
   <div class="tabs"><button id="tSale" class="on">+ عملية بيع</button><button id="tExp">+ مصروف</button><button id="tRet">↩ مرتجع</button></div>
   <label>الاسم / الوصف</label><input id="name" placeholder="مثال: شريحة، شاحن، شحن رصيد">
-  <div id="catWrap"><label>من المخزون (اختياري)</label><select id="stockSel"></select><label>الفئة</label>
-    <select id="cat"><option>جهاز</option><option>شريحة</option><option>بطاقة شحن / رصيد</option><option>إكسسوار</option><option>صيانة</option><option>أخرى</option></select></div>
+  <div id="catWrap">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <label style="margin-top:8px">من المخزون (اختياري)</label>
+      <span id="stockBadge" style="display:none" class="stock-badge"></span>
+    </div>
+    <select id="stockSel"></select>
+    <div id="stockInfoBox" style="display:none" class="stock-avail-box">
+      <span>الكمية المتوفرة بالمخزون:</span>
+      <b id="stockCountTxt" style="font-size:15px">0</b>
+    </div>
+    <label>الفئة</label>
+    <select id="cat"><option>جهاز</option><option>شريحة</option><option>بطاقة شحن / رصيد</option><option>إكسسوار</option><option>صيانة</option><option>أخرى</option></select>
+  </div>
   <div id="retWrap" style="display:none"><label>نوع المرتجع</label><select id="kind"><option value="back">مرتجع — يعود للمخزون</option><option value="dmg">تالف — لا يعود للمخزون</option></select><label>رقم الفاتورة / السبب (اختياري)</label><input id="inote"></div>
   <div class="row" id="saleRow">
     <div><label>سعر البيع</label><input id="price" type="number" inputmode="decimal" min="0"></div>
     <div class="prf"><label>سعر الشراء</label><input id="cost" type="number" inputmode="decimal" min="0"></div>
-    <div><label>الكمية</label><input id="qty" type="number" inputmode="numeric" min="1" value="1"></div>
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <label>الكمية</label>
+        <small id="qtyStockHint" style="color:var(--mut);font-size:11px"></small>
+      </div>
+      <input id="qty" type="number" inputmode="numeric" min="1" value="1">
+    </div>
   </div>
   <div id="expRow" style="display:none"><label>المبلغ</label><input id="amt" type="number" inputmode="decimal" min="0"></div>
   <button class="add" id="addBtn">إضافة</button>
@@ -156,7 +177,7 @@ input[type=checkbox]{width:auto;padding:0;margin:0}
   <button class="add" id="mNew" style="margin-top:0">+ استلام جهاز جديد</button>
   <div id="mForm" style="display:none">
     <label>اسم العميل</label><input id="mName">
-    <label>رقم الهاتف</label><input id="mPhone" type="tel" inputmode="tel">
+    <label>رقم الهاتف</label><input id="mPhone" type="tel" inputmode="tel" placeholder="مثال: 70123456 أو 03123456">
     <label>الجهاز (الموديل)</label><input id="mDev" placeholder="مثال: Samsung A12">
     <label>IMEI / الرقم التسلسلي (اختياري)</label><input id="mImei">
     <label>وصف العطل</label><textarea id="mIssue" rows="2"></textarea>
@@ -235,6 +256,13 @@ input[type=checkbox]{width:auto;padding:0;margin:0}
 
 <div id="vBak" style="display:none">
 <p id="bkMsg" class="hint" style="font-size:14px;margin:0 0 10px"></p>
+<div class="card" id="autoSyncCard" style="border-color:var(--pri)">
+  <h2>⚡ الحفظ التلقائي في ملف محلي</h2>
+  <p class="hint" style="margin-top:0">اربط ملفاً من هاتفك أو حاسوبك مرة واحدة، وسيقوم البرنامج بتحديثه وحفظ نسخة بداخله تلقائياً فور تسجيل أي بيع أو صيانة أو تعديل.</p>
+  <p id="autoFileStat" style="font-size:13px;margin:8px 0;color:var(--mut)">⚪ لم يتم ربط ملف حفظ تلقائي بعد.</p>
+  <button class="add" id="btnLinkAutoFile" style="margin-top:0">📁 ربط ملف للحفظ التلقائي المستمر</button>
+</div>
+
 <div class="card"><h2>💾 نسخة احتياطية</h2>
   <p class="hint" style="margin-top:0">بياناتك محفوظة على هذا الجهاز فقط. احفظ نسخة بشكل دوري حتى لا تضيع عند مسح بيانات المتصفح.</p>
   <p id="bkLast" style="margin:8px 0"></p>
@@ -254,8 +282,9 @@ input[type=checkbox]{width:auto;padding:0;margin:0}
 </div>
 <div class="card"><h2>🔄 مزامنة بين الجوال والحاسوب / استعادة</h2>
   <p class="hint" style="margin-top:0">من الجهاز الأول: احفظ الملف أو انسخ النص وأرسله لنفسك (واتساب، تيليجرام، بريد). على الجهاز الثاني: اختر الملف أو الصق النص ثم اضغط «دمج».</p>
-  <label>ملف نسخة احتياطية</label><input type="file" id="impFile" accept=".json,application/json,text/plain">
-  <label>أو الصق النص هنا</label><textarea id="bkIn" rows="4" style="direction:ltr;font-size:12px"></textarea>
+  <button class="add" id="btnPasteClip" style="margin-top:0;background:var(--ok)">📋 لصق النسخة المنسوخة من الحافظة مباشرة</button>
+  <label style="margin-top:10px">أو اختر ملف نسخة احتياطية من جهازك</label><input type="file" id="impFile" accept=".json,application/json,text/plain">
+  <label>أو الصق النص يدوياً هنا</label><textarea id="bkIn" rows="4" style="direction:ltr;font-size:12px" placeholder="الصق نص النسخة الاحتياطية هنا"></textarea>
   <button class="add" id="impMerge">🔄 دمج مع بياناتي (مزامنة)</button>
   <button class="add dng" id="impRep">⚠ استبدال كل بياناتي بالنسخة</button>
   <p class="hint">«دمج» يضيف العمليات الناقصة عندك ويحتفظ بما عندك. كمية كل صنف تُأخذ من الجهاز الذي عدّلها آخراً. لذلك الأفضل أن تزامن قبل البدء بالعمل على جهاز آخر، ولا تعدّل المخزون على جهازين بالوقت نفسه.</p>
@@ -281,7 +310,7 @@ try{ rep=JSON.parse(localStorage.getItem(REPK)||"[]"); }catch(e){ rep=[]; }
 var WKK="telecom_wk", WK={on:false,perms:{}};
 try{ var _w=JSON.parse(localStorage.getItem(WKK)||"null"); if(_w) WK=_w; }catch(e){}
 function wkHidePrf(){ return !!(WK.on&&!(WK.perms&&WK.perms.prf)); }
-function save(){ stamp(); try{ localStorage.setItem(KEY,JSON.stringify(data)); localStorage.setItem(INV,JSON.stringify(inv)); localStorage.setItem(TOMB,JSON.stringify(tomb)); localStorage.setItem(REPK,JSON.stringify(rep)); }catch(e){} }
+function save(){ stamp(); try{ localStorage.setItem(KEY,JSON.stringify(data)); localStorage.setItem(INV,JSON.stringify(inv)); localStorage.setItem(TOMB,JSON.stringify(tomb)); localStorage.setItem(REPK,JSON.stringify(rep)); }catch(e){} if(typeof triggerAutoSave==="function") triggerAutoSave(); }
 function today(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function fmt(n){ return Number(n||0).toLocaleString("en-US",{maximumFractionDigits:2}); }
 function $(id){ return document.getElementById(id); }
@@ -295,9 +324,44 @@ function sums(day){
     else x+=e.amt; });
   return {s:s,rt:rt,dm:dm,c:c,g:s-rt-c,x:x,n:s-rt-c-x};
 }
+
+function updateStockDisplay(){
+  var sid=$("stockSel").value;
+  var box=$("stockInfoBox"), badge=$("stockBadge"), countTxt=$("stockCountTxt"), hint=$("qtyStockHint");
+  if(!sid || mode==="exp"){
+    if(box) box.style.display="none";
+    if(badge) badge.style.display="none";
+    if(hint) hint.textContent="";
+    return;
+  }
+  var it=inv.filter(function(i){return String(i.id)===sid})[0];
+  if(it){
+    if(box) box.style.display="flex";
+    if(badge) badge.style.display="inline-block";
+    if(countTxt){
+      countTxt.textContent=it.qty + " قطعة";
+      countTxt.className=it.qty<=0?"bad":(it.qty<=2?"low":"ok");
+    }
+    if(badge){
+      badge.textContent="المتوفر: "+it.qty;
+      badge.style.background=it.qty<=0?"rgba(214,60,60,0.15)":(it.qty<=2?"rgba(255,107,107,0.15)":"rgba(20,145,90,0.15)");
+      badge.style.color=it.qty<=0?"var(--bad)":(it.qty<=2?"var(--bad)":"var(--ok)");
+    }
+    if(hint){
+      hint.textContent="(المتاح: "+it.qty+")";
+      hint.style.color=it.qty<=0?"var(--bad)":(it.qty<=2?"var(--bad)":"var(--mut)");
+    }
+  } else {
+    if(box) box.style.display="none";
+    if(badge) badge.style.display="none";
+    if(hint) hint.textContent="";
+  }
+}
+
 function setMode(m){
   mode=m; $("tSale").className=m==="sale"?"on":""; $("tExp").className=m==="exp"?"on":""; $("tRet").className=m==="ret"?"on":"";
   $("saleRow").style.display=m!=="exp"?"":"none"; $("catWrap").style.display=m!=="exp"?"":"none"; $("expRow").style.display=m==="exp"?"":"none"; $("retWrap").style.display=m==="ret"?"":"none"; $("addBtn").textContent=m==="ret"?"تسجيل المرتجع":"إضافة"; renderInv();
+  updateStockDisplay();
 }
 $("tSale").onclick=function(){setMode("sale")}; $("tExp").onclick=function(){setMode("exp")}; $("tRet").onclick=function(){setMode("ret")};
 
@@ -325,13 +389,14 @@ $("addBtn").onclick=function(){
     data.push({id:Date.now(),date:day,type:"exp",name:name||"مصروف",amt:a});
   }
   save(); ["name","price","cost","amt"].forEach(function(i){$(i).value=""}); $("qty").value=1; render();
+  updateStockDisplay();
 };
 
 function del(id){ if(!confirm("حذف هذه العملية؟")) return;
   var e=data.filter(function(x){return x.id===id})[0];
   if(e&&e.sid){ var it=inv.filter(function(i){return i.id===e.sid})[0];
     if(it){ if(e.type==="ret"){ if(e.kind==="back") it.qty=Math.max(0,it.qty-e.qty); else it.dmg=Math.max(0,(it.dmg||0)-e.qty); } else it.qty+=e.tk||0; } }
-  data=data.filter(function(x){return x.id!==id}); tomb[id]=Date.now(); save(); render(); }
+  data=data.filter(function(x){return x.id!==id}); tomb[id]=Date.now(); save(); render(); updateStockDisplay(); }
 
 function render(){
   var day=$("day").value||today(), t=sums(day);
@@ -360,6 +425,48 @@ function render(){
   $("hist").innerHTML=h;
 }
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]}); }
+
+/* WhatsApp Helper: formats number and opens chat safely */
+function openWhatsApp(phone, devName, custName){
+  var p = String(phone||"").replace(/\D/g, "");
+  if(!p) return;
+  if(p.startsWith("00")) p = p.slice(2);
+  if(/^0[3-9]\d{6}$/.test(p)) p = "961" + p.slice(1);
+  else if(/^[378]\d{6,7}$/.test(p)) p = "961" + p;
+  else if(/^09\d{8}$/.test(p)) p = "963" + p.slice(1);
+  
+  var text = "مرحباً " + (custName || "") + "، بخصوص جهازك " + (devName || "") + " في مركز الصيانة:";
+  var encText = encodeURIComponent(text);
+  
+  // 1. رابط Android Intent المباشر (يفتح تطبيق واتساب المثبت مباشرة في أندرويد دون الدخول لصفحة ويب)
+  var intentUrl = "intent://send?phone=" + p + "&text=" + encText + "#Intent;package=com.whatsapp;scheme=whatsapp;end";
+  
+  // 2. رابط واتساب الرسمي
+  var waWebUrl = "https://api.whatsapp.com/send?phone=" + p + "&text=" + encText;
+  
+  try {
+    // محاولة فتح التطبيق عبر نظام أندرويد الخارجي
+    if(window.open && navigator.userAgent.toLowerCase().indexOf("android") > -1){
+      // إنشاء عنصر رابط خارجي لضمان تعامل الـ WebView معه كطلب خارجي
+      var a = document.createElement("a");
+      a.href = intentUrl;
+      a.setAttribute("target", "_blank");
+      a.setAttribute("rel", "noopener noreferrer");
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      return;
+    }
+  } catch(e){}
+
+  // في حال المتصفح العادي أو الكمبيوتر
+  try {
+    window.open(waWebUrl, "_blank");
+  } catch(e) {
+    location.href = waWebUrl;
+  }
+}
+
 /* ===== المخزون ===== */
 function setView(v){ [["s","vSales","nS"],["i","vInv","nI"],["m","vMnt","nM"],["r","vRep","nR"],["b","vBak","nB"]].forEach(function(a){ $(a[1]).style.display=v===a[0]?"":"none"; $(a[2]).className=v===a[0]?"on":""; }); }
 $("nS").onclick=function(){setView("s")}; $("nI").onclick=function(){setView("i")}; $("nM").onclick=function(){setView("m")}; $("nR").onclick=function(){setView("r")}; $("nB").onclick=function(){setView("b")};
@@ -372,13 +479,16 @@ $("iAdd").onclick=function(){
   if(isNaN(r)){ $("iretail").focus(); return; }
   var c=$("icat").value, ex=inv.filter(function(i){return i.name===n&&i.cat===c})[0];
   if(ex){ ex.qty+=q; ex.whole=w; ex.retail=r; } else inv.push({id:Date.now(),name:n,cat:c,qty:q,whole:w,retail:r});
-  save(); ["iname","iwhole","iretail"].forEach(function(i){$(i).value=""}); $("iqty").value=1; render();
+  save(); ["iname","iwhole","iretail"].forEach(function(i){$(i).value=""}); $("iqty").value=1; render(); updateStockDisplay();
 };
-function stk(id,d){ var it=inv.filter(function(i){return i.id===id})[0]; if(!it) return; it.qty=Math.max(0,it.qty+d); save(); render(); }
-function delItem(id){ if(!confirm("حذف هذه القطعة من المخزون؟")) return; inv=inv.filter(function(i){return i.id!==id}); tomb[id]=Date.now(); save(); render(); }
+function stk(id,d){ var it=inv.filter(function(i){return i.id===id})[0]; if(!it) return; it.qty=Math.max(0,it.qty+d); save(); render(); updateStockDisplay(); }
+function delItem(id){ if(!confirm("حذف هذه القطعة من المخزون؟")) return; inv=inv.filter(function(i){return i.id!==id}); tomb[id]=Date.now(); save(); render(); updateStockDisplay(); }
 $("stockSel").onchange=function(){
-  var it=inv.filter(function(i){return String(i.id)===$("stockSel").value})[0]; if(!it) return;
-  $("name").value=it.name; $("price").value=it.retail; $("cost").value=it.whole; $("cat").value=it.cat;
+  var it=inv.filter(function(i){return String(i.id)===$("stockSel").value})[0];
+  if(it){
+    $("name").value=it.name; $("price").value=it.retail; $("cost").value=it.whole; $("cat").value=it.cat;
+  }
+  updateStockDisplay();
 };
 function renderInv(){
   var cap=0,val=0,cnt=0;
@@ -399,7 +509,7 @@ function renderInv(){
   D.innerHTML=dl.length?"":'<div class="empty">لا يوجد تالف</div>';
   dl.slice().reverse().forEach(function(e){ var r=document.createElement("div"); r.className="item"; r.innerHTML='<div><b>'+esc(e.name)+'</b><small>'+e.date+' · '+e.qty+(e.note?' · '+esc(e.note):'')+'</small></div><b class="bad">'+fmt(e.cost*e.qty)+'</b>'; D.appendChild(r); });
   var cur=$("stockSel").value, h='<option value="">— بدون —</option>';
-  inv.forEach(function(i){ if(mode==="ret"||i.qty>0) h+='<option value="'+i.id+'">'+esc(i.name)+' ('+i.qty+')</option>'; });
+  inv.forEach(function(i){ if(mode==="ret"||i.qty>0) h+='<option value="'+i.id+'">'+esc(i.name)+' [المتوفر: '+i.qty+']</option>'; });
   $("stockSel").innerHTML=h; $("stockSel").value=cur;
 }
 /* ===== الجرد ===== */
@@ -455,7 +565,7 @@ document.querySelectorAll("#pTabs button").forEach(function(b){ b.onclick=functi
 $("rday").onchange=renderRep;
 /* ===== النسخ الاحتياطي والمزامنة ===== */
 var TOMB="telecom_tomb_v1", LB="telecom_lastbackup", tomb={}, snap={};
-try{ tomb=JSON.parse(localStorage.getItem(TOMB)||"{}"); }catch(e){ tomb={}; }
+try{ tomb=JSON.parse(localStorage.getItem(TOMB)||"{}"); }catch(e){}
 function inv1(i){ var u=i.upd; delete i.upd; var j=JSON.stringify(i); if(u) i.upd=u; return j; }
 function fresh(){ inv.forEach(function(i){ snap[i.id]=inv1(i); }); }
 function stamp(){ inv.forEach(function(i){ var j=inv1(i); if(snap[i.id]!==j){ snap[i.id]=j; i.upd=Date.now(); } }); }
@@ -471,21 +581,121 @@ function bkInfo(){
 }
 function markBackup(){ try{ localStorage.setItem(LB,new Date().toISOString()); }catch(e){} bkInfo(); }
 bkInfo();
-$("bkSave").onclick=function(){
-  if(FS){ autoBackup().then(function(ok){ bmsg(ok?"تم حفظ النسخة في "+locName()+" ✓":"تعذّر الحفظ في ذاكرة الهاتف."); }); return; }
-  try{
-    var b=new Blob([pack()],{type:"application/json"}), u=URL.createObjectURL(b), a=document.createElement("a");
-    a.href=u; a.download="telecom-backup-"+today()+".json"; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(function(){ URL.revokeObjectURL(u); },2000);
-    markBackup(); bmsg("تم حفظ الملف ✓ ابحث عنه في التنزيلات.");
-  }catch(e){ bmsg("تعذّر الحفظ، جرّب «نسخ البيانات كنص»."); }
-};
+
+// نسخ فوري ومضمون للحافظة (Clipboard)
+function forceCopyText(text){
+  copyToClipboard(text, function(){}, function(){});
+}
+
+// دالة تصدير وحفظ النسخة المتوافقة 100% مع تطبيقات الأندرويد (WebView) والكمبيوتر
+function saveBackupUniversal(){
+  var dataStr = pack();
+  var fileName = "telecom-backup-" + today() + ".json";
+  
+  // 1. نسخ فوري وتلقائي للنص إلى الحافظة لضمان عدم ضياع أي بيانات
+  forceCopyText(dataStr);
+  $("bkOut").style.display = "";
+  $("bkOut").value = dataStr;
+  markBackup();
+  
+  // 2. إذا كان التطبيق يعمل عبر Capacitor APK الأصلي
+  if(FS){
+    autoBackup().then(function(ok){
+      bmsg(ok ? "تم حفظ النسخة في " + locName() + " ✓" : "تعذّر الحفظ التلقائي في ذاكرة الهاتف.");
+    });
+    return;
+  }
+
+  // 3. لأجهزة أندرويد وتطبيقات الـ APK (فتح نافذة المشاركة والحفظ لنظام أندرويد مباشرة)
+  if(/android/i.test(navigator.userAgent)){
+    try {
+      // إطلاق Intent المشاركة الخاص بنظام أندرويد (يتيح الحفظ في Drive أو مدير الملفات أو واتساب)
+      var intentUrl = "intent:#Intent;action=android.intent.action.SEND;type=text/plain;S.android.intent.extra.TEXT=" + 
+                      encodeURIComponent(dataStr) + 
+                      ";S.android.intent.extra.SUBJECT=" + encodeURIComponent(fileName) + ";end";
+      var a = document.createElement("a");
+      a.href = intentUrl;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      bmsg("تم نسخ البيانات للحافظة ✓ وفُتحت نافذة الحفظ/المشاركة بالنظام.");
+      return;
+    } catch(e){}
+  }
+
+  // 4. خيار Web Share API (للمتصفحات الحديثة)
+  if(navigator.share && navigator.canShare){
+    try {
+      var file = new File([dataStr], fileName, {type: "application/json"});
+      if(navigator.canShare({files: [file]})){
+        navigator.share({
+          files: [file],
+          title: "نسخة احتياطية - محل الاتصالات",
+          text: dataStr
+        }).then(function(){
+          bmsg("تم حفظ النسخة الاحتياطية بنجاح ✓");
+        }).catch(function(err){
+          if(err && err.name !== 'AbortError') fallbackDownloadBlob(dataStr, fileName);
+        });
+        return;
+      }
+    } catch(e){}
+  }
+
+  // 5. التحميل الكلاسيكي عبر المتصفح (للكمبيوتر والمتصفحات العادية)
+  fallbackDownloadBlob(dataStr, fileName);
+}
+
+function fallbackDownloadBlob(dataStr, fileName){
+  try {
+    var b = new Blob([dataStr], {type: "application/json"});
+    var u = URL.createObjectURL(b);
+    var a = document.createElement("a");
+    a.href = u;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(u); }, 2000);
+    bmsg("تم نسخ البيانات للحافظة ✓ وبدء تنزيل الملف (" + fileName + ").");
+  } catch(e) {
+    bmsg("تم نسخ كامل بياناتك للحافظة وعرضها في المربع أدناه ✓");
+  }
+}
+
+// لصق فوري للبيانات من الحافظة بضغطة زر
+async function pasteFromClipboardToBackup(){
+  var pasted = false;
+  try {
+    if(navigator.clipboard && navigator.clipboard.readText){
+      var txt = await navigator.clipboard.readText();
+      if(txt && txt.indexOf("telecom-acc") > -1){
+        $("bkIn").value = txt;
+        bmsg("تم لصق بيانات النسخة من الحافظة بنجاح ✓ اضغط «دمج» أو «استبدال».");
+        pasted = true;
+      }
+    }
+  } catch(e){}
+
+  if(!pasted){
+    $("bkIn").focus();
+    $("bkIn").select();
+    bmsg("الصق النص الذي نسخته داخل المربع أدناه ثم اضغط «دمج».");
+  }
+}
+
+$("bkSave").onclick = function(){ saveBackupUniversal(); };
 $("bkTxt").onclick=function(){
   var t=pack(), a=$("bkOut"), ok=false; a.style.display=""; a.value=t; a.focus(); a.select();
   try{ if(navigator.clipboard&&navigator.clipboard.writeText){ ok=true; navigator.clipboard.writeText(t).then(function(){ bmsg("تم نسخ النص ✓ الصقه في رسالة لنفسك."); },function(){ bmsg("حدّد النص في المربع وانسخه يدوياً."); }); } }catch(e){}
   if(!ok) bmsg("حدّد النص في المربع وانسخه يدوياً.");
   markBackup();
 };
+
+$("btnPasteClip").onclick = function(){
+  pasteFromClipboardToBackup();
+};
+
 $("impFile").onchange=function(){
   var f=this.files&&this.files[0]; if(!f) return;
   var r=new FileReader(); r.onload=function(){ $("bkIn").value=r.result; bmsg("تم تحميل الملف. اختر دمج أو استبدال."); }; r.readAsText(f);
@@ -682,10 +892,42 @@ function repDel(id){
   rep=rep.filter(function(x){ return x.id!==id; }); tomb[id]=Date.now(); save(); render();
 }
 function receipt(t){ return "إيصال استلام جهاز #"+t.no+"\nالتاريخ: "+t.date+"\nالعميل: "+t.name+(t.phone?" ("+t.phone+")":"")+"\nالجهاز: "+t.dev+(t.imei?"\nIMEI: "+t.imei:"")+"\nالعطل: "+(t.issue||"-")+(t.acc?"\nالملحقات: "+t.acc:"")+"\nالسعر المتفق عليه: "+fmt(t.price)+"\nالعربون: "+fmt(t.dep)+"\nالمتبقي: "+fmt(t.price-t.dep); }
+function copyToClipboard(text, onSuccess, onFail){
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(onSuccess).catch(function(){
+      fallbackCopy(text, onSuccess, onFail);
+    });
+  } else {
+    fallbackCopy(text, onSuccess, onFail);
+  }
+}
+function fallbackCopy(text, onSuccess, onFail){
+  try {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    ta.style.top = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    var ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    if(ok){ onSuccess(); } else { if(onFail) onFail(); }
+  } catch(e){
+    if(onFail) onFail();
+  }
+}
 function copyReceipt(t){
-  var x=receipt(t), done=function(){ $("mMsg").textContent="تم نسخ إيصال الطلب #"+t.no+" ✓ الصقه في رسالة للعميل."; };
-  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(x).then(done,function(){ window.prompt("انسخ الإيصال:",x); }); return; } }catch(e){}
-  window.prompt("انسخ الإيصال:",x);
+  var x = receipt(t);
+  var done = function(){
+    $("mMsg").textContent = "تم نسخ إيصال الطلب #" + t.no + " بنجاح ✓ الصقه في رسالة للعميل.";
+    setTimeout(function(){ if($("mMsg").textContent.indexOf("#" + t.no) !== -1) $("mMsg").textContent = ""; }, 4000);
+  };
+  var fail = function(){
+    window.prompt("انسخ الإيصال:", x);
+  };
+  copyToClipboard(x, done, fail);
 }
 function renderMnt(){
   var w=0,r=0,due=0;
@@ -703,12 +945,25 @@ function renderMnt(){
     var d=document.createElement("div"); d.className="item"; d.style.display="block";
     var opts=Object.keys(MS).map(function(k){ return '<option value="'+k+'"'+(k===t.status?" selected":"")+'>'+MS[k]+'</option>'; }).join("");
     var fin=t.status==="delivered";
+    var phoneHtml = "";
+    if(t.phone){
+      phoneHtml = ' · <a href="javascript:void(0)" class="wa-link" data-ph="'+esc(t.phone)+'" data-dev="'+esc(t.dev)+'" data-name="'+esc(t.name)+'">💬 '+esc(t.phone)+'</a>';
+    }
     d.innerHTML='<div style="display:flex;justify-content:space-between;gap:8px"><b>#'+t.no+' · '+esc(t.dev)+'</b><span class="'+(t.status==="ready"?"ok":(t.status==="unrep"?"bad":""))+'">'+MS[t.status]+'</span></div>'
-      +'<small>'+esc(t.name)+(t.phone?' · <a href="tel:'+esc(t.phone)+'" style="color:var(--pri)">'+esc(t.phone)+'</a>':'')+'</small>'
+      +'<small>'+esc(t.name)+phoneHtml+'</small>'
       +(t.issue?'<small>العطل: '+esc(t.issue)+'</small>':'')+(t.acc?'<small>ملحقات: '+esc(t.acc)+'</small>':'')
       +'<small>استلام: '+t.date+(t.delivered?' · تسليم: '+t.delivered:'')+'</small>'
       +'<small>'+(fin?'السعر النهائي '+fmt(t.fprice)+' · تكلفة القطع '+fmt(t.pcost)+(wkHidePrf()?'':' · ربح '+fmt(t.fprice-t.pcost)):'السعر '+fmt(t.price)+' · عربون '+fmt(t.dep)+' · المتبقي '+fmt(t.price-t.dep))+'</small>'
       +'<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center"><select class="ms" style="flex:1;min-width:130px">'+opts+'</select><button class="qb" data-a="e" style="width:auto;padding:0 10px;font-size:13px">تعديل</button><button class="qb" data-a="r" style="width:auto;padding:0 10px;font-size:13px">إيصال</button><button class="del" data-a="d" aria-label="حذف">✕</button></div>';
+    
+    var waBtn = d.querySelector(".wa-link");
+    if(waBtn){
+      waBtn.onclick = function(e){
+        e.preventDefault();
+        openWhatsApp(this.getAttribute("data-ph"), this.getAttribute("data-dev"), this.getAttribute("data-name"));
+      };
+    }
+    
     d.querySelector(".ms").onchange=function(){ repStatus(t.id,this.value); };
     d.querySelector('[data-a="e"]').onclick=function(){ repEdit(t.id); };
     d.querySelector('[data-a="r"]').onclick=function(){ copyReceipt(t); };
@@ -725,7 +980,7 @@ $("mDNo").onclick=function(){ $("mDlg").style.display="none"; mDelId=null; rende
 $("mDOk").onclick=function(){ repDeliver(); };
 renderMnt();
 /* LIC-CORE-START */
-var PUB="BNfsuFLirvpU54j7zmvF88IO1Ycspx2tWl1miIn/HS50G9/mcEyyFqsw9gg7MHb3AW7UzwK7xxsZrcTA9AOWp4Q=", TRIAL=14, CONTACT="للحصول على كود التفعيل تواصل مع البائع.";
+var PUB="BHxKZZjgNiz7AJ/YuF/Hd0Qvk+1IEaYUipTZ+/rJ6P/epu4sJPbQ4C5MV1ArwVe9nuCDBTMVT3VlPC1ZU8Xe1lI=", TRIAL=14, CONTACT="للحصول على كود التفعيل تواصل مع البائع.";
 function b64u2b(s){ s=String(s).replace(/-/g,"+").replace(/_/g,"/"); while(s.length%4) s+="="; var b=atob(s), r=new Uint8Array(b.length); for(var i=0;i<b.length;i++) r[i]=b.charCodeAt(i); return r; }
 function dd(a,b){ var A=a.split("-"), B=b.split("-"); return Math.round((new Date(+B[0],B[1]-1,+B[2])-new Date(+A[0],A[1]-1,+A[2]))/864e5); }
 function verifyCode(code){
@@ -871,6 +1126,114 @@ $("wkRecOk").onclick=function(){
   });
 };
 wkApply();
+
+/* ===== الحفظ التلقائي المستمر (File System Access & IndexedDB) ===== */
+var autoFileHandle = null;
+var IDB_NAME = "telecom_db", IDB_STORE = "handles";
+
+function openIdb(){
+  return new Promise(function(resolve, reject){
+    var req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = function(e){
+      var db = e.target.result;
+      if(!db.objectStoreNames.contains(IDB_STORE)){
+        db.createObjectStore(IDB_STORE);
+      }
+    };
+    req.onsuccess = function(e){ resolve(e.target.result); };
+    req.onerror = function(e){ reject(e); };
+  });
+}
+
+function saveHandleToIdb(handle){
+  return openIdb().then(function(db){
+    return new Promise(function(resolve, reject){
+      var tx = db.transaction(IDB_STORE, "readwrite");
+      tx.objectStore(IDB_STORE).put(handle, "auto_backup_file");
+      tx.oncomplete = function(){ resolve(); };
+      tx.onerror = function(e){ reject(e); };
+    });
+  });
+}
+
+function getHandleFromIdb(){
+  return openIdb().then(function(db){
+    return new Promise(function(resolve, reject){
+      var tx = db.transaction(IDB_STORE, "readonly");
+      var req = tx.objectStore(IDB_STORE).get("auto_backup_file");
+      req.onsuccess = function(){ resolve(req.result); };
+      req.onerror = function(e){ reject(e); };
+    });
+  }).catch(function(){ return null; });
+}
+
+async function verifyPermission(fileHandle, readWrite) {
+  var options = {};
+  if (readWrite) options.mode = 'readwrite';
+  try {
+    if ((await fileHandle.queryPermission(options)) === 'granted') return true;
+    if ((await fileHandle.requestPermission(options)) === 'granted') return true;
+  } catch(e){}
+  return false;
+}
+
+var webAutoTimer = null;
+async function writeToAutoFile(){
+  if(!autoFileHandle) return;
+  try {
+    var hasPerm = await verifyPermission(autoFileHandle, true);
+    if(!hasPerm) return;
+    var writable = await autoFileHandle.createWritable();
+    await writable.write(pack());
+    await writable.close();
+    markBackup();
+    var timeStr = new Date().toTimeString().slice(0, 5);
+    $("autoFileStat").innerHTML = '🟢 <b>الحفظ التلقائي مفعّل:</b> تم تحديث الملف بنجاح (' + timeStr + ') تلقائياً.';
+    $("autoFileStat").style.color = "var(--ok)";
+  } catch(e) {
+    console.error("Auto write failed:", e);
+  }
+}
+
+function triggerAutoSave(){
+  clearTimeout(webAutoTimer);
+  webAutoTimer = setTimeout(function(){
+    if(autoFileHandle) writeToAutoFile();
+    if(typeof autoBackup === "function" && FS) autoBackup();
+  }, 1200);
+}
+
+// Initial check for stored handle
+getHandleFromIdb().then(function(h){
+  if(h){
+    autoFileHandle = h;
+    $("autoFileStat").innerHTML = '🟢 <b>الحفظ التلقائي مفعّل:</b> مرتبط بملف (' + esc(h.name) + ') ويتم التحديث بعد كل حركة.';
+    $("autoFileStat").style.color = "var(--ok)";
+    $("btnLinkAutoFile").textContent = "📁 تغيير ملف الحفظ التلقائي";
+  }
+});
+
+$("btnLinkAutoFile").onclick = async function(){
+  if(window.showSaveFilePicker){
+    try {
+      var handle = await window.showSaveFilePicker({
+        suggestedName: "telecom-auto-backup.json",
+        types: [{ description: 'ملف نسخة احتياطية (JSON)', accept: {'application/json': ['.json']} }]
+      });
+      autoFileHandle = handle;
+      await saveHandleToIdb(handle);
+      await writeToAutoFile();
+      $("autoFileStat").innerHTML = '🟢 <b>الحفظ التلقائي مفعّل:</b> تم ربط الملف بنجاح (' + esc(handle.name) + ').';
+      $("autoFileStat").style.color = "var(--ok)";
+      $("btnLinkAutoFile").textContent = "📁 تغيير ملف الحفظ التلقائي";
+    } catch(e){
+      if(e && e.name !== 'AbortError') alert("تعذّر تحديد الملف: " + e.message);
+    }
+  } else {
+    alert("ملاحظة: ميزة الكتابة التلقائية المستمرة في ملف بالذاكرة مدعومة على متصفحات الكمبيوتر وتطبيقات أندرويد (Capacitor/APK).\nفي المتصفح العادي على الهاتف، يتم حفظ كافة العمليات بأمان داخل ذاكرة المتصفح الدائمة (Persistent Storage)، ويمكنك تنزيل نسخة للملف في أي وقت عبر زر «حفظ ملف نسخة احتياطية».");
+  }
+};
+
 </script>
 </body>
 </html>
