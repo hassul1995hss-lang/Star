@@ -24,7 +24,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Prepare Web Directory & Capacitor with Plugins
+      - name: Prepare Web Directory & Capacitor
         run: |
           mkdir -p www
           cp index.html www/
@@ -40,7 +40,7 @@ jobs:
           with open("capacitor.config.json", "r") as f:
               cfg = json.load(f)
           cfg["server"] = {
-              "allowNavigation": ["*.whatsapp.com", "wa.me"]
+              "allowNavigation": ["*.whatsapp.com", "wa.me", "api.whatsapp.com"]
           }
           with open("capacitor.config.json", "w") as f:
               json.dump(cfg, f, indent=2)
@@ -60,13 +60,8 @@ jobs:
           fi
 
           if [ -n "$ICON_SRC" ]; then
-            echo "Applying custom icon: $ICON_SRC"
             RES_DIR="android/app/src/main/res"
-            
-            # إزالة تعريفات الـ XML لمنع خطأ Duplicate resources
             rm -rf "$RES_DIR"/mipmap-anydpi-v26
-            
-            # نسخ الصورة لجميع مقاسات mipmap العادية
             for d in "$RES_DIR"/mipmap-*; do
               if [ -d "$d" ]; then
                 cp -f "$ICON_SRC" "$d/ic_launcher.png"
@@ -86,19 +81,53 @@ jobs:
               <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
               <queries>
                   <package android:name="com.whatsapp" />
-                  <intent>
-                      <action android:name="android.intent.action.VIEW" />
-                      <data android:scheme="https" />
-                  </intent>
+                  <package android:name="com.whatsapp.w4b" />
                   <intent>
                       <action android:name="android.intent.action.VIEW" />
                       <data android:scheme="whatsapp" />
+                  </intent>
+                  <intent>
+                      <action android:name="android.intent.action.VIEW" />
+                      <data android:scheme="https" android:host="wa.me" />
+                  </intent>
+                  <intent>
+                      <action android:name="android.intent.action.VIEW" />
+                      <data android:scheme="https" android:host="api.whatsapp.com" />
                   </intent>
               </queries>
           </manifest>"""
           c = c.replace("</manifest>", extra)
           with open("android/app/src/main/AndroidManifest.xml", "w", encoding="utf-8") as f:
               f.write(c)
+          '
+
+      - name: Setup Fixed Keystore & Increase Version
+        run: |
+          # زيادة رقم الإصدار تلقائياً حتى يقبل أندرويد التحديث
+          BUILD_GRADLE="android/app/build.gradle"
+          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/g" "$BUILD_GRADLE"
+          sed -i "s/versionName \"1.0\"/versionName \"1.${{ github.run_number }}\"/g" "$BUILD_GRADLE"
+          
+          # إنشاء مفتاح موحد ثابت بنفس الكلمات دائماً
+          keytool -genkeypair -v -keystore android/app/fixed.keystore -alias starphone -keyalg RSA -keysize 2048 -validity 10000 -storepass "123456" -keypass "123456" -dname "CN=StarPhone"
+          
+          # ربط المفتاح بالبناء
+          python3 -c '
+          with open("android/app/build.gradle", "r") as f:
+              text = f.read()
+          cfg = """
+              signingConfigs {
+                  debug {
+                      storeFile file("fixed.keystore")
+                      storePassword "123456"
+                      keyAlias "starphone"
+                      keyPassword "123456"
+                  }
+              }
+          """
+          text = text.replace("android {", "android {" + cfg)
+          with open("android/app/build.gradle", "w") as f:
+              f.write(text)
           '
 
       - name: Sync Capacitor
