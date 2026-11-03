@@ -24,48 +24,54 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Accept Android Licenses
-        run: |
-          yes | sdkmanager --licenses || true
-
-      - name: Build Web Assets & Initialize App
+      - name: Prepare Web Directory & Capacitor
         run: |
           mkdir -p www
-          # نسخ ملفات الموقع لداخل مجلد www النظيف
           cp index.html www/
-          cp -r manifest.webmanifest www/ 2>/dev/null || true
-          cp -r *.png www/ 2>/dev/null || true
+          cp -f manifest.webmanifest www/ 2>/dev/null || true
+          cp -f *.png www/ 2>/dev/null || true
           
-          # تثبيت Capacitor وبناء مشروع أندرويد
           npm init -y
-          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest
+          npm install @capacitor/core @capacitor/cli @capacitor/android
           npx cap init "Star Phone" "com.app.starphone" --web-dir "www"
           npx cap add android
 
-      - name: Inject Android Permissions & Queries
+      - name: Inject Permissions to AndroidManifest
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
-          if [ -f "$MANIFEST" ]; then
-            # إضافة صلاحيات التخزين والإنترنت قبل وسم الإغلاق
-            sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />\n    <queries>\n        <package android:name="com.whatsapp" />\n        <intent>\n            <action android:name="android.intent.action.VIEW" />\n            <data android:scheme="https" />\n        </intent>\n    </queries>' "$MANIFEST"
-          fi
+          # تعديل الصلاحيات ودعم الروابط الخارجية لتطبيق واتساب
+          python3 -c '
+          import re
+          with open("android/app/src/main/AndroidManifest.xml", "r", encoding="utf-8") as f:
+              c = f.read()
+          extra = """    <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+              <queries>
+                  <package android:name="com.whatsapp" />
+                  <intent>
+                      <action android:name="android.intent.action.VIEW" />
+                      <data android:scheme="https" />
+                  </intent>
+              </queries>
+          </manifest>"""
+          c = c.replace("</manifest>", extra)
+          with open("android/app/src/main/AndroidManifest.xml", "w", encoding="utf-8") as f:
+              f.write(c)
+          '
 
       - name: Sync Capacitor
         run: |
           npx cap sync android
 
-      - name: Build Debug APK
+      - name: Build Android APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: StarPhone-Debug-APK
+          name: StarPhone-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          
