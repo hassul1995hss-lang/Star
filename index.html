@@ -256,38 +256,43 @@ input[type=checkbox]{width:auto;padding:0;margin:0}
 
 <div id="vBak" style="display:none">
 <p id="bkMsg" class="hint" style="font-size:14px;margin:0 0 10px"></p>
-<div class="card" id="autoSyncCard" style="border-color:var(--pri)">
-  <h2>⚡ الحفظ التلقائي في ملف محلي</h2>
-  <p class="hint" style="margin-top:0">اربط ملفاً من هاتفك أو حاسوبك مرة واحدة، وسيقوم البرنامج بتحديثه وحفظ نسخة بداخله تلقائياً فور تسجيل أي بيع أو صيانة أو تعديل.</p>
-  <p id="autoFileStat" style="font-size:13px;margin:8px 0;color:var(--mut)">⚪ لم يتم ربط ملف حفظ تلقائي بعد.</p>
-  <button class="add" id="btnLinkAutoFile" style="margin-top:0">📁 ربط ملف للحفظ التلقائي المستمر</button>
+
+<!-- 1. النسخ الاحتياطي المجدول التلقائي -->
+<div class="card" id="schCard"><h2>⏰ نسخ احتياطي مجدول (تلقائي بالهاتف)</h2>
+  <p class="hint" style="margin-top:0">يحفظ تلقائياً في مجلد <b>Download/StarPhoneBackup</b> بالهاتف ويحتفظ بآخر 60 لقطة. المسار ثابت وموحد على أي هاتف لتسهيل الوصول للملفات.</p>
+  <label>تكرار النسخ التلقائي</label>
+  <select id="schMode"><option value="off">إيقاف المجدول (نسخ يدوي فقط)</option><option value="h1">كل ساعة</option><option value="h3">كل 3 ساعات</option><option value="h6">كل 6 ساعات</option><option value="d">يومياً في وقت محدد</option></select>
+  <div id="schTimeWrap" style="display:none"><label>الوقت المحدد يومياً</label><input type="time" id="schTime" value="23:00"></div>
+  <p class="hint" id="schInfo"></p>
+  <button class="add sec" id="schNow">💾 حفظ لقطة مجدولة الآن</button>
+  <label style="margin-top:12px">آخر اللقطات المحفوظة (اضغط استعادة للرجوع لأي نقطة)</label><div id="schList"></div>
 </div>
 
-<div class="card"><h2>💾 نسخة احتياطية</h2>
-  <p class="hint" style="margin-top:0">بياناتك محفوظة على هذا الجهاز فقط. احفظ نسخة بشكل دوري حتى لا تضيع عند مسح بيانات المتصفح.</p>
-  <p id="bkLast" style="margin:8px 0"></p>
-  <p class="hint" id="autoInfo" style="margin-top:0"></p>
-  <button class="add" id="bkSave">💾 حفظ ملف نسخة احتياطية</button>
-  <button class="add sec" id="bkTxt">📋 نسخ البيانات كنص</button>
-  <textarea id="bkOut" rows="4" readonly style="display:none;margin-top:10px;direction:ltr;font-size:12px"></textarea>
-</div>
-<div class="card" id="schCard"><h2>⏰ نسخ احتياطي مجدول</h2>
-  <p class="hint" style="margin-top:0">يحفظ لقطة بتاريخ ووقت في Documents/TelecomBackup ويحتفظ بآخر 60 لقطة، ولا يحفظ إلا إذا تغيّرت البيانات. يعمل أثناء فتح التطبيق، وإذا كان مغلقاً يحفظ فور فتحه إن فات الموعد.</p>
-  <label>التكرار</label>
-  <select id="schMode"><option value="off">بدون (النسخ بعد كل تعديل فقط)</option><option value="h1">كل ساعة</option><option value="h3">كل 3 ساعات</option><option value="h6">كل 6 ساعات</option><option value="d">يومياً في وقت محدد</option></select>
-  <div id="schTimeWrap" style="display:none"><label>الوقت</label><input type="time" id="schTime" value="23:00"></div>
-  <p class="hint" id="schInfo"></p>
-  <button class="add sec" id="schNow">حفظ لقطة الآن</button>
-  <label>آخر اللقطات (اضغط استعادة للرجوع إليها)</label><div id="schList"></div>
-</div>
-<div class="card"><h2>🔄 مزامنة بين الجوال والحاسوب / استعادة</h2>
-  <p class="hint" style="margin-top:0">من الجهاز الأول: احفظ الملف أو انسخ النص وأرسله لنفسك (واتساب، تيليجرام، بريد). على الجهاز الثاني: اختر الملف أو الصق النص ثم اضغط «دمج».</p>
-  <button class="add" id="btnPasteClip" style="margin-top:0;background:var(--ok)">📋 لصق النسخة المنسوخة من الحافظة مباشرة</button>
-  <label style="margin-top:10px">أو اختر ملف نسخة احتياطية من جهازك</label><input type="file" id="impFile" accept=".json,application/json,text/plain">
-  <label>أو الصق النص يدوياً هنا</label><textarea id="bkIn" rows="4" style="direction:ltr;font-size:12px" placeholder="الصق نص النسخة الاحتياطية هنا"></textarea>
-  <button class="add" id="impMerge">🔄 دمج مع بياناتي (مزامنة)</button>
-  <button class="add dng" id="impRep">⚠ استبدال كل بياناتي بالنسخة</button>
-  <p class="hint">«دمج» يضيف العمليات الناقصة عندك ويحتفظ بما عندك. كمية كل صنف تُأخذ من الجهاز الذي عدّلها آخراً. لذلك الأفضل أن تزامن قبل البدء بالعمل على جهاز آخر، ولا تعدّل المخزون على جهازين بالوقت نفسه.</p>
+<!-- 2. نسخ عند الطلب والمزامنة بين الهاتف والحاسوب -->
+<div class="card"><h2>🔄 نسخ عند الطلب ومزامنة (جوال ⇄ كمبيوتر)</h2>
+  <p class="hint" style="margin-top:0">لحفظ نسخة يدوية فورية أو نقل البيانات بين أجهزتك. احفظ الملف أو انسخ النص وأرسله للجهاز الآخر ثم اضغط «دمج».</p>
+  
+  <div class="row" style="grid-template-columns:1fr 1fr;margin-bottom:10px">
+    <button class="add" id="bkSave" style="margin-top:0">💾 حفظ ملف نسخة</button>
+    <button class="add sec" id="bkTxt" style="margin-top:0">📋 نسخ كنص</button>
+  </div>
+  <textarea id="bkOut" rows="3" readonly style="display:none;margin-bottom:10px;direction:ltr;font-size:12px"></textarea>
+  <p id="bkLast" style="margin:4px 0 10px;font-size:12px"></p>
+
+  <hr style="border:0;border-top:1px solid var(--line);margin:12px 0">
+
+  <label style="margin-top:0">استيراد أو مزامنة بيانات من جهاز آخر:</label>
+  <button class="add" id="btnPasteClip" style="margin-top:6px;background:var(--ok)">📋 لصق النسخة من الحافظة مباشرة</button>
+  <label style="margin-top:10px">أو اختر ملف نسخة احتياطية (.json):</label>
+  <input type="file" id="impFile" accept=".json,application/json,text/plain">
+  <label style="margin-top:8px">أو الصق النص يدوياً هنا:</label>
+  <textarea id="bkIn" rows="3" style="direction:ltr;font-size:12px" placeholder="الصق نص النسخة الاحتياطية هنا"></textarea>
+  
+  <div class="row" style="grid-template-columns:1fr 1fr;margin-top:8px">
+    <button class="add" id="impMerge" style="margin-top:0">🔄 دمج البيانات (مزامنة)</button>
+    <button class="add dng" id="impRep" style="margin-top:0">⚠ استبدال شامل</button>
+  </div>
+  <p class="hint" style="margin-top:8px">«دمج» يجمع العمليات الناقصة دون حذف ما لديك، ويحدث المخزون حسب آخر تعديل.</p>
 </div>
 </div>
 
@@ -310,7 +315,7 @@ try{ rep=JSON.parse(localStorage.getItem(REPK)||"[]"); }catch(e){ rep=[]; }
 var WKK="telecom_wk", WK={on:false,perms:{}};
 try{ var _w=JSON.parse(localStorage.getItem(WKK)||"null"); if(_w) WK=_w; }catch(e){}
 function wkHidePrf(){ return !!(WK.on&&!(WK.perms&&WK.perms.prf)); }
-function save(){ stamp(); try{ localStorage.setItem(KEY,JSON.stringify(data)); localStorage.setItem(INV,JSON.stringify(inv)); localStorage.setItem(TOMB,JSON.stringify(tomb)); localStorage.setItem(REPK,JSON.stringify(rep)); }catch(e){} if(typeof triggerAutoSave==="function") triggerAutoSave(); }
+function save(){ stamp(); try{ localStorage.setItem(KEY,JSON.stringify(data)); localStorage.setItem(INV,JSON.stringify(inv)); localStorage.setItem(TOMB,JSON.stringify(tomb)); localStorage.setItem(REPK,JSON.stringify(rep)); }catch(e){}  }
 function today(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function fmt(n){ return Number(n||0).toLocaleString("en-US",{maximumFractionDigits:2}); }
 function $(id){ return document.getElementById(id); }
@@ -590,46 +595,97 @@ function inv1(i){ var u=i.upd; delete i.upd; var j=JSON.stringify(i); if(u) i.up
 function fresh(){ inv.forEach(function(i){ snap[i.id]=inv1(i); }); }
 function stamp(){ inv.forEach(function(i){ var j=inv1(i); if(snap[i.id]!==j){ snap[i.id]=j; i.upd=Date.now(); } }); }
 fresh();
-function bmsg(t){ $("bkMsg").textContent=t; }
+function bmsg(t){ var el=$("bkMsg"); if(el) el.textContent=t; }
 function pack(){ return JSON.stringify({app:"telecom-acc",v:1,exported:new Date().toISOString(),data:data,inv:inv,rep:rep,tomb:tomb}); }
 function bkInfo(){
   var t=null; try{ t=localStorage.getItem(LB); }catch(e){}
-  var el=$("bkLast");
+  var el=$("bkLast"); if(!el) return;
   if(!t){ el.textContent="لم تحفظ أي نسخة احتياطية بعد."; el.className="low"; return; }
   var days=Math.floor((Date.now()-new Date(t).getTime())/864e5);
-  el.textContent="آخر نسخة: "+t.slice(0,10)+(days>0?" (قبل "+days+" يوم)":" (اليوم)"); el.className=days>7?"low":"";
+  el.textContent="آخر حفظ: "+t.slice(0,10)+(days>0?" (قبل "+days+" يوم)":" (اليوم)"); el.className=days>7?"low":"";
 }
 function markBackup(){ try{ localStorage.setItem(LB,new Date().toISOString()); }catch(e){} bkInfo(); }
 bkInfo();
 
-// نسخ فوري ومضمون للحافظة (Clipboard)
-function forceCopyText(text){
-  copyToClipboard(text, function(){}, function(){});
+/* نظام مسار التخزين الموحد الثابت في قسم التنزيلات (Download/StarPhoneBackup) */
+var CAP=window.Capacitor, FS=(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform())?CAP.Plugins.Filesystem:null;
+var BDIR="Download/StarPhoneBackup", bLoc="EXTERNAL_STORAGE", pOK=false;
+
+function locName(){ return "Download/StarPhoneBackup"; }
+
+function askPerm(){
+  if(pOK||!FS||!FS.requestPermissions) return Promise.resolve();
+  pOK=true;
+  return FS.requestPermissions().catch(function(){});
 }
 
-// دالة تصدير وحفظ النسخة المتوافقة 100% مع تطبيقات الأندرويد (WebView) والكمبيوتر
+function fsWrite(name, text){
+  if(!FS) return Promise.reject("No FS");
+  var o1 = {path: BDIR + "/" + name, data: text, directory: bLoc, encoding: "utf8", recursive: true};
+  return FS.writeFile(o1).catch(function(){
+    // محاولة بديلة 1: عبر DOCUMENTS مع مسار StarPhoneBackup
+    bLoc = "DOCUMENTS";
+    var o2 = {path: "StarPhoneBackup/" + name, data: text, directory: bLoc, encoding: "utf8", recursive: true};
+    return FS.writeFile(o2).catch(function(){
+      // محاولة بديلة 2: عبر EXTERNAL
+      bLoc = "EXTERNAL";
+      var o3 = {path: "StarPhoneBackup/" + name, data: text, directory: bLoc, encoding: "utf8", recursive: true};
+      return FS.writeFile(o3);
+    });
+  });
+}
+
+function fsRead(name){
+  if(!FS) return Promise.reject("No FS");
+  return FS.readFile({path: BDIR + "/" + name, directory: bLoc, encoding: "utf8"}).catch(function(){
+    return FS.readFile({path: "StarPhoneBackup/" + name, directory: "DOCUMENTS", encoding: "utf8"}).catch(function(){
+      return FS.readFile({path: "StarPhoneBackup/" + name, directory: "EXTERNAL", encoding: "utf8"});
+    });
+  });
+}
+
+function fsList(){
+  if(!FS) return Promise.reject("No FS");
+  return FS.readdir({path: BDIR, directory: bLoc}).catch(function(){
+    return FS.readdir({path: "StarPhoneBackup", directory: "DOCUMENTS"}).catch(function(){
+      return FS.readdir({path: "StarPhoneBackup", directory: "EXTERNAL"});
+    });
+  });
+}
+
+function fsDelete(name){
+  if(!FS) return Promise.reject("No FS");
+  return FS.deleteFile({path: BDIR + "/" + name, directory: bLoc}).catch(function(){
+    return FS.deleteFile({path: "StarPhoneBackup/" + name, directory: "DOCUMENTS"}).catch(function(){
+      return FS.deleteFile({path: "StarPhoneBackup/" + name, directory: "EXTERNAL"});
+    });
+  });
+}
+
+/* نسخ عند الطلب (حفظ ملف للمزامنة أو المشاركة) */
+function forceCopyText(text){ copyToClipboard(text, function(){}, function(){}); }
+
 function saveBackupUniversal(){
   var dataStr = pack();
   var fileName = "telecom-backup-" + today() + ".json";
-  
-  // 1. نسخ فوري وتلقائي للنص إلى الحافظة لضمان عدم ضياع أي بيانات
   forceCopyText(dataStr);
   $("bkOut").style.display = "";
   $("bkOut").value = dataStr;
   markBackup();
   
-  // 2. إذا كان التطبيق يعمل عبر Capacitor APK الأصلي
   if(FS){
-    autoBackup().then(function(ok){
-      bmsg(ok ? "تم حفظ النسخة في " + locName() + " ✓" : "تعذّر الحفظ التلقائي في ذاكرة الهاتف.");
+    askPerm().then(function(){
+      return fsWrite(fileName, dataStr);
+    }).then(function(){
+      bmsg("تم حفظ النسخة بنجاح في مجلد " + locName() + " (" + fileName + ") ✓");
+    }).catch(function(){
+      bmsg("تم نسخ كامل بياناتك للحافظة ✓");
     });
     return;
   }
 
-  // 3. لأجهزة أندرويد وتطبيقات الـ APK (فتح نافذة المشاركة والحفظ لنظام أندرويد مباشرة)
   if(/android/i.test(navigator.userAgent)){
     try {
-      // إطلاق Intent المشاركة الخاص بنظام أندرويد (يتيح الحفظ في Drive أو مدير الملفات أو واتساب)
       var intentUrl = "intent:#Intent;action=android.intent.action.SEND;type=text/plain;S.android.intent.extra.TEXT=" + 
                       encodeURIComponent(dataStr) + 
                       ";S.android.intent.extra.SUBJECT=" + encodeURIComponent(fileName) + ";end";
@@ -638,31 +694,11 @@ function saveBackupUniversal(){
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      bmsg("تم نسخ البيانات للحافظة ✓ وفُتحت نافذة الحفظ/المشاركة بالنظام.");
+      bmsg("تم نسخ البيانات للحافظة ✓ وفُتحت نافذة المشاركة والحفظ.");
       return;
     } catch(e){}
   }
 
-  // 4. خيار Web Share API (للمتصفحات الحديثة)
-  if(navigator.share && navigator.canShare){
-    try {
-      var file = new File([dataStr], fileName, {type: "application/json"});
-      if(navigator.canShare({files: [file]})){
-        navigator.share({
-          files: [file],
-          title: "نسخة احتياطية - محل الاتصالات",
-          text: dataStr
-        }).then(function(){
-          bmsg("تم حفظ النسخة الاحتياطية بنجاح ✓");
-        }).catch(function(err){
-          if(err && err.name !== 'AbortError') fallbackDownloadBlob(dataStr, fileName);
-        });
-        return;
-      }
-    } catch(e){}
-  }
-
-  // 5. التحميل الكلاسيكي عبر المتصفح (للكمبيوتر والمتصفحات العادية)
   fallbackDownloadBlob(dataStr, fileName);
 }
 
@@ -677,13 +713,12 @@ function fallbackDownloadBlob(dataStr, fileName){
     a.click();
     document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(u); }, 2000);
-    bmsg("تم نسخ البيانات للحافظة ✓ وبدء تنزيل الملف (" + fileName + ").");
+    bmsg("تم نسخ البيانات للحافظة ✓ وبدء تحميل الملف (" + fileName + ").");
   } catch(e) {
     bmsg("تم نسخ كامل بياناتك للحافظة وعرضها في المربع أدناه ✓");
   }
 }
 
-// لصق فوري للبيانات من الحافظة بضغطة زر
 async function pasteFromClipboardToBackup(){
   var pasted = false;
   try {
@@ -705,16 +740,13 @@ async function pasteFromClipboardToBackup(){
 }
 
 $("bkSave").onclick = function(){ saveBackupUniversal(); };
-$("bkTxt").onclick=function(){
+$("bkTxt").onclick = function(){
   var t=pack(), a=$("bkOut"), ok=false; a.style.display=""; a.value=t; a.focus(); a.select();
   try{ if(navigator.clipboard&&navigator.clipboard.writeText){ ok=true; navigator.clipboard.writeText(t).then(function(){ bmsg("تم نسخ النص ✓ الصقه في رسالة لنفسك."); },function(){ bmsg("حدّد النص في المربع وانسخه يدوياً."); }); } }catch(e){}
   if(!ok) bmsg("حدّد النص في المربع وانسخه يدوياً.");
   markBackup();
 };
-
-$("btnPasteClip").onclick = function(){
-  pasteFromClipboardToBackup();
-};
+$("btnPasteClip").onclick = function(){ pasteFromClipboardToBackup(); };
 
 $("impFile").onchange=function(){
   var f=this.files&&this.files[0]; if(!f) return;
@@ -747,63 +779,10 @@ $("impMerge").onclick=function(){
 };
 $("impRep").onclick=function(){
   var o=readIn(); if(!o) return;
-  if(!confirm("سيتم حذف كل بياناتك الحالية على هذا الجهاز واستبدالها بالنسخة ("+o.data.length+" عملية، "+o.inv.length+" صنف). إن لم تحفظ نسخة من بياناتك الحالية فالغِ واحفظها أولاً. متأكد؟")) return;
+  if(!confirm("سيتم حذف كل بياناتك الحالية على هذا الجهاز واستبدالها بالنسخة ("+o.data.length+" عملية، "+o.inv.length+" صنف). متأكد؟")) return;
   data=o.data; inv=o.inv; rep=o.rep; tomb=o.tomb; fresh(); save(); render(); bmsg("تم استبدال البيانات ✓");
 };
-/* ===== ضبط المصنع ===== */
-$("rstBtn").onclick=function(){ $("rstBox").style.display=""; $("rstBtn").style.display="none"; $("rstMsg").textContent=""; };
-$("rstNo").onclick=function(){ $("rstBox").style.display="none"; $("rstBtn").style.display=""; };
-$("rstYes").onclick=function(){
-  [KEY,INV,TOMB,LB,REPK].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
-  data=[]; inv=[]; rep=[]; tomb={}; snap={};
-  ["name","price","cost","amt","inote","iname","iwhole","iretail","bkIn","bkOut"].forEach(function(i){ $(i).value=""; });
-  $("qty").value=1; $("iqty").value=1; $("bkOut").style.display="none"; $("stockSel").value="";
-  $("day").value=today(); $("rday").value=today();
-  setMode("sale"); setView("s"); bkInfo(); bmsg("");
-  $("rstBox").style.display="none"; $("rstBtn").style.display=""; render();
-  $("rstMsg").textContent="تم مسح كل البيانات والعودة للبداية ✓"; if(typeof autoBackup==="function") autoBackup();
-};
-var _r=render; render=function(){ _r(); renderInv(); renderRep(); renderMnt(); };
-$("day").onchange=render;
-render();
-try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
-/* ===== حفظ تلقائي في ذاكرة الهاتف (أندرويد) ===== */
-var CAP=window.Capacitor, FS=(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform())?CAP.Plugins.Filesystem:null, BDIR="TelecomBackup", bLoc="DOCUMENTS", bTimer=null, pOK=false;
-function locName(){ return bLoc==="DOCUMENTS"?"Documents/TelecomBackup":"مجلد بيانات التطبيق (Android/data)"; }
-function autoTxt(ok){ $("autoInfo").textContent=ok?"آخر حفظ تلقائي: "+new Date().toTimeString().slice(0,5)+" — "+locName():"تعذّر الحفظ التلقائي في ذاكرة الهاتف."; }
-function askPerm(){ if(pOK||!FS.requestPermissions) return Promise.resolve(); pOK=true; return FS.requestPermissions().catch(function(){}); }
-function fsWrite(name,text){
-  var o={path:BDIR+"/"+name,data:text,directory:bLoc,encoding:"utf8",recursive:true};
-  return FS.writeFile(o).catch(function(){ if(bLoc==="EXTERNAL") throw 0; bLoc="EXTERNAL"; o.directory=bLoc; return FS.writeFile(o); });
-}
-function pruneBackups(){
-  FS.readdir({path:BDIR,directory:bLoc}).then(function(r){
-    var n=(r.files||[]).map(function(f){ return f.name||f; }).filter(function(x){ return /^telecom-backup-\d{4}-\d{2}-\d{2}\.json$/.test(x); }).sort();
-    n.slice(0,Math.max(0,n.length-14)).forEach(function(x){ FS.deleteFile({path:BDIR+"/"+x,directory:bLoc}).catch(function(){}); });
-  }).catch(function(){});
-}
-function autoBackup(){
-  if(!FS) return Promise.resolve(false);
-  var t=pack();
-  return askPerm().then(function(){ return fsWrite("telecom-backup-latest.json",t); })
-    .then(function(){ return fsWrite("telecom-backup-"+today()+".json",t); })
-    .then(function(){ markBackup(); autoTxt(true); pruneBackups(); return true; })
-    .catch(function(){ autoTxt(false); return false; });
-}
-if(FS){
-  $("autoInfo").textContent="الحفظ التلقائي مفعّل: تُحفظ نسخة في ذاكرة الهاتف بعد كل تعديل (يحتفظ بآخر 14 يوماً).";
-  var _s=save; save=function(){ _s(); clearTimeout(bTimer); bTimer=setTimeout(autoBackup,1500); };
-  if(!data.length&&!inv.length){
-    var rd=function(loc){ return FS.readFile({path:BDIR+"/telecom-backup-latest.json",directory:loc,encoding:"utf8"}); };
-    rd("DOCUMENTS").catch(function(){ return rd("EXTERNAL"); }).then(function(r){
-      var o=JSON.parse(r.data);
-      if(o&&o.app==="telecom-acc"&&((o.data||[]).length||(o.inv||[]).length)){
-        window._rs=o; $("rsBar").style.display=""; $("rsTxt").textContent="وُجدت نسخة تلقائية بتاريخ "+String(o.exported).slice(0,10)+" ("+o.data.length+" عملية، "+o.inv.length+" صنف).";
-      }
-    }).catch(function(){});
-  }
-} else { $("autoInfo").style.display="none"; }
-$("rsBtn").onclick=function(){ var o=window._rs; if(!o) return; data=o.data; inv=o.inv; rep=o.rep||[]; tomb=o.tomb||{}; fresh(); save(); render(); $("rsBar").style.display="none"; bmsg("تمت الاستعادة ✓"); };
+
 /* ===== نسخ مجدول (أندرويد) ===== */
 var SK="telecom_sched", SL="telecom_snap_last", SH="telecom_snap_hash", SNAPKEEP=60, sched={mode:"off",time:"23:00"};
 try{ var _sc=JSON.parse(localStorage.getItem(SK)||"null"); if(_sc&&_sc.mode) sched=_sc; }catch(e){}
@@ -822,8 +801,8 @@ function nextDue(){
 }
 function snapNames(r){ return (r.files||[]).map(function(f){ return f.name||f; }).filter(function(x){ return /^telecom-snap-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}\.json$/.test(x); }).sort(); }
 function pruneSnaps(){
-  FS.readdir({path:BDIR,directory:bLoc}).then(function(r){
-    var n=snapNames(r); n.slice(0,Math.max(0,n.length-SNAPKEEP)).forEach(function(x){ FS.deleteFile({path:BDIR+"/"+x,directory:bLoc}).catch(function(){}); });
+  fsList().then(function(r){
+    var n=snapNames(r); n.slice(0,Math.max(0,n.length-SNAPKEEP)).forEach(function(x){ fsDelete(x).catch(function(){}); });
   }).catch(function(){});
 }
 function snapNow(manual){
@@ -839,26 +818,26 @@ function snapNow(manual){
 function schPaint(){
   var m=sched.mode, n=nextDue(), l=lastSnap(), x;
   $("schMode").value=m; $("schTimeWrap").style.display=m==="d"?"":"none"; $("schTime").value=sched.time||"23:00";
-  x=m==="off"?"التكرار متوقف، والنسخ بعد كل تعديل يعمل كالمعتاد.":"الموعد القادم: "+(n<=Date.now()?"عند أول فحص (خلال دقيقة)":fmtT(n))+".";
-  if(l) x+=" آخر فحص أو لقطة: "+fmtT(l)+".";
+  x=m==="off"?"التكرار التلقائي متوقف حالياً. يمكنك الضغط على حفظ لقطة يدوياً.":"الموعد القادم للنسخ التلقائي: "+(n<=Date.now()?"عند أول فحص (خلال دقيقة)":fmtT(n))+".";
+  if(l) x+=" آخر لقطة تم حفظها: "+fmtT(l)+".";
   $("schInfo").textContent=x;
 }
 function listSnaps(){
   if(!FS) return;
-  FS.readdir({path:BDIR,directory:bLoc}).then(function(r){
-    var n=snapNames(r).reverse().slice(0,8), L=$("schList"); L.innerHTML=n.length?"":'<div class="empty">لا توجد لقطات بعد</div>';
+  fsList().then(function(r){
+    var n=snapNames(r).reverse().slice(0,8), L=$("schList"); L.innerHTML=n.length?"":'<div class="empty">لا توجد لقطات محفوظة بعد</div>';
     n.forEach(function(x){
       var m=x.match(/telecom-snap-(\d{4}-\d{2}-\d{2})_(\d{2})-(\d{2})/), d=document.createElement("div"); d.className="item";
       d.innerHTML='<b>'+m[1]+' '+m[2]+':'+m[3]+'</b><button class="qb" style="width:auto;padding:0 10px;font-size:13px">استعادة</button>';
       d.querySelector("button").onclick=function(){ restoreSnap(x); }; L.appendChild(d);
     });
-  }).catch(function(){ $("schList").innerHTML='<div class="empty">لا توجد لقطات بعد</div>'; });
+  }).catch(function(){ $("schList").innerHTML='<div class="empty">لا توجد لقطات محفوظة بعد</div>'; });
 }
 function restoreSnap(name){
-  FS.readFile({path:BDIR+"/"+name,directory:bLoc,encoding:"utf8"}).then(function(r){
+  fsRead(name).then(function(r){
     var o=JSON.parse(r.data); if(!o||o.app!=="telecom-acc"||!Array.isArray(o.data)||!Array.isArray(o.inv)) throw 0;
     if(!confirm("استبدال بياناتك الحالية بنسخة "+name.slice(11,27).replace("_"," ")+"؟ ستُحفظ لقطة من وضعك الحالي أولاً.")) return;
-    return snapNow(true).then(function(){ data=o.data; inv=o.inv; rep=Array.isArray(o.rep)?o.rep:[]; tomb=o.tomb||{}; fresh(); save(); render(); listSnaps(); bmsg("تمت الاستعادة ✓"); });
+    return snapNow(true).then(function(){ data=o.data; inv=o.inv; rep=Array.isArray(o.rep)?o.rep:[]; tomb=o.tomb||{}; fresh(); save(); render(); listSnaps(); bmsg("تمت الاستعادة بنجاح ✓"); });
   }).catch(function(){ bmsg("تعذّرت قراءة هذه النسخة."); });
 }
 function schTick(){ var n=nextDue(); if(n!==null&&Date.now()>=n) snapNow(false).then(listSnaps); else schPaint(); }
@@ -866,7 +845,7 @@ function saveSched(){ try{ localStorage.setItem(SK,JSON.stringify(sched)); }catc
 if(FS){
   $("schMode").onchange=function(){ sched.mode=this.value; saveSched(); };
   $("schTime").onchange=function(){ sched.time=this.value||"23:00"; saveSched(); };
-  $("schNow").onclick=function(){ snapNow(true).then(function(ok){ bmsg(ok?"تم حفظ لقطة ✓":"تعذّر الحفظ."); listSnaps(); }); };
+  $("schNow").onclick=function(){ snapNow(true).then(function(ok){ bmsg(ok?"تم حفظ لقطة بنجاح في " + locName() + " ✓":"تعذّر الحفظ."); listSnaps(); }); };
   setInterval(schTick,60000);
   document.addEventListener("visibilitychange",function(){ if(!document.hidden) schTick(); });
   schPaint(); listSnaps(); schTick();
@@ -1146,113 +1125,6 @@ $("wkRecOk").onclick=function(){
   });
 };
 wkApply();
-
-/* ===== الحفظ التلقائي المستمر (File System Access & IndexedDB) ===== */
-var autoFileHandle = null;
-var IDB_NAME = "telecom_db", IDB_STORE = "handles";
-
-function openIdb(){
-  return new Promise(function(resolve, reject){
-    var req = indexedDB.open(IDB_NAME, 1);
-    req.onupgradeneeded = function(e){
-      var db = e.target.result;
-      if(!db.objectStoreNames.contains(IDB_STORE)){
-        db.createObjectStore(IDB_STORE);
-      }
-    };
-    req.onsuccess = function(e){ resolve(e.target.result); };
-    req.onerror = function(e){ reject(e); };
-  });
-}
-
-function saveHandleToIdb(handle){
-  return openIdb().then(function(db){
-    return new Promise(function(resolve, reject){
-      var tx = db.transaction(IDB_STORE, "readwrite");
-      tx.objectStore(IDB_STORE).put(handle, "auto_backup_file");
-      tx.oncomplete = function(){ resolve(); };
-      tx.onerror = function(e){ reject(e); };
-    });
-  });
-}
-
-function getHandleFromIdb(){
-  return openIdb().then(function(db){
-    return new Promise(function(resolve, reject){
-      var tx = db.transaction(IDB_STORE, "readonly");
-      var req = tx.objectStore(IDB_STORE).get("auto_backup_file");
-      req.onsuccess = function(){ resolve(req.result); };
-      req.onerror = function(e){ reject(e); };
-    });
-  }).catch(function(){ return null; });
-}
-
-async function verifyPermission(fileHandle, readWrite) {
-  var options = {};
-  if (readWrite) options.mode = 'readwrite';
-  try {
-    if ((await fileHandle.queryPermission(options)) === 'granted') return true;
-    if ((await fileHandle.requestPermission(options)) === 'granted') return true;
-  } catch(e){}
-  return false;
-}
-
-var webAutoTimer = null;
-async function writeToAutoFile(){
-  if(!autoFileHandle) return;
-  try {
-    var hasPerm = await verifyPermission(autoFileHandle, true);
-    if(!hasPerm) return;
-    var writable = await autoFileHandle.createWritable();
-    await writable.write(pack());
-    await writable.close();
-    markBackup();
-    var timeStr = new Date().toTimeString().slice(0, 5);
-    $("autoFileStat").innerHTML = '🟢 <b>الحفظ التلقائي مفعّل:</b> تم تحديث الملف بنجاح (' + timeStr + ') تلقائياً.';
-    $("autoFileStat").style.color = "var(--ok)";
-  } catch(e) {
-    console.error("Auto write failed:", e);
-  }
-}
-
-function triggerAutoSave(){
-  clearTimeout(webAutoTimer);
-  webAutoTimer = setTimeout(function(){
-    if(autoFileHandle) writeToAutoFile();
-    if(typeof autoBackup === "function" && FS) autoBackup();
-  }, 1200);
-}
-
-// Initial check for stored handle
-getHandleFromIdb().then(function(h){
-  if(h){
-    autoFileHandle = h;
-    $("autoFileStat").innerHTML = '🟢 <b>الحفظ التلقائي مفعّل:</b> مرتبط بملف (' + esc(h.name) + ') ويتم التحديث بعد كل حركة.';
-    $("autoFileStat").style.color = "var(--ok)";
-    $("btnLinkAutoFile").textContent = "📁 تغيير ملف الحفظ التلقائي";
-  }
-});
-
-$("btnLinkAutoFile").onclick = async function(){
-  if(window.showSaveFilePicker){
-    try {
-      var handle = await window.showSaveFilePicker({
-        suggestedName: "telecom-auto-backup.json",
-        types: [{ description: 'ملف نسخة احتياطية (JSON)', accept: {'application/json': ['.json']} }]
-      });
-      autoFileHandle = handle;
-      await saveHandleToIdb(handle);
-      await writeToAutoFile();
-      $("autoFileStat").innerHTML = '🟢 <b>الحفظ التلقائي مفعّل:</b> تم ربط الملف بنجاح (' + esc(handle.name) + ').';
-      $("autoFileStat").style.color = "var(--ok)";
-      $("btnLinkAutoFile").textContent = "📁 تغيير ملف الحفظ التلقائي";
-    } catch(e){
-      if(e && e.name !== 'AbortError') alert("تعذّر تحديد الملف: " + e.message);
-    }
-  } else {
-    alert("ملاحظة: ميزة الكتابة التلقائية المستمرة في ملف بالذاكرة مدعومة على متصفحات الكمبيوتر وتطبيقات أندرويد (Capacitor/APK).\nفي المتصفح العادي على الهاتف، يتم حفظ كافة العمليات بأمان داخل ذاكرة المتصفح الدائمة (Persistent Storage)، ويمكنك تنزيل نسخة للملف في أي وقت عبر زر «حفظ ملف نسخة احتياطية».");
-  }
-};
 
 </script>
 </body>
