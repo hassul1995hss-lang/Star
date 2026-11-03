@@ -43,13 +43,16 @@ th{color:var(--mut);font-weight:600}
 h2{font-size:15px;margin:0 0 8px}
 .qb{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:8px;width:32px;height:32px;font-size:18px;cursor:pointer}
 .low{color:var(--bad)}.ctl{display:flex;align-items:center;gap:6px}.hint{color:var(--mut);font-size:12px;margin:8px 0 0}
-#navTabs button{padding:10px 2px;font-size:13px}
+#navTabs button{padding:10px 1px;font-size:12px}
 .add.sec{background:var(--bg);color:var(--text);border:1px solid var(--line)}.add.dng{background:var(--bad)}
+body.ro #addBtn,body.ro #iAdd{opacity:.45}
 </style>
 </head>
 <body>
 <h1>📱 محاسبة محل الاتصالات</h1>
-<div class="tabs" id="navTabs"><button id="nS" class="on">🧾 المبيعات</button><button id="nI">📦 المخزون</button><button id="nR">📊 الجرد</button><button id="nB">💾 النسخ</button></div>
+<div class="card" style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><b id="licStat" style="font-size:13px"></b><button class="qb" id="licOpen" style="width:auto;padding:0 12px;font-size:13px">🔑 التفعيل</button></div>
+<div class="card" id="rsBar" style="display:none;border-color:var(--ok)"><p id="rsTxt" style="margin:0 0 8px"></p><button class="add" id="rsBtn" style="margin-top:0">استعادة النسخة التلقائية</button></div>
+<div class="tabs" id="navTabs"><button id="nS" class="on">🧾 المبيعات</button><button id="nI">📦 المخزون</button><button id="nM">🔧 الصيانة</button><button id="nR">📊 الجرد</button><button id="nB">💾 النسخ</button></div>
 <div id="vSales">
 
 <div class="card"><label style="margin-top:0">التاريخ</label><input type="date" id="day"></div>
@@ -133,11 +136,59 @@ h2{font-size:15px;margin:0 0 8px}
 </div>
 </div>
 
+<div id="vMnt" style="display:none">
+<div class="grid" style="margin-bottom:12px">
+  <div class="stat"><small>قيد العمل</small><b id="mWork">0</b></div>
+  <div class="stat"><small>جاهزة للتسليم</small><b id="mReady" class="ok">0</b></div>
+  <div class="stat net"><small>مستحق عند تسليم الأجهزة الجاهزة</small><b id="mDue">0</b></div>
+</div>
+<div class="card">
+  <button class="add" id="mNew" style="margin-top:0">+ استلام جهاز جديد</button>
+  <div id="mForm" style="display:none">
+    <label>اسم العميل</label><input id="mName">
+    <label>رقم الهاتف</label><input id="mPhone" type="tel" inputmode="tel">
+    <label>الجهاز (الموديل)</label><input id="mDev" placeholder="مثال: Samsung A12">
+    <label>IMEI / الرقم التسلسلي (اختياري)</label><input id="mImei">
+    <label>وصف العطل</label><textarea id="mIssue" rows="2"></textarea>
+    <label>ملحقات مستلمة (اختياري)</label><input id="mAcc" placeholder="شريحة، غطاء، شاحن...">
+    <div class="row" style="grid-template-columns:1fr 1fr"><div><label>السعر المتفق عليه</label><input id="mPrice" type="number" inputmode="decimal" min="0"></div><div><label>العربون المدفوع</label><input id="mDep" type="number" inputmode="decimal" min="0"></div></div>
+    <button class="add" id="mSave">استلام الجهاز</button>
+    <button class="add sec" id="mCancel">إلغاء</button>
+    <p class="hint">العربون لا يدخل في المبيعات اليومية، وإنما يُحتسب مع السعر النهائي في يوم التسليم.</p>
+  </div>
+</div>
+<div class="card">
+  <div class="row" style="grid-template-columns:1fr 1fr"><select id="mFilter"><option value="act">النشطة</option><option value="all">الكل</option><option value="received">مستلم</option><option value="working">قيد الإصلاح</option><option value="ready">جاهز للتسليم</option><option value="delivered">مُسلَّم</option><option value="unrep">غير قابل للإصلاح</option></select><input id="mSearch" placeholder="بحث: اسم، هاتف، جهاز"></div>
+  <p class="hint" id="mMsg" style="font-size:14px"></p>
+  <div id="mList"></div>
+</div>
+</div>
+<div id="mDlg" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.5);z-index:50;align-items:center;justify-content:center;padding:16px">
+  <div class="card" style="width:100%;max-width:420px;margin:0">
+    <h2 id="mDT"></h2>
+    <label>السعر النهائي (شامل العربون)</label><input id="mFP" type="number" inputmode="decimal" min="0">
+    <label>تكلفة القطع المستخدمة</label><input id="mPC" type="number" inputmode="decimal" min="0">
+    <p class="hint" id="mDS"></p>
+    <div class="row" style="grid-template-columns:1fr 1fr"><button class="add" id="mDOk" style="margin-top:6px">تأكيد التسليم</button><button class="add sec" id="mDNo" style="margin-top:6px">إلغاء</button></div>
+  </div>
+</div>
+
+<div id="vLic" style="display:none">
+<div class="card"><h2>🔑 حالة الاشتراك</h2><div id="licInfo"></div></div>
+<div class="card"><h2>تفعيل بكود</h2>
+  <textarea id="licIn" rows="4" placeholder="الصق كود التفعيل هنا" style="direction:ltr;font-size:12px"></textarea>
+  <button class="add" id="licGo">تفعيل</button>
+  <p class="hint" id="licMsg" style="font-size:14px"></p><p class="hint" id="licContact"></p>
+</div>
+<button class="add sec" id="licBack">رجوع</button>
+</div>
+
 <div id="vBak" style="display:none">
 <p id="bkMsg" class="hint" style="font-size:14px;margin:0 0 10px"></p>
 <div class="card"><h2>💾 نسخة احتياطية</h2>
   <p class="hint" style="margin-top:0">بياناتك محفوظة على هذا الجهاز فقط. احفظ نسخة بشكل دوري حتى لا تضيع عند مسح بيانات المتصفح.</p>
   <p id="bkLast" style="margin:8px 0"></p>
+  <p class="hint" id="autoInfo" style="margin-top:0"></p>
   <button class="add" id="bkSave">💾 حفظ ملف نسخة احتياطية</button>
   <button class="add sec" id="bkTxt">📋 نسخ البيانات كنص</button>
   <textarea id="bkOut" rows="4" readonly style="display:none;margin-top:10px;direction:ltr;font-size:12px"></textarea>
@@ -166,7 +217,9 @@ var KEY="telecom_acc_v1", data=[], mode="sale";
 var INV="telecom_inv_v1", inv=[];
 try{ data=JSON.parse(localStorage.getItem(KEY)||"[]"); }catch(e){ data=[]; }
 try{ inv=JSON.parse(localStorage.getItem(INV)||"[]"); }catch(e){ inv=[]; }
-function save(){ stamp(); try{ localStorage.setItem(KEY,JSON.stringify(data)); localStorage.setItem(INV,JSON.stringify(inv)); localStorage.setItem(TOMB,JSON.stringify(tomb)); }catch(e){} }
+var REPK="telecom_rep_v1", rep=[], MS={received:"مستلم",working:"قيد الإصلاح",ready:"جاهز للتسليم",delivered:"مُسلَّم",unrep:"غير قابل للإصلاح"};
+try{ rep=JSON.parse(localStorage.getItem(REPK)||"[]"); }catch(e){ rep=[]; }
+function save(){ stamp(); try{ localStorage.setItem(KEY,JSON.stringify(data)); localStorage.setItem(INV,JSON.stringify(inv)); localStorage.setItem(TOMB,JSON.stringify(tomb)); localStorage.setItem(REPK,JSON.stringify(rep)); }catch(e){} }
 function today(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function fmt(n){ return Number(n||0).toLocaleString("en-US",{maximumFractionDigits:2}); }
 function $(id){ return document.getElementById(id); }
@@ -246,8 +299,8 @@ function render(){
 }
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]}); }
 /* ===== المخزون ===== */
-function setView(v){ [["s","vSales","nS"],["i","vInv","nI"],["r","vRep","nR"],["b","vBak","nB"]].forEach(function(a){ $(a[1]).style.display=v===a[0]?"":"none"; $(a[2]).className=v===a[0]?"on":""; }); }
-$("nS").onclick=function(){setView("s")}; $("nI").onclick=function(){setView("i")}; $("nR").onclick=function(){setView("r")}; $("nB").onclick=function(){setView("b")};
+function setView(v){ [["s","vSales","nS"],["i","vInv","nI"],["m","vMnt","nM"],["r","vRep","nR"],["b","vBak","nB"]].forEach(function(a){ $(a[1]).style.display=v===a[0]?"":"none"; $(a[2]).className=v===a[0]?"on":""; }); }
+$("nS").onclick=function(){setView("s")}; $("nI").onclick=function(){setView("i")}; $("nM").onclick=function(){setView("m")}; $("nR").onclick=function(){setView("r")}; $("nB").onclick=function(){setView("b")};
 $("icat").innerHTML=$("cat").innerHTML;
 $("iAdd").onclick=function(){
   var n=$("iname").value.trim(), q=parseInt($("iqty").value), w=parseFloat($("iwhole").value), r=parseFloat($("iretail").value);
@@ -346,7 +399,7 @@ function fresh(){ inv.forEach(function(i){ snap[i.id]=inv1(i); }); }
 function stamp(){ inv.forEach(function(i){ var j=inv1(i); if(snap[i.id]!==j){ snap[i.id]=j; i.upd=Date.now(); } }); }
 fresh();
 function bmsg(t){ $("bkMsg").textContent=t; }
-function pack(){ return JSON.stringify({app:"telecom-acc",v:1,exported:new Date().toISOString(),data:data,inv:inv,tomb:tomb}); }
+function pack(){ return JSON.stringify({app:"telecom-acc",v:1,exported:new Date().toISOString(),data:data,inv:inv,rep:rep,tomb:tomb}); }
 function bkInfo(){
   var t=null; try{ t=localStorage.getItem(LB); }catch(e){}
   var el=$("bkLast");
@@ -357,6 +410,7 @@ function bkInfo(){
 function markBackup(){ try{ localStorage.setItem(LB,new Date().toISOString()); }catch(e){} bkInfo(); }
 bkInfo();
 $("bkSave").onclick=function(){
+  if(FS){ autoBackup().then(function(ok){ bmsg(ok?"تم حفظ النسخة في "+locName()+" ✓":"تعذّر الحفظ في ذاكرة الهاتف."); }); return; }
   try{
     var b=new Blob([pack()],{type:"application/json"}), u=URL.createObjectURL(b), a=document.createElement("a");
     a.href=u; a.download="telecom-backup-"+today()+".json"; document.body.appendChild(a); a.click(); a.remove();
@@ -375,7 +429,7 @@ $("impFile").onchange=function(){
   var r=new FileReader(); r.onload=function(){ $("bkIn").value=r.result; bmsg("تم تحميل الملف. اختر دمج أو استبدال."); }; r.readAsText(f);
 };
 function readIn(){
-  try{ var o=JSON.parse($("bkIn").value.trim()); if(!o||o.app!=="telecom-acc"||!Array.isArray(o.data)||!Array.isArray(o.inv)) throw 0; o.tomb=o.tomb||{}; return o; }
+  try{ var o=JSON.parse($("bkIn").value.trim()); if(!o||o.app!=="telecom-acc"||!Array.isArray(o.data)||!Array.isArray(o.inv)) throw 0; o.tomb=o.tomb||{}; o.rep=Array.isArray(o.rep)?o.rep:[]; return o; }
   catch(e){ bmsg("النص أو الملف غير صالح. تأكد أنه نسخة من هذا البرنامج."); return null; }
 }
 $("impMerge").onclick=function(){
@@ -393,32 +447,213 @@ $("impMerge").onclick=function(){
     else if((i.upd||0)>(l.upd||0)){ Object.keys(l).forEach(function(k){ delete l[k]; }); Object.keys(i).forEach(function(k){ l[k]=i[k]; }); upd++; }
   });
   inv=inv.filter(function(i){ return !tomb[i.id]; });
+  var rm={}; rep.forEach(function(t){ rm[t.id]=t; });
+  o.rep.forEach(function(t){ if(tomb[t.id]) return; var l=rm[t.id]; if(!l) rep.push(t); else if((t.upd||0)>(l.upd||0)){ Object.keys(l).forEach(function(k){ delete l[k]; }); Object.keys(t).forEach(function(k){ l[k]=t[k]; }); } });
+  rep=rep.filter(function(t){ return !tomb[t.id]; });
   fresh(); save(); render();
   bmsg("تمت المزامنة ✓ أُضيفت "+add+" عملية و"+addi+" صنف جديد، وحُدّث "+upd+" صنف.");
 };
 $("impRep").onclick=function(){
   var o=readIn(); if(!o) return;
   if(!confirm("سيتم حذف كل بياناتك الحالية على هذا الجهاز واستبدالها بالنسخة ("+o.data.length+" عملية، "+o.inv.length+" صنف). إن لم تحفظ نسخة من بياناتك الحالية فالغِ واحفظها أولاً. متأكد؟")) return;
-  data=o.data; inv=o.inv; tomb=o.tomb; fresh(); save(); render(); bmsg("تم استبدال البيانات ✓");
+  data=o.data; inv=o.inv; rep=o.rep; tomb=o.tomb; fresh(); save(); render(); bmsg("تم استبدال البيانات ✓");
 };
 /* ===== ضبط المصنع ===== */
 $("rstBtn").onclick=function(){ $("rstBox").style.display=""; $("rstBtn").style.display="none"; $("rstMsg").textContent=""; };
 $("rstNo").onclick=function(){ $("rstBox").style.display="none"; $("rstBtn").style.display=""; };
 $("rstYes").onclick=function(){
-  [KEY,INV,TOMB,LB].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
-  data=[]; inv=[]; tomb={}; snap={};
+  [KEY,INV,TOMB,LB,REPK].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+  data=[]; inv=[]; rep=[]; tomb={}; snap={};
   ["name","price","cost","amt","inote","iname","iwhole","iretail","bkIn","bkOut"].forEach(function(i){ $(i).value=""; });
   $("qty").value=1; $("iqty").value=1; $("bkOut").style.display="none"; $("stockSel").value="";
   $("day").value=today(); $("rday").value=today();
   setMode("sale"); setView("s"); bkInfo(); bmsg("");
   $("rstBox").style.display="none"; $("rstBtn").style.display=""; render();
-  $("rstMsg").textContent="تم مسح كل البيانات والعودة للبداية ✓";
+  $("rstMsg").textContent="تم مسح كل البيانات والعودة للبداية ✓"; if(typeof autoBackup==="function") autoBackup();
 };
-var _r=render; render=function(){ _r(); renderInv(); renderRep(); };
+var _r=render; render=function(){ _r(); renderInv(); renderRep(); renderMnt(); };
 $("day").onchange=render;
 render();
 try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
-if("serviceWorker" in navigator){ window.addEventListener("load",function(){ navigator.serviceWorker.register("sw.js").catch(function(){}); }); }
+/* ===== حفظ تلقائي في ذاكرة الهاتف (أندرويد) ===== */
+var CAP=window.Capacitor, FS=(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform())?CAP.Plugins.Filesystem:null, BDIR="TelecomBackup", bLoc="DOCUMENTS", bTimer=null, pOK=false;
+function locName(){ return bLoc==="DOCUMENTS"?"Documents/TelecomBackup":"مجلد بيانات التطبيق (Android/data)"; }
+function autoTxt(ok){ $("autoInfo").textContent=ok?"آخر حفظ تلقائي: "+new Date().toTimeString().slice(0,5)+" — "+locName():"تعذّر الحفظ التلقائي في ذاكرة الهاتف."; }
+function askPerm(){ if(pOK||!FS.requestPermissions) return Promise.resolve(); pOK=true; return FS.requestPermissions().catch(function(){}); }
+function fsWrite(name,text){
+  var o={path:BDIR+"/"+name,data:text,directory:bLoc,encoding:"utf8",recursive:true};
+  return FS.writeFile(o).catch(function(){ if(bLoc==="EXTERNAL") throw 0; bLoc="EXTERNAL"; o.directory=bLoc; return FS.writeFile(o); });
+}
+function pruneBackups(){
+  FS.readdir({path:BDIR,directory:bLoc}).then(function(r){
+    var n=(r.files||[]).map(function(f){ return f.name||f; }).filter(function(x){ return /^telecom-backup-\d{4}-\d{2}-\d{2}\.json$/.test(x); }).sort();
+    n.slice(0,Math.max(0,n.length-14)).forEach(function(x){ FS.deleteFile({path:BDIR+"/"+x,directory:bLoc}).catch(function(){}); });
+  }).catch(function(){});
+}
+function autoBackup(){
+  if(!FS) return Promise.resolve(false);
+  var t=pack();
+  return askPerm().then(function(){ return fsWrite("telecom-backup-latest.json",t); })
+    .then(function(){ return fsWrite("telecom-backup-"+today()+".json",t); })
+    .then(function(){ markBackup(); autoTxt(true); pruneBackups(); return true; })
+    .catch(function(){ autoTxt(false); return false; });
+}
+if(FS){
+  $("autoInfo").textContent="الحفظ التلقائي مفعّل: تُحفظ نسخة في ذاكرة الهاتف بعد كل تعديل (يحتفظ بآخر 14 يوماً).";
+  var _s=save; save=function(){ _s(); clearTimeout(bTimer); bTimer=setTimeout(autoBackup,1500); };
+  if(!data.length&&!inv.length){
+    var rd=function(loc){ return FS.readFile({path:BDIR+"/telecom-backup-latest.json",directory:loc,encoding:"utf8"}); };
+    rd("DOCUMENTS").catch(function(){ return rd("EXTERNAL"); }).then(function(r){
+      var o=JSON.parse(r.data);
+      if(o&&o.app==="telecom-acc"&&((o.data||[]).length||(o.inv||[]).length)){
+        window._rs=o; $("rsBar").style.display=""; $("rsTxt").textContent="وُجدت نسخة تلقائية بتاريخ "+String(o.exported).slice(0,10)+" ("+o.data.length+" عملية، "+o.inv.length+" صنف).";
+      }
+    }).catch(function(){});
+  }
+} else { $("autoInfo").style.display="none"; }
+$("rsBtn").onclick=function(){ var o=window._rs; if(!o) return; data=o.data; inv=o.inv; rep=o.rep||[]; tomb=o.tomb||{}; fresh(); save(); render(); $("rsBar").style.display="none"; bmsg("تمت الاستعادة ✓"); };
+/* ===== الصيانة ===== */
+var mEdit=null, mDelId=null;
+function mNum(v){ var n=parseFloat(v); return isNaN(n)?0:n; }
+function mFormShow(on){ $("mForm").style.display=on?"":"none"; $("mNew").style.display=on?"none":""; }
+function mClear(){ ["mName","mPhone","mDev","mImei","mIssue","mAcc","mPrice","mDep"].forEach(function(i){ $(i).value=""; }); mEdit=null; $("mSave").textContent="استلام الجهاز"; }
+function mFind(id){ return rep.filter(function(x){ return x.id===id; })[0]; }
+function repAdd(){
+  var name=$("mName").value.trim(), dev=$("mDev").value.trim();
+  if(!name){ $("mName").focus(); return; } if(!dev){ $("mDev").focus(); return; }
+  var f={name:name,phone:$("mPhone").value.trim(),dev:dev,imei:$("mImei").value.trim(),issue:$("mIssue").value.trim(),acc:$("mAcc").value.trim(),price:mNum($("mPrice").value),dep:mNum($("mDep").value)};
+  if(mEdit){ var t=mFind(mEdit); if(t){ Object.keys(f).forEach(function(k){ t[k]=f[k]; }); t.upd=Date.now(); } }
+  else { var no=rep.reduce(function(m,x){ return Math.max(m,x.no||0); },0)+1; var n={id:Date.now(),no:no,date:today(),status:"received",upd:Date.now()}; Object.keys(f).forEach(function(k){ n[k]=f[k]; }); rep.push(n); }
+  save(); mClear(); mFormShow(false); render();
+}
+function repEdit(id){
+  var t=mFind(id); if(!t) return; mEdit=id;
+  $("mName").value=t.name; $("mPhone").value=t.phone||""; $("mDev").value=t.dev; $("mImei").value=t.imei||""; $("mIssue").value=t.issue||""; $("mAcc").value=t.acc||""; $("mPrice").value=t.price||""; $("mDep").value=t.dep||"";
+  $("mSave").textContent="حفظ التعديل"; mFormShow(true);
+  try{ $("mForm").scrollIntoView(); }catch(e){}
+}
+function undeliver(t){ if(t.sale){ data=data.filter(function(e){ return e.id!==t.sale; }); tomb[t.sale]=Date.now(); t.sale=null; } t.delivered=null; t.fprice=null; t.pcost=null; }
+function repStatus(id,st){
+  var t=mFind(id); if(!t||t.status===st){ render(); return; }
+  if(st==="delivered"){ mDelId=id; $("mDT").textContent="تسليم: "+t.dev; $("mFP").value=t.price||""; $("mPC").value=t.pcost||""; dlgHint(); $("mDlg").style.display="flex"; return; }
+  if(t.status==="delivered") undeliver(t);
+  t.status=st; t.upd=Date.now(); save(); render();
+}
+function dlgHint(){ var t=mFind(mDelId); if(!t) return; $("mDS").textContent="العربون المدفوع: "+fmt(t.dep)+" — يُقبض الآن: "+fmt(mNum($("mFP").value)-t.dep); }
+function repDeliver(){
+  var t=mFind(mDelId); if(!t) return;
+  var fp=parseFloat($("mFP").value); if(isNaN(fp)){ $("mFP").focus(); return; }
+  var pc=mNum($("mPC").value);
+  var e={id:Date.now(),date:today(),type:"sale",name:"صيانة: "+t.dev,cat:"صيانة",price:fp,cost:pc,qty:1,sid:null,tk:0,rid:t.id};
+  data.push(e); t.sale=e.id; t.fprice=fp; t.pcost=pc; t.delivered=today(); t.status="delivered"; t.upd=Date.now();
+  $("mDlg").style.display="none"; mDelId=null; save(); render();
+}
+function repDel(id){
+  if(!confirm("حذف هذا الطلب؟ (قيد البيع المسجّل عند التسليم يبقى في المبيعات)")) return;
+  rep=rep.filter(function(x){ return x.id!==id; }); tomb[id]=Date.now(); save(); render();
+}
+function receipt(t){ return "إيصال استلام جهاز #"+t.no+"\nالتاريخ: "+t.date+"\nالعميل: "+t.name+(t.phone?" ("+t.phone+")":"")+"\nالجهاز: "+t.dev+(t.imei?"\nIMEI: "+t.imei:"")+"\nالعطل: "+(t.issue||"-")+(t.acc?"\nالملحقات: "+t.acc:"")+"\nالسعر المتفق عليه: "+fmt(t.price)+"\nالعربون: "+fmt(t.dep)+"\nالمتبقي: "+fmt(t.price-t.dep); }
+function copyReceipt(t){
+  var x=receipt(t), done=function(){ $("mMsg").textContent="تم نسخ إيصال الطلب #"+t.no+" ✓ الصقه في رسالة للعميل."; };
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(x).then(done,function(){ window.prompt("انسخ الإيصال:",x); }); return; } }catch(e){}
+  window.prompt("انسخ الإيصال:",x);
+}
+function renderMnt(){
+  var w=0,r=0,due=0;
+  rep.forEach(function(t){ if(t.status==="received"||t.status==="working") w++; if(t.status==="ready"){ r++; due+=t.price-t.dep; } });
+  $("mWork").textContent=w; $("mReady").textContent=r; $("mDue").textContent=fmt(due);
+  var f=$("mFilter").value, q=String($("mSearch").value||"").trim().toLowerCase();
+  var L=rep.filter(function(t){
+    if(f==="act"&&!(t.status==="received"||t.status==="working"||t.status==="ready")) return false;
+    if(f!=="all"&&f!=="act"&&t.status!==f) return false;
+    if(q&&(t.name+" "+(t.phone||"")+" "+t.dev+" "+(t.imei||"")+" #"+t.no).toLowerCase().indexOf(q)<0) return false;
+    return true;
+  }).sort(function(a,b){ return b.id-a.id; });
+  var C=$("mList"); C.innerHTML=L.length?"":'<div class="empty">لا توجد طلبات</div>';
+  L.forEach(function(t){
+    var d=document.createElement("div"); d.className="item"; d.style.display="block";
+    var opts=Object.keys(MS).map(function(k){ return '<option value="'+k+'"'+(k===t.status?" selected":"")+'>'+MS[k]+'</option>'; }).join("");
+    var fin=t.status==="delivered";
+    d.innerHTML='<div style="display:flex;justify-content:space-between;gap:8px"><b>#'+t.no+' · '+esc(t.dev)+'</b><span class="'+(t.status==="ready"?"ok":(t.status==="unrep"?"bad":""))+'">'+MS[t.status]+'</span></div>'
+      +'<small>'+esc(t.name)+(t.phone?' · <a href="tel:'+esc(t.phone)+'" style="color:var(--pri)">'+esc(t.phone)+'</a>':'')+'</small>'
+      +(t.issue?'<small>العطل: '+esc(t.issue)+'</small>':'')+(t.acc?'<small>ملحقات: '+esc(t.acc)+'</small>':'')
+      +'<small>استلام: '+t.date+(t.delivered?' · تسليم: '+t.delivered:'')+'</small>'
+      +'<small>'+(fin?'السعر النهائي '+fmt(t.fprice)+' · تكلفة القطع '+fmt(t.pcost)+' · ربح '+fmt(t.fprice-t.pcost):'السعر '+fmt(t.price)+' · عربون '+fmt(t.dep)+' · المتبقي '+fmt(t.price-t.dep))+'</small>'
+      +'<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center"><select class="ms" style="flex:1;min-width:130px">'+opts+'</select><button class="qb" data-a="e" style="width:auto;padding:0 10px;font-size:13px">تعديل</button><button class="qb" data-a="r" style="width:auto;padding:0 10px;font-size:13px">إيصال</button><button class="del" data-a="d" aria-label="حذف">✕</button></div>';
+    d.querySelector(".ms").onchange=function(){ repStatus(t.id,this.value); };
+    d.querySelector('[data-a="e"]').onclick=function(){ repEdit(t.id); };
+    d.querySelector('[data-a="r"]').onclick=function(){ copyReceipt(t); };
+    d.querySelector('[data-a="d"]').onclick=function(){ repDel(t.id); };
+    C.appendChild(d);
+  });
+}
+$("mNew").onclick=function(){ mClear(); mFormShow(true); $("mName").focus(); };
+$("mCancel").onclick=function(){ mClear(); mFormShow(false); };
+$("mSave").onclick=function(){ repAdd(); };
+$("mFilter").onchange=renderMnt; $("mSearch").oninput=renderMnt;
+$("mFP").oninput=dlgHint;
+$("mDNo").onclick=function(){ $("mDlg").style.display="none"; mDelId=null; render(); };
+$("mDOk").onclick=function(){ repDeliver(); };
+renderMnt();
+/* LIC-CORE-START */
+var PUB="BNfsuFLirvpU54j7zmvF88IO1Ycspx2tWl1miIn/HS50G9/mcEyyFqsw9gg7MHb3AW7UzwK7xxsZrcTA9AOWp4Q=", TRIAL=14, CONTACT="للحصول على كود التفعيل تواصل مع البائع.";
+function b64u2b(s){ s=String(s).replace(/-/g,"+").replace(/_/g,"/"); while(s.length%4) s+="="; var b=atob(s), r=new Uint8Array(b.length); for(var i=0;i<b.length;i++) r[i]=b.charCodeAt(i); return r; }
+function dd(a,b){ var A=a.split("-"), B=b.split("-"); return Math.round((new Date(+B[0],B[1]-1,+B[2])-new Date(+A[0],A[1]-1,+A[2]))/864e5); }
+function verifyCode(code){
+  code=String(code||"").replace(/\s+/g,"");
+  var p=code.split("."); if(p.length!==2) return Promise.reject("format");
+  if(!(window.crypto&&crypto.subtle)) return Promise.reject("nocrypto");
+  var payload=b64u2b(p[0]), sig=b64u2b(p[1]);
+  return crypto.subtle.importKey("raw",b64u2b(PUB),{name:"ECDSA",namedCurve:"P-256"},false,["verify"])
+    .then(function(k){ return crypto.subtle.verify({name:"ECDSA",hash:"SHA-256"},k,sig,payload); })
+    .then(function(ok){
+      if(!ok) throw "sig";
+      var t=new TextDecoder().decode(payload).split("|");
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(t[1]||"")) throw "fmt";
+      return {name:t[0],exp:t[1]};
+    });
+}
+/* LIC-CORE-END */
+/* ===== نظام التفعيل والاشتراك ===== */
+var LK="telecom_license", TS="telecom_trial_start", LS="telecom_lastseen", LIC={mode:"trial",locked:false,left:TRIAL,name:"",exp:""};
+function eff(){ var t=today(), l=null; try{ l=localStorage.getItem(LS); }catch(e){} var e=(l&&l>t)?l:t; try{ localStorage.setItem(LS,e); }catch(x){} return e; }
+function trialStart(){ var s=null; try{ s=localStorage.getItem(TS); }catch(e){} if(!s){ s=eff(); try{ localStorage.setItem(TS,s); }catch(e){} } return s; }
+function row(a,b){ return '<div class="item"><small style="display:inline">'+a+'</small><b>'+b+'</b></div>'; }
+function licPaint(){
+  var s=$("licStat"), i=$("licInfo"), L=Math.max(0,LIC.left);
+  document.body.className=LIC.locked?"ro":"";
+  if(LIC.mode==="trial"){
+    s.textContent=LIC.locked?"انتهت الفترة التجريبية — عرض فقط":"فترة تجريبية: باقي "+L+" يوم"; s.className=LIC.locked?"bad":(L<=3?"low":"");
+    i.innerHTML=row("الحالة",LIC.locked?"انتهت الفترة التجريبية":"فترة تجريبية")+row("المتبقي",L+" يوم");
+  } else {
+    s.textContent=LIC.locked?"انتهى الاشتراك — عرض فقط":"اشتراك فعّال — باقي "+L+" يوم"; s.className=LIC.locked?"bad":(L<=7?"low":"ok");
+    i.innerHTML=row("الحالة",LIC.locked?"منتهي":"فعّال")+row("العميل",esc(LIC.name))+row("ينتهي في",LIC.exp)+row("المتبقي",L+" يوم");
+  }
+  $("licContact").textContent=CONTACT;
+}
+function trialState(){ var left=TRIAL-dd(trialStart(),eff()); LIC={mode:"trial",locked:left<=0,left:left,name:"",exp:""}; licPaint(); }
+function licRefresh(){
+  var code=null; try{ code=localStorage.getItem(LK); }catch(e){}
+  if(!code){ trialState(); return Promise.resolve(); }
+  return verifyCode(code).then(function(r){
+    var left=dd(eff(),r.exp); LIC={mode:"lic",locked:left<0,left:left,name:r.name,exp:r.exp}; licPaint();
+  }).catch(function(){ try{ localStorage.removeItem(LK); }catch(e){} trialState(); });
+}
+trialState(); licRefresh();
+function guard(){ if(!LIC.locked) return false; setView("l"); $("licMsg").textContent="انتهى الاشتراك: التطبيق في وضع العرض فقط. أدخل كود تفعيل جديد."; return true; }
+var _sv=setView; setView=function(v){ _sv(v); $("vLic").style.display=v==="l"?"":"none"; };
+$("licOpen").onclick=function(){ setView("l"); }; $("licBack").onclick=function(){ setView("s"); };
+$("licGo").onclick=function(){
+  var c=$("licIn").value.replace(/\s+/g,""); if(!c) return;
+  verifyCode(c).then(function(r){
+    if(dd(eff(),r.exp)<0){ $("licMsg").textContent="هذا الكود منتهي الصلاحية."; return; }
+    try{ localStorage.setItem(LK,c); }catch(e){}
+    $("licIn").value="";
+    return licRefresh().then(function(){ $("licMsg").textContent="تم التفعيل ✓ مرحباً "+r.name; });
+  }).catch(function(e){ $("licMsg").textContent=e==="nocrypto"?"هذا المتصفح لا يدعم التحقق من الكود.":"الكود غير صحيح. تأكد من نسخه كاملاً."; });
+};
+["addBtn","iAdd","impMerge","impRep","rstYes","rsBtn"].forEach(function(id){ var f=$(id).onclick; $(id).onclick=function(ev){ if(guard()) return; return f.call(this,ev); }; });
+["del","stk","delItem","repAdd","repStatus","repDeliver","repDel"].forEach(function(n){ var f=window[n]; window[n]=function(){ if(guard()) return; return f.apply(this,arguments); }; });
 </script>
 </body>
 </html>
