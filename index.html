@@ -63,7 +63,7 @@ input[type=checkbox]{width:auto;padding:0;margin:0}
 </head>
 <body>
 <h1>📱 محاسبة محل الاتصالات</h1>
-<div class="card" id="licBar" style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><b id="licStat" style="font-size:13px"></b><span style="display:flex;gap:6px"><button class="qb" id="wkOpen" style="width:auto;padding:0 12px;font-size:13px">🔒 العامل</button><button class="qb" id="licOpen" style="width:auto;padding:0 12px;font-size:13px">🔑 التفعيل</button></span></div>
+<div class="card" id="licBar" style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:13px;color:var(--ok)">✓ مفعل مدى الحياة</b><button class="qb" id="wkOpen" style="width:auto;padding:0 12px;font-size:13px">🔒 وضع العامل</button></div>
 <div class="card" id="wkBar" style="display:none;padding:8px 12px;border-color:var(--bad);justify-content:space-between;align-items:center;gap:8px"><b id="wkTxt" style="font-size:13px">🔒 وضع العامل مفعّل</b><button class="qb" id="wkExit" style="width:auto;padding:0 12px;font-size:13px">🔓 فك التقييد</button></div>
 <div class="card" id="rsBar" style="display:none;border-color:var(--ok)"><p id="rsTxt" style="margin:0 0 8px"></p><button class="add" id="rsBtn" style="margin-top:0">استعادة النسخة التلقائية</button></div>
 <div class="tabs" id="navTabs"><button id="nS" class="on">🧾 المبيعات</button><button id="nI">📦 المخزون</button><button id="nM">🔧 الصيانة</button><button id="nR">📊 الجرد</button><button id="nB">💾 النسخ</button></div>
@@ -242,16 +242,6 @@ input[type=checkbox]{width:auto;padding:0;margin:0}
       <button class="add sec" id="wkRecOk">استرجاع</button>
     </details>
   </div>
-</div>
-
-<div id="vLic" style="display:none">
-<div class="card"><h2>🔑 حالة الاشتراك</h2><div id="licInfo"></div></div>
-<div class="card"><h2>تفعيل بكود</h2>
-  <textarea id="licIn" rows="4" placeholder="الصق كود التفعيل هنا" style="direction:ltr;font-size:12px"></textarea>
-  <button class="add" id="licGo">تفعيل</button>
-  <p class="hint" id="licMsg" style="font-size:14px"></p><p class="hint" id="licContact"></p>
-</div>
-<button class="add sec" id="licBack">رجوع</button>
 </div>
 
 <div id="vBak" style="display:none">
@@ -978,65 +968,6 @@ $("mFP").oninput=dlgHint;
 $("mDNo").onclick=function(){ $("mDlg").style.display="none"; mDelId=null; render(); };
 $("mDOk").onclick=function(){ repDeliver(); };
 renderMnt();
-/* LIC-CORE-START */
-var PUB="BHxKZZjgNiz7AJ/YuF/Hd0Qvk+1IEaYUipTZ+/rJ6P/epu4sJPbQ4C5MV1ArwVe9nuCDBTMVT3VlPC1ZU8Xe1lI=", TRIAL=14, CONTACT="للحصول على كود التفعيل تواصل مع البائع.";
-function b64u2b(s){ s=String(s).replace(/-/g,"+").replace(/_/g,"/"); while(s.length%4) s+="="; var b=atob(s), r=new Uint8Array(b.length); for(var i=0;i<b.length;i++) r[i]=b.charCodeAt(i); return r; }
-function dd(a,b){ var A=a.split("-"), B=b.split("-"); return Math.round((new Date(+B[0],B[1]-1,+B[2])-new Date(+A[0],A[1]-1,+A[2]))/864e5); }
-function verifyCode(code){
-  code=String(code||"").replace(/\s+/g,"");
-  var p=code.split("."); if(p.length!==2) return Promise.reject("format");
-  if(!(window.crypto&&crypto.subtle)) return Promise.reject("nocrypto");
-  var payload=b64u2b(p[0]), sig=b64u2b(p[1]);
-  return crypto.subtle.importKey("raw",b64u2b(PUB),{name:"ECDSA",namedCurve:"P-256"},false,["verify"])
-    .then(function(k){ return crypto.subtle.verify({name:"ECDSA",hash:"SHA-256"},k,sig,payload); })
-    .then(function(ok){
-      if(!ok) throw "sig";
-      var t=new TextDecoder().decode(payload).split("|");
-      if(!/^\d{4}-\d{2}-\d{2}$/.test(t[1]||"")) throw "fmt";
-      return {name:t[0],exp:t[1]};
-    });
-}
-/* LIC-CORE-END */
-/* ===== نظام التفعيل والاشتراك ===== */
-var LK="telecom_license", TS="telecom_trial_start", LS="telecom_lastseen", LIC={mode:"trial",locked:false,left:TRIAL,name:"",exp:""};
-function eff(){ var t=today(), l=null; try{ l=localStorage.getItem(LS); }catch(e){} var e=(l&&l>t)?l:t; try{ localStorage.setItem(LS,e); }catch(x){} return e; }
-function trialStart(){ var s=null; try{ s=localStorage.getItem(TS); }catch(e){} if(!s){ s=eff(); try{ localStorage.setItem(TS,s); }catch(e){} } return s; }
-function row(a,b){ return '<div class="item"><small style="display:inline">'+a+'</small><b>'+b+'</b></div>'; }
-function licPaint(){
-  var s=$("licStat"), i=$("licInfo"), L=Math.max(0,LIC.left);
-  document.body.classList.toggle("ro",!!LIC.locked);
-  if(LIC.mode==="trial"){
-    s.textContent=LIC.locked?"انتهت الفترة التجريبية — عرض فقط":"فترة تجريبية: باقي "+L+" يوم"; s.className=LIC.locked?"bad":(L<=3?"low":"");
-    i.innerHTML=row("الحالة",LIC.locked?"انتهت الفترة التجريبية":"فترة تجريبية")+row("المتبقي",L+" يوم");
-  } else {
-    s.textContent=LIC.locked?"انتهى الاشتراك — عرض فقط":"اشتراك فعّال — باقي "+L+" يوم"; s.className=LIC.locked?"bad":(L<=7?"low":"ok");
-    i.innerHTML=row("الحالة",LIC.locked?"منتهي":"فعّال")+row("العميل",esc(LIC.name))+row("ينتهي في",LIC.exp)+row("المتبقي",L+" يوم");
-  }
-  $("licContact").textContent=CONTACT;
-}
-function trialState(){ var left=TRIAL-dd(trialStart(),eff()); LIC={mode:"trial",locked:left<=0,left:left,name:"",exp:""}; licPaint(); }
-function licRefresh(){
-  var code=null; try{ code=localStorage.getItem(LK); }catch(e){}
-  if(!code){ trialState(); return Promise.resolve(); }
-  return verifyCode(code).then(function(r){
-    var left=dd(eff(),r.exp); LIC={mode:"lic",locked:left<0,left:left,name:r.name,exp:r.exp}; licPaint();
-  }).catch(function(){ try{ localStorage.removeItem(LK); }catch(e){} trialState(); });
-}
-trialState(); licRefresh();
-function guard(){ if(!LIC.locked) return false; setView("l"); $("licMsg").textContent="انتهى الاشتراك: التطبيق في وضع العرض فقط. أدخل كود تفعيل جديد."; return true; }
-var _sv=setView; setView=function(v){ _sv(v); $("vLic").style.display=v==="l"?"":"none"; };
-$("licOpen").onclick=function(){ setView("l"); }; $("licBack").onclick=function(){ setView("s"); };
-$("licGo").onclick=function(){
-  var c=$("licIn").value.replace(/\s+/g,""); if(!c) return;
-  verifyCode(c).then(function(r){
-    if(dd(eff(),r.exp)<0){ $("licMsg").textContent="هذا الكود منتهي الصلاحية."; return; }
-    try{ localStorage.setItem(LK,c); }catch(e){}
-    $("licIn").value="";
-    return licRefresh().then(function(){ $("licMsg").textContent="تم التفعيل ✓ مرحباً "+r.name; });
-  }).catch(function(e){ $("licMsg").textContent=e==="nocrypto"?"هذا المتصفح لا يدعم التحقق من الكود.":"الكود غير صحيح. تأكد من نسخه كاملاً."; });
-};
-["addBtn","iAdd","impMerge","impRep","rstYes","rsBtn"].forEach(function(id){ var f=$(id).onclick; $(id).onclick=function(ev){ if(guard()) return; return f.call(this,ev); }; });
-["del","stk","delItem","repAdd","repStatus","repDeliver","repDel","restoreSnap"].forEach(function(n){ var f=window[n]; window[n]=function(){ if(guard()) return; return f.apply(this,arguments); }; });
 /* ===== وضع العامل ===== */
 var WKDEF={ret:false,exp:false,del:false,stk:false,prf:false,rep:false}, wkFail=0, wkUntil=0;
 try{ wkUntil=parseInt(localStorage.getItem("telecom_wk_until"))||0; }catch(e){}
@@ -1076,7 +1007,7 @@ function wkPaint(){
 /* view routing + permission wrappers */
 var _sv2=setView;
 setView=function(v){
-  if(WK.on){ var P=WK.perms||{}; if(v==="b"||v==="l"||v==="w"||(v==="r"&&!P.rep)) v="s"; }
+  if(WK.on){ var P=WK.perms||{}; if(v==="b"||v==="w"||(v==="r"&&!P.rep)) v="s"; }
   _sv2(v); $("vWk").style.display=v==="w"?"":"none"; if(v==="w") wkPaint();
 };
 var WKB={del:"del",repDel:"del",stk:"stk",delItem:"stk",restoreSnap:"x"};
