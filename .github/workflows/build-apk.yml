@@ -1,0 +1,71 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Accept Android Licenses
+        run: |
+          yes | sdkmanager --licenses || true
+
+      - name: Build Web Assets & Initialize App
+        run: |
+          mkdir -p www
+          # نسخ ملفات الموقع لداخل مجلد www النظيف
+          cp index.html www/
+          cp -r manifest.webmanifest www/ 2>/dev/null || true
+          cp -r *.png www/ 2>/dev/null || true
+          
+          # تثبيت Capacitor وبناء مشروع أندرويد
+          npm init -y
+          npm install @capacitor/core@latest @capacitor/cli@latest @capacitor/android@latest
+          npx cap init "Star Phone" "com.app.starphone" --web-dir "www"
+          npx cap add android
+
+      - name: Inject Android Permissions & Queries
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          if [ -f "$MANIFEST" ]; then
+            # إضافة صلاحيات التخزين والإنترنت قبل وسم الإغلاق
+            sed -i '/<\/manifest>/i \    <uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />\n    <queries>\n        <package android:name="com.whatsapp" />\n        <intent>\n            <action android:name="android.intent.action.VIEW" />\n            <data android:scheme="https" />\n        </intent>\n    </queries>' "$MANIFEST"
+          fi
+
+      - name: Sync Capacitor
+        run: |
+          npx cap sync android
+
+      - name: Build Debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: StarPhone-Debug-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          
