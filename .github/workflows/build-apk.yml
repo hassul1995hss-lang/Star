@@ -24,7 +24,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Prepare Web Directory & Capacitor v6
+      - name: Prepare Web Directory & Capacitor with Plugins
         run: |
           mkdir -p www
           cp index.html www/
@@ -32,10 +32,45 @@ jobs:
           cp -f *.png www/ 2>/dev/null || true
           
           npm init -y
-          # تثبيت الإصدار 6 المستقر لتفادي أخطاء التبعيات الحديثة
-          npm install @capacitor/core@^6.0.0 @capacitor/cli@^6.0.0 @capacitor/android@^6.0.0
+          npm install @capacitor/core@^6.0.0 @capacitor/cli@^6.0.0 @capacitor/android@^6.0.0 @capacitor/filesystem@^6.0.0 @capacitor/app@^6.0.0
           npx cap init "Star Phone" "com.app.starphone" --web-dir "www"
+          
+          python3 -c '
+          import json
+          with open("capacitor.config.json", "r") as f:
+              cfg = json.load(f)
+          cfg["server"] = {
+              "allowNavigation": ["*.whatsapp.com", "wa.me"]
+          }
+          with open("capacitor.config.json", "w") as f:
+              json.dump(cfg, f, indent=2)
+          '
+          
           npx cap add android
+
+      - name: Apply Custom App Icon
+        run: |
+          # العثور على ملف الأيقونة ونسخه مكان أيقونات أندرويد الافتراضية
+          ICON_SRC=""
+          if [ -f "icon-only.png" ]; then
+            ICON_SRC="icon-only.png"
+          elif [ -f "icon-192.png" ]; then
+            ICON_SRC="icon-192.png"
+          elif [ -f "icon.png" ]; then
+            ICON_SRC="icon.png"
+          fi
+
+          if [ -n "$ICON_SRC" ]; then
+            echo "Applying custom icon: $ICON_SRC"
+            RES_DIR="android/app/src/main/res"
+            for d in "$RES_DIR"/mipmap-*; do
+              if [ -d "$d" ]; then
+                cp -f "$ICON_SRC" "$d/ic_launcher.png"
+                cp -f "$ICON_SRC" "$d/ic_launcher_round.png"
+                cp -f "$ICON_SRC" "$d/ic_launcher_foreground.png"
+              fi
+            done
+          fi
 
       - name: Inject Permissions & WhatsApp Queries
         run: |
@@ -50,6 +85,10 @@ jobs:
                   <intent>
                       <action android:name="android.intent.action.VIEW" />
                       <data android:scheme="https" />
+                  </intent>
+                  <intent>
+                      <action android:name="android.intent.action.VIEW" />
+                      <data android:scheme="whatsapp" />
                   </intent>
               </queries>
           </manifest>"""
