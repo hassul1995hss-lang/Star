@@ -426,7 +426,7 @@ function render(){
 }
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]}); }
 
-/* WhatsApp Helper: formats number and opens chat safely */
+/* WhatsApp Helper: formats number and opens chat safely across Android APK, WebView, and Browsers */
 function openWhatsApp(phone, devName, custName){
   var p = String(phone||"").replace(/\D/g, "");
   if(!p) return;
@@ -438,33 +438,53 @@ function openWhatsApp(phone, devName, custName){
   var text = "مرحباً " + (custName || "") + "، بخصوص جهازك " + (devName || "") + " في مركز الصيانة:";
   var encText = encodeURIComponent(text);
   
-  // 1. رابط Android Intent المباشر (يفتح تطبيق واتساب المثبت مباشرة في أندرويد دون الدخول لصفحة ويب)
+  var waCustomScheme = "whatsapp://send?phone=" + p + "&text=" + encText;
   var intentUrl = "intent://send?phone=" + p + "&text=" + encText + "#Intent;package=com.whatsapp;scheme=whatsapp;end";
-  
-  // 2. رابط واتساب الرسمي
   var waWebUrl = "https://api.whatsapp.com/send?phone=" + p + "&text=" + encText;
-  
+  var waMeUrl = "https://wa.me/" + p + "?text=" + encText;
+
+  // 1. إذا كان التطبيق يعمل داخل Capacitor وله وصول لمكتبة App أو AppLauncher
   try {
-    // محاولة فتح التطبيق عبر نظام أندرويد الخارجي
-    if(window.open && navigator.userAgent.toLowerCase().indexOf("android") > -1){
-      // إنشاء عنصر رابط خارجي لضمان تعامل الـ WebView معه كطلب خارجي
-      var a = document.createElement("a");
-      a.href = intentUrl;
-      a.setAttribute("target", "_blank");
-      a.setAttribute("rel", "noopener noreferrer");
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      return;
+    if(window.Capacitor && window.Capacitor.Plugins){
+      if(window.Capacitor.Plugins.AppLauncher && window.Capacitor.Plugins.AppLauncher.openUrl){
+        window.Capacitor.Plugins.AppLauncher.openUrl({ url: waCustomScheme });
+        return;
+      }
+      if(window.Capacitor.Plugins.App && window.Capacitor.Plugins.App.openUrl){
+        window.Capacitor.Plugins.App.openUrl({ url: waCustomScheme });
+        return;
+      }
     }
+  } catch(err){}
+
+  // 2. تشغيل عبر Intent أو البروتوكول المباشر في أندرويد
+  try {
+    var a = document.createElement("a");
+    a.href = intentUrl;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   } catch(e){}
 
-  // في حال المتصفح العادي أو الكمبيوتر
-  try {
-    window.open(waWebUrl, "_blank");
-  } catch(e) {
-    location.href = waWebUrl;
-  }
+  // 3. التوجيه المباشر عبر whatsapp:// ثم wa.me كاحتياط فوري
+  setTimeout(function(){
+    try {
+      window.location.href = waCustomScheme;
+    } catch(e){
+      window.open(waMeUrl, "_system");
+    }
+  }, 150);
+
+  // 4. فتح في المتصفح الخارجي للنظام كحل أخير إذا لم يستجب التطبيق
+  setTimeout(function(){
+    try {
+      window.open(waWebUrl, "_system");
+    } catch(e){
+      window.open(waWebUrl, "_blank");
+    }
+  }, 600);
 }
 
 /* ===== المخزون ===== */
