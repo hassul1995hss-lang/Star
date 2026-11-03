@@ -46,11 +46,21 @@ h2{font-size:15px;margin:0 0 8px}
 #navTabs button{padding:10px 1px;font-size:12px}
 .add.sec{background:var(--bg);color:var(--text);border:1px solid var(--line)}.add.dng{background:var(--bad)}
 body.ro #addBtn,body.ro #iAdd{opacity:.45}
+.wk #licBar,.wk #nB{display:none!important}
+.wk:not(.wk-prf) .prf{display:none!important}
+.wk:not(.wk-rep) #nR{display:none!important}
+.wk:not(.wk-ret) #tRet{display:none!important}
+.wk:not(.wk-exp) #tExp{display:none!important}
+.wk:not(.wk-del) #list .del,.wk:not(.wk-del) #mList .del{display:none!important}
+.wk:not(.wk-stk) #iList .qb,.wk:not(.wk-stk) #iList .del,.wk:not(.wk-stk) #iAddCard{display:none!important}
+input[type=checkbox]{width:auto;padding:0;margin:0}
+.chk{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text);margin:10px 0}
 </style>
 </head>
 <body>
 <h1>📱 محاسبة محل الاتصالات</h1>
-<div class="card" style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><b id="licStat" style="font-size:13px"></b><button class="qb" id="licOpen" style="width:auto;padding:0 12px;font-size:13px">🔑 التفعيل</button></div>
+<div class="card" id="licBar" style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><b id="licStat" style="font-size:13px"></b><span style="display:flex;gap:6px"><button class="qb" id="wkOpen" style="width:auto;padding:0 12px;font-size:13px">🔒 العامل</button><button class="qb" id="licOpen" style="width:auto;padding:0 12px;font-size:13px">🔑 التفعيل</button></span></div>
+<div class="card" id="wkBar" style="display:none;padding:8px 12px;border-color:var(--bad);justify-content:space-between;align-items:center;gap:8px"><b id="wkTxt" style="font-size:13px">🔒 وضع العامل مفعّل</b><button class="qb" id="wkExit" style="width:auto;padding:0 12px;font-size:13px">🔓 فك التقييد</button></div>
 <div class="card" id="rsBar" style="display:none;border-color:var(--ok)"><p id="rsTxt" style="margin:0 0 8px"></p><button class="add" id="rsBtn" style="margin-top:0">استعادة النسخة التلقائية</button></div>
 <div class="tabs" id="navTabs"><button id="nS" class="on">🧾 المبيعات</button><button id="nI">📦 المخزون</button><button id="nM">🔧 الصيانة</button><button id="nR">📊 الجرد</button><button id="nB">💾 النسخ</button></div>
 <div id="vSales">
@@ -59,12 +69,12 @@ body.ro #addBtn,body.ro #iAdd{opacity:.45}
 
 <div class="grid" style="margin-bottom:12px">
   <div class="stat"><small>المبيعات</small><b id="sSales">0</b></div>
-  <div class="stat"><small>تكلفة البضاعة</small><b id="sCost">0</b></div>
-  <div class="stat"><small>الربح الإجمالي</small><b id="sGross">0</b></div>
+  <div class="stat prf"><small>تكلفة البضاعة</small><b id="sCost">0</b></div>
+  <div class="stat prf"><small>الربح الإجمالي</small><b id="sGross">0</b></div>
   <div class="stat"><small>المصاريف</small><b id="sExp">0</b></div>
   <div class="stat"><small>المرتجعات (مبلغ مردود)</small><b id="sRet">0</b></div>
-  <div class="stat"><small>التالف (بالتكلفة)</small><b id="sDmg">0</b></div>
-  <div class="stat net"><small>صافي الربح اليوم</small><b id="sNet">0</b></div>
+  <div class="stat prf"><small>التالف (بالتكلفة)</small><b id="sDmg">0</b></div>
+  <div class="stat net prf"><small>صافي الربح اليوم</small><b id="sNet">0</b></div>
 </div>
 
 <div class="card">
@@ -75,7 +85,7 @@ body.ro #addBtn,body.ro #iAdd{opacity:.45}
   <div id="retWrap" style="display:none"><label>نوع المرتجع</label><select id="kind"><option value="back">مرتجع — يعود للمخزون</option><option value="dmg">تالف — لا يعود للمخزون</option></select><label>رقم الفاتورة / السبب (اختياري)</label><input id="inote"></div>
   <div class="row" id="saleRow">
     <div><label>سعر البيع</label><input id="price" type="number" inputmode="decimal" min="0"></div>
-    <div><label>سعر الشراء</label><input id="cost" type="number" inputmode="decimal" min="0"></div>
+    <div class="prf"><label>سعر الشراء</label><input id="cost" type="number" inputmode="decimal" min="0"></div>
     <div><label>الكمية</label><input id="qty" type="number" inputmode="numeric" min="1" value="1"></div>
   </div>
   <div id="expRow" style="display:none"><label>المبلغ</label><input id="amt" type="number" inputmode="decimal" min="0"></div>
@@ -84,18 +94,18 @@ body.ro #addBtn,body.ro #iAdd{opacity:.45}
 
 <div class="card"><h2>عمليات اليوم</h2><div id="list"></div></div>
 
-<div class="card"><h2>آخر 7 أيام</h2><div class="scroll"><table id="hist"></table></div></div>
+<div class="card prf"><h2>آخر 7 أيام</h2><div class="scroll"><table id="hist"></table></div></div>
 </div>
 
 <div id="vInv" style="display:none">
 <div class="grid" style="margin-bottom:12px">
-  <div class="stat net"><small>إجمالي رأس المال (سعر الجملة × الكمية)</small><b id="iCap">0</b></div>
-  <div class="stat"><small>قيمة البيع المتوقعة (مفرق)</small><b id="iVal">0</b></div>
-  <div class="stat"><small>الربح المتوقع</small><b id="iProf" class="ok">0</b></div>
+  <div class="stat net prf"><small>إجمالي رأس المال (سعر الجملة × الكمية)</small><b id="iCap">0</b></div>
+  <div class="stat prf"><small>قيمة البيع المتوقعة (مفرق)</small><b id="iVal">0</b></div>
+  <div class="stat prf"><small>الربح المتوقع</small><b id="iProf" class="ok">0</b></div>
   <div class="stat"><small>عدد القطع</small><b id="iCnt">0</b></div>
   <div class="stat"><small>عدد الأصناف</small><b id="iKinds">0</b></div>
 </div>
-<div class="card"><h2>إضافة قطع للمخزون</h2>
+<div class="card" id="iAddCard"><h2>إضافة قطع للمخزون</h2>
   <label style="margin-top:0">اسم القطعة</label><input id="iname" placeholder="مثال: شاحن سامسونج">
   <label>الفئة</label><select id="icat"></select>
   <div class="row">
@@ -107,7 +117,7 @@ body.ro #addBtn,body.ro #iAdd{opacity:.45}
   <p class="hint">إذا كانت القطعة موجودة بنفس الاسم والفئة، تُضاف الكمية وتتحدّث الأسعار.</p>
 </div>
 <div class="card"><h2>المخزون الحالي</h2><div id="iList"></div></div>
-<div class="card"><h2>🗑 التالف (خارج المخزون ورأس المال) <span id="dTot" class="bad"></span></h2><div id="dList"></div></div>
+<div class="card prf"><h2>🗑 التالف (خارج المخزون ورأس المال) <span id="dTot" class="bad"></span></h2><div id="dList"></div></div>
 </div>
 
 <div id="vRep" style="display:none">
@@ -173,6 +183,46 @@ body.ro #addBtn,body.ro #iAdd{opacity:.45}
   </div>
 </div>
 
+<div id="vWk" style="display:none">
+<div class="card"><h2>🔒 وضع العامل</h2>
+  <p class="hint" style="margin-top:0">عند التفعيل يبقى للعامل: تسجيل البيع، واستلام أجهزة الصيانة وتغيير حالتها وتسليمها. وتُخفى النسخ الاحتياطي والتفعيل وضبط المصنع دائماً، ولا يفك التقييد إلا كود المالك.</p>
+  <div id="wkNoPin">
+    <label>أنشئ كود المالك (4 خانات على الأقل)</label><input id="wkP1" type="password" inputmode="numeric" autocomplete="off">
+    <label>أعد كتابة الكود</label><input id="wkP2" type="password" inputmode="numeric" autocomplete="off">
+    <button class="add" id="wkSavePin">حفظ الكود</button>
+  </div>
+  <div id="wkHasPin" style="display:none">
+    <h2 style="margin-top:4px">صلاحيات إضافية للعامل (اختيارية)</h2>
+    <label class="chk"><input type="checkbox" id="pRet"> تسجيل المرتجعات والتالف</label>
+    <label class="chk"><input type="checkbox" id="pExp"> تسجيل المصاريف</label>
+    <label class="chk"><input type="checkbox" id="pDel"> حذف عمليات البيع وطلبات الصيانة</label>
+    <label class="chk"><input type="checkbox" id="pStk"> تعديل المخزون (إضافة وتعديل الكميات والحذف)</label>
+    <label class="chk"><input type="checkbox" id="pPrf"> رؤية الأرباح والتكلفة وسعر الجملة ورأس المال</label>
+    <label class="chk"><input type="checkbox" id="pRep"> فتح تبويب الجرد والتقارير</label>
+    <button class="add dng" id="wkOn">🔒 تفعيل وضع العامل الآن</button>
+    <details style="margin-top:12px"><summary style="cursor:pointer;font-size:14px">تغيير كود المالك</summary>
+      <label>الكود الحالي</label><input id="wkOldP" type="password" inputmode="numeric" autocomplete="off">
+      <label>الكود الجديد</label><input id="wkNewP" type="password" inputmode="numeric" autocomplete="off">
+      <button class="add sec" id="wkChg">تغيير الكود</button>
+    </details>
+  </div>
+  <p id="wkMsg" style="font-size:14px;margin:10px 0 0"></p>
+</div>
+<button class="add sec" id="wkBack">رجوع</button>
+</div>
+<div id="wkDlg" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.55);z-index:60;align-items:center;justify-content:center;padding:16px">
+  <div class="card" style="width:100%;max-width:380px;margin:0">
+    <h2>🔓 فك وضع العامل</h2>
+    <label style="margin-top:0">كود المالك</label><input id="wkIn" type="password" inputmode="numeric" autocomplete="off">
+    <p class="hint" id="wkDM" style="font-size:14px"></p>
+    <div class="row" style="grid-template-columns:1fr 1fr"><button class="add" id="wkOk" style="margin-top:6px">فك التقييد</button><button class="add sec" id="wkNo" style="margin-top:6px">إلغاء</button></div>
+    <details style="margin-top:12px"><summary style="cursor:pointer;font-size:14px">نسيت الكود؟</summary>
+      <label>رمز الاسترجاع</label><input id="wkRec" autocomplete="off" style="direction:ltr;text-transform:uppercase">
+      <button class="add sec" id="wkRecOk">استرجاع</button>
+    </details>
+  </div>
+</div>
+
 <div id="vLic" style="display:none">
 <div class="card"><h2>🔑 حالة الاشتراك</h2><div id="licInfo"></div></div>
 <div class="card"><h2>تفعيل بكود</h2>
@@ -228,6 +278,9 @@ try{ data=JSON.parse(localStorage.getItem(KEY)||"[]"); }catch(e){ data=[]; }
 try{ inv=JSON.parse(localStorage.getItem(INV)||"[]"); }catch(e){ inv=[]; }
 var REPK="telecom_rep_v1", rep=[], MS={received:"مستلم",working:"قيد الإصلاح",ready:"جاهز للتسليم",delivered:"مُسلَّم",unrep:"غير قابل للإصلاح"};
 try{ rep=JSON.parse(localStorage.getItem(REPK)||"[]"); }catch(e){ rep=[]; }
+var WKK="telecom_wk", WK={on:false,perms:{}};
+try{ var _w=JSON.parse(localStorage.getItem(WKK)||"null"); if(_w) WK=_w; }catch(e){}
+function wkHidePrf(){ return !!(WK.on&&!(WK.perms&&WK.perms.prf)); }
 function save(){ stamp(); try{ localStorage.setItem(KEY,JSON.stringify(data)); localStorage.setItem(INV,JSON.stringify(inv)); localStorage.setItem(TOMB,JSON.stringify(tomb)); localStorage.setItem(REPK,JSON.stringify(rep)); }catch(e){} }
 function today(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function fmt(n){ return Number(n||0).toLocaleString("en-US",{maximumFractionDigits:2}); }
@@ -291,7 +344,7 @@ function render(){
     var left=e.type==="ret"
       ? '<div><b>↩ '+esc(e.name)+'</b><small>'+(e.kind==="back"?"مرتجع — عاد للمخزون":"تالف — لم يعد للمخزون")+' · '+e.qty+' × '+fmt(e.price)+(e.note?' · '+esc(e.note):'')+'</small></div><b class="bad">-'+fmt(e.price*e.qty)+'</b>'
       : e.type==="sale"
-      ? '<div><b>'+esc(e.name)+'</b><small>'+esc(e.cat)+' · '+e.qty+' × '+fmt(e.price)+' · ربح '+fmt((e.price-e.cost)*e.qty)+'</small></div><b class="ok">'+fmt(e.price*e.qty)+'</b>'
+      ? '<div><b>'+esc(e.name)+'</b><small>'+esc(e.cat)+' · '+e.qty+' × '+fmt(e.price)+(wkHidePrf()?'':' · ربح '+fmt((e.price-e.cost)*e.qty))+'</small></div><b class="ok">'+fmt(e.price*e.qty)+'</b>'
       : '<div><b>'+esc(e.name)+'</b><small>مصروف</small></div><b class="bad">-'+fmt(e.amt)+'</b>';
     d.innerHTML=left+'<button class="del" aria-label="حذف">✕</button>';
     d.querySelector(".del").onclick=function(){del(e.id)};
@@ -334,7 +387,7 @@ function renderInv(){
   var L=$("iList"); L.innerHTML=inv.length?"":'<div class="empty">المخزون فارغ</div>';
   inv.slice().reverse().forEach(function(i){
     var d=document.createElement("div"); d.className="item";
-    d.innerHTML='<div><b>'+esc(i.name)+'</b><small>'+esc(i.cat)+' · جملة '+fmt(i.whole)+' · مفرق '+fmt(i.retail)+(i.dmg?' · تالف '+i.dmg:'')+'</small></div>'
+    d.innerHTML='<div><b>'+esc(i.name)+'</b><small>'+esc(i.cat)+(wkHidePrf()?'':' · جملة '+fmt(i.whole))+' · مفرق '+fmt(i.retail)+(i.dmg?' · تالف '+i.dmg:'')+'</small></div>'
       +'<div class="ctl"><button class="qb" data-d="-1">−</button><b class="'+(i.qty<=2?"low":"")+'">'+i.qty+'</b><button class="qb" data-d="1">+</button><button class="del" aria-label="حذف">✕</button></div>';
     d.querySelectorAll(".qb").forEach(function(b){ b.onclick=function(){ stk(i.id,parseInt(b.getAttribute("data-d"))); }; });
     d.querySelector(".del").onclick=function(){ delItem(i.id); };
@@ -654,7 +707,7 @@ function renderMnt(){
       +'<small>'+esc(t.name)+(t.phone?' · <a href="tel:'+esc(t.phone)+'" style="color:var(--pri)">'+esc(t.phone)+'</a>':'')+'</small>'
       +(t.issue?'<small>العطل: '+esc(t.issue)+'</small>':'')+(t.acc?'<small>ملحقات: '+esc(t.acc)+'</small>':'')
       +'<small>استلام: '+t.date+(t.delivered?' · تسليم: '+t.delivered:'')+'</small>'
-      +'<small>'+(fin?'السعر النهائي '+fmt(t.fprice)+' · تكلفة القطع '+fmt(t.pcost)+' · ربح '+fmt(t.fprice-t.pcost):'السعر '+fmt(t.price)+' · عربون '+fmt(t.dep)+' · المتبقي '+fmt(t.price-t.dep))+'</small>'
+      +'<small>'+(fin?'السعر النهائي '+fmt(t.fprice)+' · تكلفة القطع '+fmt(t.pcost)+(wkHidePrf()?'':' · ربح '+fmt(t.fprice-t.pcost)):'السعر '+fmt(t.price)+' · عربون '+fmt(t.dep)+' · المتبقي '+fmt(t.price-t.dep))+'</small>'
       +'<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center"><select class="ms" style="flex:1;min-width:130px">'+opts+'</select><button class="qb" data-a="e" style="width:auto;padding:0 10px;font-size:13px">تعديل</button><button class="qb" data-a="r" style="width:auto;padding:0 10px;font-size:13px">إيصال</button><button class="del" data-a="d" aria-label="حذف">✕</button></div>';
     d.querySelector(".ms").onchange=function(){ repStatus(t.id,this.value); };
     d.querySelector('[data-a="e"]').onclick=function(){ repEdit(t.id); };
@@ -697,7 +750,7 @@ function trialStart(){ var s=null; try{ s=localStorage.getItem(TS); }catch(e){} 
 function row(a,b){ return '<div class="item"><small style="display:inline">'+a+'</small><b>'+b+'</b></div>'; }
 function licPaint(){
   var s=$("licStat"), i=$("licInfo"), L=Math.max(0,LIC.left);
-  document.body.className=LIC.locked?"ro":"";
+  document.body.classList.toggle("ro",!!LIC.locked);
   if(LIC.mode==="trial"){
     s.textContent=LIC.locked?"انتهت الفترة التجريبية — عرض فقط":"فترة تجريبية: باقي "+L+" يوم"; s.className=LIC.locked?"bad":(L<=3?"low":"");
     i.innerHTML=row("الحالة",LIC.locked?"انتهت الفترة التجريبية":"فترة تجريبية")+row("المتبقي",L+" يوم");
@@ -730,6 +783,94 @@ $("licGo").onclick=function(){
 };
 ["addBtn","iAdd","impMerge","impRep","rstYes","rsBtn"].forEach(function(id){ var f=$(id).onclick; $(id).onclick=function(ev){ if(guard()) return; return f.call(this,ev); }; });
 ["del","stk","delItem","repAdd","repStatus","repDeliver","repDel","restoreSnap"].forEach(function(n){ var f=window[n]; window[n]=function(){ if(guard()) return; return f.apply(this,arguments); }; });
+/* ===== وضع العامل ===== */
+var WKDEF={ret:false,exp:false,del:false,stk:false,prf:false,rep:false}, wkFail=0, wkUntil=0;
+try{ wkUntil=parseInt(localStorage.getItem("telecom_wk_until"))||0; }catch(e){}
+function wkSave(){ try{ localStorage.setItem(WKK,JSON.stringify(WK)); }catch(e){} }
+function b2h(u){ return Array.prototype.map.call(new Uint8Array(u),function(x){ return ("0"+x.toString(16)).slice(-2); }).join(""); }
+function rnd(n){ var a=new Uint8Array(n); crypto.getRandomValues(a); return b2h(a); }
+function pbk(pin,saltHex){
+  var salt=new Uint8Array(saltHex.match(/../g).map(function(h){ return parseInt(h,16); }));
+  return crypto.subtle.importKey("raw",new TextEncoder().encode(String(pin)),"PBKDF2",false,["deriveBits"])
+    .then(function(k){ return crypto.subtle.deriveBits({name:"PBKDF2",salt:salt,iterations:50000,hash:"SHA-256"},k,256); }).then(b2h);
+}
+function wkSetPin(pin){
+  var s=rnd(16), rs=rnd(16), rc=rnd(4).toUpperCase();
+  return Promise.all([pbk(pin,s),pbk(rc,rs)]).then(function(h){
+    WK.salt=s; WK.hash=h[0]; WK.rsalt=rs; WK.rhash=h[1];
+    if(!WK.perms||!Object.keys(WK.perms).length) WK.perms=Object.assign({},WKDEF);
+    wkSave(); return rc;
+  });
+}
+function wkCheck(pin){ return pbk(pin,WK.salt).then(function(h){ return h===WK.hash; }); }
+function wkCheckRec(c){ return pbk(String(c).trim().toUpperCase(),WK.rsalt).then(function(h){ return h===WK.rhash; }); }
+function wkTxtReset(){ $("wkTxt").textContent="🔒 وضع العامل مفعّل"; }
+function wkDeny(){ $("wkTxt").textContent="🔒 هذه العملية لصاحب المحل فقط"; setTimeout(wkTxtReset,3000); }
+function wkApply(){
+  var on=!!WK.on, b=document.body.classList, P=WK.perms||{};
+  b.toggle("wk",on); ["ret","exp","del","stk","prf","rep"].forEach(function(k){ b.toggle("wk-"+k,on&&!!P[k]); });
+  $("wkBar").style.display=on?"flex":"none";
+  try{ $("rstBtn").parentNode.style.display=on?"none":""; }catch(e){}
+  if(on){ setMode("sale"); setView("s"); }
+  render();
+}
+function wkPaint(){
+  var has=!!WK.hash, P=WK.perms||{};
+  $("wkNoPin").style.display=has?"none":""; $("wkHasPin").style.display=has?"":"none";
+  [["pRet","ret"],["pExp","exp"],["pDel","del"],["pStk","stk"],["pPrf","prf"],["pRep","rep"]].forEach(function(a){ $(a[0]).checked=!!P[a[1]]; });
+}
+/* view routing + permission wrappers */
+var _sv2=setView;
+setView=function(v){
+  if(WK.on){ var P=WK.perms||{}; if(v==="b"||v==="l"||v==="w"||(v==="r"&&!P.rep)) v="s"; }
+  _sv2(v); $("vWk").style.display=v==="w"?"":"none"; if(v==="w") wkPaint();
+};
+var WKB={del:"del",repDel:"del",stk:"stk",delItem:"stk",restoreSnap:"x"};
+Object.keys(WKB).forEach(function(n){ var f=window[n], need=WKB[n]; if(typeof f!=="function") return;
+  window[n]=function(){ if(WK.on&&(need==="x"||!(WK.perms&&WK.perms[need]))){ wkDeny(); return; } return f.apply(this,arguments); }; });
+[["iAdd","stk"],["impMerge","x"],["impRep","x"],["rstYes","x"],["rsBtn","x"]].forEach(function(a){ var f=$(a[0]).onclick, need=a[1];
+  $(a[0]).onclick=function(ev){ if(WK.on&&(need==="x"||!(WK.perms&&WK.perms[need]))){ wkDeny(); return; } return f.call(this,ev); }; });
+var _ab=$("addBtn").onclick;
+$("addBtn").onclick=function(ev){ var P=WK.perms||{}; if(WK.on&&((mode==="ret"&&!P.ret)||(mode==="exp"&&!P.exp))){ wkDeny(); return; } return _ab.call(this,ev); };
+/* settings screen */
+$("wkOpen").onclick=function(){ setView("w"); };
+$("wkBack").onclick=function(){ setView("s"); };
+$("wkSavePin").onclick=function(){
+  var a=$("wkP1").value, b=$("wkP2").value, m=$("wkMsg");
+  if(!(window.crypto&&crypto.subtle)){ m.textContent="هذا المتصفح لا يدعم التشفير المطلوب."; return; }
+  if(a.length<4){ m.textContent="الكود يجب أن يكون 4 خانات على الأقل."; return; }
+  if(a!==b){ m.textContent="الكودان غير متطابقين."; return; }
+  wkSetPin(a).then(function(rc){ $("wkP1").value=""; $("wkP2").value=""; wkPaint(); m.textContent="تم حفظ الكود ✓ رمز الاسترجاع (يظهر مرة واحدة): "+rc+" — اكتبه واحتفظ به، تحتاجه إن نسيت الكود."; });
+};
+[["pRet","ret"],["pExp","exp"],["pDel","del"],["pStk","stk"],["pPrf","prf"],["pRep","rep"]].forEach(function(a){ $(a[0]).onchange=function(){ WK.perms=WK.perms||{}; WK.perms[a[1]]=this.checked; wkSave(); }; });
+$("wkOn").onclick=function(){ WK.on=true; wkSave(); $("wkMsg").textContent=""; wkApply(); };
+$("wkChg").onclick=function(){
+  var o=$("wkOldP").value, n=$("wkNewP").value, m=$("wkMsg");
+  if(n.length<4){ m.textContent="الكود الجديد يجب أن يكون 4 خانات على الأقل."; return; }
+  wkCheck(o).then(function(ok){ if(!ok){ m.textContent="الكود الحالي غير صحيح."; return; }
+    return wkSetPin(n).then(function(rc){ $("wkOldP").value=""; $("wkNewP").value=""; m.textContent="تم تغيير الكود ✓ رمز الاسترجاع الجديد: "+rc+" — احتفظ به."; }); });
+};
+/* unlock dialog */
+$("wkExit").onclick=function(){ $("wkIn").value=""; $("wkDM").textContent=""; $("wkDlg").style.display="flex"; };
+$("wkNo").onclick=function(){ $("wkDlg").style.display="none"; };
+$("wkOk").onclick=function(){
+  var left=Math.ceil((wkUntil-Date.now())/1000);
+  if(left>0){ $("wkDM").textContent="محاولات كثيرة خاطئة. انتظر "+left+" ثانية."; return; }
+  wkCheck($("wkIn").value).then(function(ok){
+    if(ok){ wkFail=0; WK.on=false; wkSave(); $("wkIn").value=""; $("wkDlg").style.display="none"; wkApply(); return; }
+    wkFail++;
+    if(wkFail>=5){ wkFail=0; wkUntil=Date.now()+60000; try{ localStorage.setItem("telecom_wk_until",String(wkUntil)); }catch(e){} $("wkDM").textContent="محاولات كثيرة خاطئة. انتظر دقيقة."; }
+    else $("wkDM").textContent="الكود غير صحيح.";
+  });
+};
+$("wkRecOk").onclick=function(){
+  wkCheckRec($("wkRec").value).then(function(ok){
+    if(!ok){ $("wkDM").textContent="رمز الاسترجاع غير صحيح."; return; }
+    WK.on=false; WK.salt=WK.hash=WK.rsalt=WK.rhash=null; wkSave(); $("wkRec").value=""; $("wkDlg").style.display="none"; wkApply(); setView("w");
+    $("wkMsg").textContent="تم فك التقييد. أنشئ كود مالك جديداً.";
+  });
+};
+wkApply();
 </script>
 </body>
 </html>
