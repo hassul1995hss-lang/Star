@@ -48,9 +48,8 @@ jobs:
           
           npx cap add android
 
-      - name: Apply Custom App Icon
+      - name: Apply Custom App Icon Safely
         run: |
-          # العثور على ملف الأيقونة ونسخه مكان أيقونات أندرويد الافتراضية
           ICON_SRC=""
           if [ -f "icon-only.png" ]; then
             ICON_SRC="icon-only.png"
@@ -63,6 +62,11 @@ jobs:
           if [ -n "$ICON_SRC" ]; then
             echo "Applying custom icon: $ICON_SRC"
             RES_DIR="android/app/src/main/res"
+            
+            # إزالة تعريفات الـ XML لمنع خطأ Duplicate resources
+            rm -rf "$RES_DIR"/mipmap-anydpi-v26
+            
+            # نسخ الصورة لجميع مقاسات mipmap العادية
             for d in "$RES_DIR"/mipmap-*; do
               if [ -d "$d" ]; then
                 cp -f "$ICON_SRC" "$d/ic_launcher.png"
