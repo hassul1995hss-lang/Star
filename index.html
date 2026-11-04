@@ -60,6 +60,12 @@ input[type=checkbox]{width:auto;padding:0;margin:0}
 .wa-link{display:inline-flex;align-items:center;gap:4px;color:#25d366;font-weight:600;text-decoration:none;padding:2px 6px;border-radius:6px;background:rgba(37,211,102,0.1)}
 .wa-link:hover{background:rgba(37,211,102,0.2)}
 
+/* ميزات مخصصة لشاشات الكمبيوتر فقط (مثل نظام الباركود) */
+.desk-only { display: none !important; }
+body.is-desktop .desk-only { display: block !important; }
+body.is-desktop div.desk-only.row { display: grid !important; }
+body.is-desktop div.desk-only.flex { display: flex !important; }
+
 /* ===== تحسينات التوافق مع شاشات الكمبيوتر والأجهزة اللوحية (Desktop & Tablet) ===== */
 @media (min-width: 768px) {
   body {
@@ -157,6 +163,14 @@ input[type=checkbox]{width:auto;padding:0;margin:0}
 
 <div class="card">
   <div class="tabs"><button id="tSale" class="on">+ عملية بيع</button><button id="tExp">+ مصروف</button><button id="tRet">↩ مرتجع</button></div>
+  <!-- خاص بنسخة ويندوز / الكمبيوتر: مسح الباركود -->
+  <div class="desk-only" style="background:rgba(29,111,224,0.06);border:1px dashed var(--pri);border-radius:10px;padding:10px;margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <label style="margin:0;font-weight:bold;color:var(--pri)">🔍 مسح باركود المنتج (Barcode Scanner)</label>
+      <small id="barStatus" style="font-weight:600;font-size:12px;color:var(--ok)"></small>
+    </div>
+    <input id="saleBarcode" placeholder="اضغط هنا أو مرر الماسح الضوئي (قارئ الباركود)..." autocomplete="off" style="margin-top:6px;background:var(--card)">
+  </div>
   <label>الاسم / الوصف</label><input id="name" placeholder="مثال: شريحة، شاحن، شحن رصيد">
   <div id="catWrap">
     <div style="display:flex;justify-content:space-between;align-items:center">
@@ -208,6 +222,11 @@ input[type=checkbox]{width:auto;padding:0;margin:0}
     <div><label>سعر الجملة</label><input id="iwhole" type="number" inputmode="decimal" min="0"></div>
     <div><label>سعر المفرق</label><input id="iretail" type="number" inputmode="decimal" min="0"></div>
   </div>
+  <div class="desk-only" style="margin-top:8px">
+    <label style="margin-top:0">رمز الباركود (امسحه بالماسح أو اكتبه يدوياً)</label>
+    <input id="ibarcode" placeholder="مثال: 628100123456" autocomplete="off">
+  </div>
+
   <button class="add" id="iAdd">إضافة للمخزون</button>
   <p class="hint">إذا كانت القطعة موجودة بنفس الاسم والفئة، تُضاف الكمية وتتحدّث الأسعار.</p>
 </div>
@@ -607,9 +626,9 @@ $("iAdd").onclick=function(){
   if(isNaN(q)||q<0){ $("iqty").focus(); return; }
   if(isNaN(w)){ $("iwhole").focus(); return; }
   if(isNaN(r)){ $("iretail").focus(); return; }
-  var c=$("icat").value, ex=inv.filter(function(i){return i.name===n&&i.cat===c})[0];
-  if(ex){ ex.qty+=q; ex.whole=w; ex.retail=r; } else inv.push({id:Date.now(),name:n,cat:c,qty:q,whole:w,retail:r});
-  save(); ["iname","iwhole","iretail"].forEach(function(i){$(i).value=""}); $("iqty").value=1; render(); updateStockDisplay();
+  var c=$("icat").value, bc=($("ibarcode")?$("ibarcode").value.trim():""), ex=inv.filter(function(i){return (bc&&i.barcode===bc)||(i.name===n&&i.cat===c)})[0];
+  if(ex){ ex.qty+=q; ex.whole=w; ex.retail=r; if(bc) ex.barcode=bc; } else inv.push({id:Date.now(),name:n,cat:c,qty:q,whole:w,retail:r,barcode:bc});
+  save(); ["iname","iwhole","iretail","ibarcode"].forEach(function(i){var el=$(i);if(el)el.value=""}); $("iqty").value=1; render(); updateStockDisplay();
 };
 function stk(id,d){ var it=inv.filter(function(i){return i.id===id})[0]; if(!it) return; it.qty=Math.max(0,it.qty+d); save(); render(); updateStockDisplay(); }
 function delItem(id){ if(!confirm("حذف هذه القطعة من المخزون؟")) return; inv=inv.filter(function(i){return i.id!==id}); tomb[id]=Date.now(); save(); render(); updateStockDisplay(); }
@@ -627,7 +646,8 @@ function renderInv(){
   var L=$("iList"); L.innerHTML=inv.length?"":'<div class="empty">المخزون فارغ</div>';
   inv.slice().reverse().forEach(function(i){
     var d=document.createElement("div"); d.className="item";
-    d.innerHTML='<div><b>'+esc(i.name)+'</b><small>'+esc(i.cat)+(wkHidePrf()?'':' · جملة '+fmt(i.whole))+' · مفرق '+fmt(i.retail)+(i.dmg?' · تالف '+i.dmg:'')+'</small></div>'
+    var bcTag = i.barcode ? ' <span style="background:rgba(29,111,224,0.12);color:var(--pri);padding:1px 6px;border-radius:4px;font-size:11px;font-family:monospace">#'+esc(i.barcode)+'</span>' : '';
+    d.innerHTML='<div><b>'+esc(i.name)+bcTag+'</b><small>'+esc(i.cat)+(wkHidePrf()?'':' · جملة '+fmt(i.whole))+' · مفرق '+fmt(i.retail)+(i.dmg?' · تالف '+i.dmg:'')+'</small></div>'
       +'<div class="ctl"><button class="qb" data-d="-1">−</button><b class="'+(i.qty<=2?"low":"")+'">'+i.qty+'</b><button class="qb" data-d="1">+</button><button class="del" aria-label="حذف">✕</button></div>';
     d.querySelectorAll(".qb").forEach(function(b){ b.onclick=function(){ stk(i.id,parseInt(b.getAttribute("data-d"))); }; });
     d.querySelector(".del").onclick=function(){ delItem(i.id); };
@@ -1265,6 +1285,61 @@ function applyLang(lang){
 if($("btnLangAr")) $("btnLangAr").onclick = function(){ applyLang("ar"); };
 if($("btnLangEn")) $("btnLangEn").onclick = function(){ applyLang("en"); };
 applyLang(currentLang);
+
+
+/* ===== نظام الباركود الحصري لنسخة ويندوز / سطح المكتب ===== */
+(function initDesktopBarcode(){
+  var isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  // إذا لم يكن تطبيق أندرويد APK، فهو نظام ويندوز / سطح المكتب
+  if(!isNativeApp){
+    document.body.classList.add("is-desktop");
+  }
+
+  var barInput = $("saleBarcode");
+  if(!barInput) return;
+
+  function handleBarcode(code){
+    code = String(code||"").trim();
+    if(!code) return;
+    
+    // البحث في المخزون عن القطعة المطابقة للباركود
+    var match = inv.filter(function(i){ return i.barcode && String(i.barcode).trim() === code; })[0];
+    var statusEl = $("barStatus");
+    
+    if(match){
+      // تحديد الصنف وتعبئة بيانات الفاتورة فوراً
+      $("stockSel").value = String(match.id);
+      $("name").value = match.name;
+      $("price").value = match.retail;
+      $("cost").value = match.whole;
+      $("cat").value = match.cat;
+      updateStockDisplay();
+      
+      if(statusEl){
+        statusEl.textContent = "✓ تم العثور: " + match.name + " (" + fmt(match.retail) + ")";
+        statusEl.style.color = "var(--ok)";
+      }
+      
+      // توجيه التركيز إلى زر الإضافة أو الكمية
+      $("qty").focus();
+      $("qty").select();
+    } else {
+      if(statusEl){
+        statusEl.textContent = "✕ هذا الباركود غير مسجل بالمخزون (" + code + ")";
+        statusEl.style.color = "var(--bad)";
+      }
+    }
+  }
+
+  // عند الضغط على Enter من قارئ الباركود (قارئ الباركود يرسل Enter تلقائياً بعد المسح)
+  barInput.addEventListener("keydown", function(e){
+    if(e.key === "Enter" || e.keyCode === 13){
+      e.preventDefault();
+      handleBarcode(this.value);
+      this.value = "";
+    }
+  });
+})();
 
 </script>
 </body>
