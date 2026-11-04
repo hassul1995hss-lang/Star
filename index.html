@@ -140,7 +140,7 @@ input[type=checkbox]{width:auto;padding:0;margin:0}
 <div class="card" id="licBar" style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:13px;color:var(--ok)">✓ مفعل مدى الحياة</b><button class="qb" id="wkOpen" style="width:auto;padding:0 12px;font-size:13px">🔒 وضع العامل</button></div>
 <div class="card" id="wkBar" style="display:none;padding:8px 12px;border-color:var(--bad);justify-content:space-between;align-items:center;gap:8px"><b id="wkTxt" style="font-size:13px">🔒 وضع العامل مفعّل</b><button class="qb" id="wkExit" style="width:auto;padding:0 12px;font-size:13px">🔓 فك التقييد</button></div>
 <div class="card" id="rsBar" style="display:none;border-color:var(--ok)"><p id="rsTxt" style="margin:0 0 8px"></p><button class="add" id="rsBtn" style="margin-top:0">استعادة النسخة التلقائية</button></div>
-<div class="tabs" id="navTabs"><button id="nS" class="on">🧾 المبيعات</button><button id="nI">📦 المخزون</button><button id="nM">🔧 الصيانة</button><button id="nR">📊 الجرد</button><button id="nB">💾 النسخ</button></div>
+<div class="tabs" id="navTabs"><button id="nS" class="on">🧾 المبيعات</button><button id="nI">📦 المخزون</button><button id="nM">🔧 الصيانة</button><button id="nR">📊 الجرد</button><button id="nB">⚙️ الإعدادات</button></div>
 <div id="vSales">
 
 <div class="card"><label style="margin-top:0">التاريخ</label><input type="date" id="day"></div>
@@ -321,7 +321,34 @@ input[type=checkbox]{width:auto;padding:0;margin:0}
 <div id="vBak" style="display:none">
 <p id="bkMsg" class="hint" style="font-size:14px;margin:0 0 10px"></p>
 
-<!-- 1. الحفظ التلقائي الفوري بالهاتف عند كل تعديل -->
+<!-- 1. إعدادات اللغة (Language Switcher) -->
+<div class="card">
+  <h2>🌐 لغة التطبيق (Language)</h2>
+  <label style="margin-top:0">اختر لغة واجهة البرنامج / Select Interface Language:</label>
+  <div class="row" style="grid-template-columns:1fr 1fr;margin-top:6px">
+    <button class="tabs button on" id="btnLangAr" style="padding:10px;font-size:14px;font-weight:bold;cursor:pointer">العربية (Arabic)</button>
+    <button class="tabs button" id="btnLangEn" style="padding:10px;font-size:14px;cursor:pointer">English (الإنجليزية)</button>
+  </div>
+</div>
+
+<!-- 2. معلومات وتحديث التطبيق (App Version) -->
+<div class="card">
+  <h2>ℹ️ معلومات التطبيق والإصدار</h2>
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)">
+    <span>اسم البرنامج:</span>
+    <b style="color:var(--pri)">Star Phone POS</b>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)">
+    <span>رقم الإصدار (Version):</span>
+    <b id="appVersionTxt" style="direction:ltr;color:var(--ok)">v1.6</b>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0">
+    <span>حالة الترخيص:</span>
+    <b style="color:var(--ok)">مفعّل دائم (Lifetime) ✓</b>
+  </div>
+</div>
+
+<!-- 3. الحفظ التلقائي الفوري بالهاتف عند كل تعديل -->
 <div class="card" id="autoCard" style="border-color:var(--ok)">
   <h2>⚡ النسخ الاحتياطي التلقائي الفوري</h2>
   <p class="hint" style="margin-top:0">يحفظ نسخة في ذاكرة الهاتف بمجلد <b>Download/StarPhoneBackup</b> تلقائياً وفوراً بعد أي عملية بيع، شراء، تعديل مخزون أو صيانة دون الحاجة لجدولة أو تدخل منك.</p>
@@ -339,8 +366,9 @@ input[type=checkbox]{width:auto;padding:0;margin:0}
   <div id="schList"></div>
 </div>
 
-<!-- 2. نسخ عند الطلب والمزامنة بين الهاتف والحاسوب -->
-<div class="card"><h2>🔄 مزامنة ونقل بيانات (جوال ⇄ كمبيوتر)</h2>
+<!-- 4. نسخ عند الطلب والمزامنة بين الهاتف والحاسوب -->
+<div class="card">
+  <h2>🔄 مزامنة ونقل بيانات (جوال ⇄ كمبيوتر)</h2>
   <p class="hint" style="margin-top:0">لحفظ ملف يدوي للمشاركة، أو نقل المبيعات والمخزون بين أجهزتك. احفظ الملف أو انسخ النص وأرسله للجهاز الآخر ثم اضغط «دمج».</p>
   
   <div class="row" style="grid-template-columns:1fr 1fr;margin-bottom:10px">
@@ -365,15 +393,21 @@ input[type=checkbox]{width:auto;padding:0;margin:0}
   </div>
   <p class="hint" style="margin-top:8px">«دمج» يجمع العمليات الناقصة دون حذف ما لديك، ويحدث المخزون حسب آخر تعديل.</p>
 </div>
+
+<!-- 5. ضبط المصنع داخل قسم الإعدادات -->
+<div class="card" style="border-color:var(--bad)">
+  <h2 style="color:var(--bad)">🗑 ضبط المصنع وإعادة التهيئة</h2>
+  <button class="add dng" id="rstBtn" style="margin-top:4px">🗑 مسح كافة البيانات (ضبط المصنع)</button>
+  <div id="rstBox" style="display:none;margin-top:10px">
+    <p style="margin:0 0 8px;font-weight:600">سيتم مسح كافة المبيعات والمخزون والصيانة نهائياً. هل أنت متأكد؟</p>
+    <div class="row" style="grid-template-columns:1fr 1fr">
+      <button class="add dng" id="rstYes" style="margin-top:0">نعم، امسح كل شيء</button>
+      <button class="add sec" id="rstNo" style="margin-top:0">إلغاء</button>
+    </div>
+  </div>
+  <p class="hint" id="rstMsg" style="margin-top:6px"></p>
 </div>
 
-<div class="card" style="border-color:var(--bad)">
-  <button class="add dng" id="rstBtn" style="margin-top:0">🗑 ضبط المصنع (مسح كل البيانات)</button>
-  <div id="rstBox" style="display:none">
-    <p style="margin:0 0 8px">سيتم حذف كل المبيعات والمصاريف والمرتجعات والمخزون من هذا الجهاز، ولا يمكن التراجع. هل أنت متأكد؟</p>
-    <div class="row" style="grid-template-columns:1fr 1fr"><button class="add dng" id="rstYes" style="margin-top:0">نعم، امسح كل شيء</button><button class="add sec" id="rstNo" style="margin-top:0">إلغاء</button></div>
-  </div>
-  <p class="hint" id="rstMsg"></p>
 </div>
 
 <script>
@@ -1179,6 +1213,58 @@ $("wkRecOk").onclick=function(){
   });
 };
 wkApply();
+
+
+/* ===== تشغيل زر ضبط المصنع ===== */
+$("rstBtn").onclick = function(){ $("rstBox").style.display = ""; $("rstBtn").style.display = "none"; $("rstMsg").textContent = ""; };
+$("rstNo").onclick = function(){ $("rstBox").style.display = "none"; $("rstBtn").style.display = ""; };
+$("rstYes").onclick = function(){
+  [KEY, INV, TOMB, LB, REPK].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+  data = []; inv = []; rep = []; tomb = {}; snap = {};
+  ["name","price","cost","amt","inote","iname","iwhole","iretail","bkIn","bkOut"].forEach(function(i){ var el=$(i); if(el) el.value=""; });
+  if($("qty")) $("qty").value = 1; if($("iqty")) $("iqty").value = 1;
+  if($("day")) $("day").value = today(); if($("rday")) $("rday").value = today();
+  setMode("sale"); setView("s"); bkInfo(); bmsg("");
+  $("rstBox").style.display = "none"; $("rstBtn").style.display = "";
+  render();
+  $("rstMsg").textContent = "تمت استعادة ضبط المصنع بنجاح ✓";
+  if(typeof runAutoBackup === "function") runAutoBackup(true);
+};
+
+/* ===== قراءة وتحديث رقم الإصدار تلقائياً ===== */
+if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App){
+  window.Capacitor.Plugins.App.getInfo().then(function(info){
+    if(info && info.version){
+      $("appVersionTxt").textContent = "v" + info.version + " (" + (info.build || "Build") + ")";
+    }
+  }).catch(function(){});
+}
+
+/* ===== نظام تبديل لغة الواجهة (عربي / English) ===== */
+var currentLang = localStorage.getItem("telecom_lang") || "ar";
+function applyLang(lang){
+  currentLang = lang;
+  try{ localStorage.setItem("telecom_lang", lang); }catch(e){}
+  var isEn = (lang === "en");
+  document.documentElement.lang = isEn ? "en" : "ar";
+  document.documentElement.dir = isEn ? "ltr" : "rtl";
+  
+  if($("btnLangAr")) $("btnLangAr").className = isEn ? "tabs button" : "tabs button on";
+  if($("btnLangEn")) $("btnLangEn").className = isEn ? "tabs button on" : "tabs button";
+
+  // ترجمة التبويبات الرئيسية
+  if($("nS")) $("nS").textContent = isEn ? "🧾 Sales" : "🧾 المبيعات";
+  if($("nI")) $("nI").textContent = isEn ? "📦 Inventory" : "📦 المخزون";
+  if($("nM")) $("nM").textContent = isEn ? "🔧 Repairs" : "🔧 الصيانة";
+  if($("nR")) $("nR").textContent = isEn ? "📊 Reports" : "📊 الجرد";
+  if($("nB")) $("nB").textContent = isEn ? "⚙️ Settings" : "⚙️ الإعدادات";
+  var h1 = document.querySelector("h1");
+  if(h1) h1.textContent = isEn ? "📱 Star Phone POS" : "📱 محاسبة محل الاتصالات";
+}
+
+if($("btnLangAr")) $("btnLangAr").onclick = function(){ applyLang("ar"); };
+if($("btnLangEn")) $("btnLangEn").onclick = function(){ applyLang("en"); };
+applyLang(currentLang);
 
 </script>
 </body>
