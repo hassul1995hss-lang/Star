@@ -1,0 +1,93 @@
+name: Build Windows Application (.exe)
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Web Directory & Electron Shell
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp index.html dist/index.html
+          npm init -y
+          npm install --save-dev electron electron-builder
+          
+          cat << 'EOF' > main.js
+          const { app, BrowserWindow } = require('electron');
+          const path = require('path');
+
+          function createWindow () {
+            const win = new BrowserWindow({
+              width: 1200,
+              height: 800,
+              minWidth: 900,
+              minHeight: 600,
+              autoHideMenuBar: true,
+              title: "Star Phone POS",
+              webPreferences: {
+                nodeIntegration: false,
+                contextIsolation: true
+              }
+            });
+
+            win.loadFile('dist/index.html');
+          }
+
+          app.whenReady().then(createWindow);
+
+          app.on('window-all-closed', () => {
+            if (process.platform !== 'darwin') app.quit();
+          });
+          EOF
+
+      - name: Configure Package.json for Windows Executable
+        shell: bash
+        run: |
+          node -e '
+          const fs = require("fs");
+          const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+          pkg.main = "main.js";
+          pkg.scripts = {
+            "dist": "electron-builder --win portable"
+          };
+          pkg.build = {
+            "appId": "com.starphone.pos",
+            "productName": "Star Phone POS",
+            "directories": {
+              "output": "release"
+            },
+            "win": {
+              "target": ["portable"]
+            },
+            "files": [
+              "main.js",
+              "dist/**/*"
+            ]
+          };
+          fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2));
+          '
+
+      - name: Compile Windows .EXE
+        shell: bash
+        run: |
+          npm run dist
+
+      - name: Upload Windows Executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: StarPhone-Windows-Portable
+          path: release/*.exe
