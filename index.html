@@ -883,6 +883,7 @@ function today(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth
 function fmt(n){ return Number(n||0).toLocaleString("en-US",{maximumFractionDigits:2}); }
 function $(id){ return document.getElementById(id); }
 $("day").value=today();
+$("day").onchange=renderAll;
 
 function sums(day){
   var s=0,c=0,x=0,rt=0,dm=0;
@@ -972,8 +973,7 @@ $("addBtn").onclick=function(){
   save();
   ["name","price","cost","amt"].forEach(function(i){$(i).value=""});
   $("qty").value=1;
-  render();
-  updateStockDisplay();
+  renderAll();
 };
 
 function del(id){
@@ -992,8 +992,7 @@ function del(id){
   data=data.filter(function(x){return x.id!==id});
   tomb[id]=Date.now();
   save();
-  render();
-  updateStockDisplay();
+  renderAll();
 }
 
 function render(){
@@ -1031,6 +1030,15 @@ function render(){
   }
   $("hist").innerHTML=h;
 }
+
+function renderAll(){
+  render();
+  renderInv();
+  renderMnt();
+  renderRep();
+  updateStockDisplay();
+}
+
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]}); }
 
 /* WhatsApp Direct Launcher */
@@ -1115,19 +1123,17 @@ $("iAdd").onclick=function(){
   save();
   ["iname","iwhole","iretail","ibarcode"].forEach(function(i){var el=$(i);if(el)el.value=""});
   $("iqty").value=1;
-  render();
-  updateStockDisplay();
+  renderAll();
 };
 
-function stk(id,d){ var it=inv.filter(function(i){return i.id===id})[0]; if(!it) return; it.qty=Math.max(0,it.qty+d); save(); render(); updateStockDisplay(); }
+function stk(id,d){ var it=inv.filter(function(i){return i.id===id})[0]; if(!it) return; it.qty=Math.max(0,it.qty+d); save(); renderAll(); }
 function delItem(id){
   var confirmMsg = (currentLang==="en") ? "Delete this item from inventory?" : "حذف هذه القطعة من المخزون؟";
   if(!confirm(confirmMsg)) return;
   inv=inv.filter(function(i){return i.id!==id});
   tomb[id]=Date.now();
   save();
-  render();
-  updateStockDisplay();
+  renderAll();
 }
 
 $("stockSel").onchange=function(){
@@ -1594,7 +1600,7 @@ function repAdd(){
     Object.keys(f).forEach(function(k){ n[k]=f[k]; });
     rep.push(n);
   }
-  save(); mClear(); mFormShow(false); render();
+  save(); mClear(); mFormShow(false); renderAll();
 }
 function repEdit(id){
   var tItem=mFind(id); if(!tItem) return; mEdit=id;
@@ -1608,7 +1614,7 @@ function undeliver(tItem){
   tItem.delivered=null; tItem.fprice=null; tItem.pcost=null;
 }
 function repStatus(id,st){
-  var tItem=mFind(id); if(!tItem||tItem.status===st){ render(); return; }
+  var tItem=mFind(id); if(!tItem||tItem.status===st){ renderAll(); return; }
   if(st==="delivered"){
     mDelId=id;
     $("mDT").textContent=(currentLang==="en"?"Deliver: ":"تسليم: ")+tItem.dev;
@@ -1616,7 +1622,7 @@ function repStatus(id,st){
     dlgHint(); $("mDlg").style.display="flex"; return;
   }
   if(tItem.status==="delivered") undeliver(tItem);
-  tItem.status=st; tItem.upd=Date.now(); save(); render();
+  tItem.status=st; tItem.upd=Date.now(); save(); renderAll();
 }
 function dlgHint(){
   var tItem=mFind(mDelId); if(!tItem) return;
@@ -1631,12 +1637,12 @@ function repDeliver(){
   var repairCatName = (currentLang==="en") ? "Repair" : "صيانة";
   var e={id:Date.now(),date:today(),type:"sale",name:repairCatName+": "+tItem.dev,cat:repairCatName,price:fp,cost:pc,qty:1,sid:null,tk:0,rid:tItem.id};
   data.push(e); tItem.sale=e.id; tItem.fprice=fp; tItem.pcost=pc; tItem.delivered=today(); tItem.status="delivered"; tItem.upd=Date.now();
-  $("mDlg").style.display="none"; mDelId=null; save(); render();
+  $("mDlg").style.display="none"; mDelId=null; save(); renderAll();
 }
 function repDel(id){
   var confirmMsg = (currentLang==="en") ? "Delete this repair order?" : "حذف هذا الطلب؟ (قيد البيع المسجّل عند التسليم يبقى في المبيعات)";
   if(!confirm(confirmMsg)) return;
-  rep=rep.filter(function(x){ return x.id!==id; }); tomb[id]=Date.now(); save(); render();
+  rep=rep.filter(function(x){ return x.id!==id; }); tomb[id]=Date.now(); save(); renderAll();
 }
 function receipt(tItem){
   if(currentLang==="en"){
@@ -1719,7 +1725,7 @@ $("mCancel").onclick=function(){ mClear(); mFormShow(false); };
 $("mSave").onclick=function(){ repAdd(); };
 $("mFilter").onchange=renderMnt; $("mSearch").oninput=renderMnt;
 $("mFP").oninput=dlgHint;
-$("mDNo").onclick=function(){ $("mDlg").style.display="none"; mDelId=null; render(); };
+$("mDNo").onclick=function(){ $("mDlg").style.display="none"; mDelId=null; renderAll(); };
 $("mDOk").onclick=function(){ repDeliver(); };
 renderMnt();
 
@@ -1834,7 +1840,7 @@ $("rstYes").onclick = function(){
   if($("day")) $("day").value = today(); if($("rday")) $("rday").value = today();
   setMode("sale"); setView("s"); bkInfo(); bmsg("");
   $("rstBox").style.display = "none"; $("rstBtn").style.display = "";
-  render();
+  renderAll();
   $("rstMsg").textContent = (currentLang==="en") ? "Factory reset completed ✓" : "تمت استعادة ضبط المصنع بنجاح ✓";
   if(typeof runAutoBackup === "function") runAutoBackup(true);
 };
@@ -1892,10 +1898,7 @@ function applyLang(lang){
   if(mode === "ret") $("addBtn").textContent = t("btn_add_ret");
   else $("addBtn").textContent = t("btn_add");
 
-  render();
-  renderInv();
-  renderMnt();
-  renderRep();
+  renderAll();
   bkInfo();
 }
 
