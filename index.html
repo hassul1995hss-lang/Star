@@ -59,6 +59,80 @@ input[type=checkbox]{width:auto;padding:0;margin:0}
 .stock-avail-box{background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:8px 12px;margin-top:6px;display:flex;justify-content:space-between;align-items:center;font-size:13px}
 .wa-link{display:inline-flex;align-items:center;gap:4px;color:#25d366;font-weight:600;text-decoration:none;padding:2px 6px;border-radius:6px;background:rgba(37,211,102,0.1)}
 .wa-link:hover{background:rgba(37,211,102,0.2)}
+
+/* ===== تحسينات التوافق مع شاشات الكمبيوتر والأجهزة اللوحية (Desktop & Tablet) ===== */
+@media (min-width: 768px) {
+  body {
+    max-width: 1080px;
+    padding: 24px 20px;
+  }
+  h1 {
+    font-size: 24px;
+    margin-bottom: 16px;
+  }
+  .card {
+    padding: 16px;
+    border-radius: 16px;
+    margin-bottom: 16px;
+  }
+  #navTabs {
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  #navTabs button {
+    padding: 12px 14px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .stat {
+    padding: 14px;
+  }
+  .stat b {
+    font-size: 22px;
+  }
+  .stat.net {
+    grid-column: span 2;
+  }
+  .stat.net b {
+    font-size: 30px;
+  }
+  .row {
+    gap: 14px;
+  }
+  input, select, textarea {
+    padding: 12px;
+    font-size: 15px;
+  }
+  table {
+    font-size: 14px;
+  }
+  th, td {
+    padding: 10px 8px;
+  }
+  /* عرض البطاقات بجانب بعضها على الشاشات الكبيرة */
+  .desk-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+}
+@media (min-width: 1024px) {
+  body {
+    max-width: 1180px;
+  }
+  .grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+  .stat.net {
+    grid-column: span 2;
+  }
+}
+
 </style>
 </head>
 <body>
