@@ -24,36 +24,67 @@ jobs:
         with:
           node-version: 20
 
-      - name: Prepare Web Assets & Capacitor Project
+      - name: Prepare Web Assets & Install Capacitor with All Plugins
         run: |
           mkdir -p dist
+          # نسخ كافة ملفات الواجهة والأيقونات والمانيفست
           cp index.html dist/index.html
-          npm init -y
-          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
+          [ -f icon-192.png ] && cp icon-192.png dist/icon-192.png || true
+          [ -f manifest.webmanifest ] && cp manifest.webmanifest dist/manifest.webmanifest || true
+          cp -r *.png dist/ 2>/dev/null || true
+          cp -r *.svg dist/ 2>/dev/null || true
+          cp -r *.json dist/ 2>/dev/null || true
           
-          cat << 'EOF' > capacitor.config.json
+          # تثبيت كاباسيتور مع إضافات النظام والملفات الضرورية
+          npm init -y
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/filesystem@6 @capacitor/app@6
+          
+          # إنشاء تكوين كاباسيتور فقط إذا لم يكن موجوداً
+          if [ ! -f capacitor.config.json ]; then
+            cat << 'EOF' > capacitor.config.json
           {
             "appId": "com.starphone.pos",
             "appName": "Star Phone POS",
             "webDir": "dist",
-            "bundledWebRuntime": false,
-            "android": {
-              "allowMixedContent": false
-            }
+            "bundledWebRuntime": false
           }
           EOF
+          fi
           
-          npx cap add android
+          # الحفاظ على مجلد android الأصلي إن وجد أو إنشاؤه لأول مرة
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
           npx cap sync android
 
-      - name: Configure Production Android Manifest & Build APK
+      - name: Restore Custom Icons to Android Project
         run: |
+          # حقن الأيقونة في كافة مقاسات أندرويد لضمان عدم اختفائها أبداً
+          if [ -f icon-192.png ]; then
+            for dir in android/app/src/main/res/mipmap-*; do
+              if [ -d "$dir" ]; then
+                cp icon-192.png "$dir/ic_launcher.png" || true
+                cp icon-192.png "$dir/ic_launcher_round.png" || true
+                cp icon-192.png "$dir/ic_launcher_foreground.png" || true
+              fi
+            done
+            echo "Custom icons restored to all mipmap densities."
+          fi
+
+      - name: Configure Manifest, Permissions & Build Release APK
+        run: |
+          # زيادة رقم الإصدار تلقائياً حتى يقبل أندرويد التحديث
+          RUN_NUM=${{ github.run_number }}
+          sed -i "s/versionCode [0-9]*/versionCode $RUN_NUM/g" android/app/build.gradle || true
+          
+          # التأكد من إزالة وضع تصحيح الأخطاء
           sed -i 's/android:debuggable="true"/android:debuggable="false"/g' android/app/src/main/AndroidManifest.xml || true
+          
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon
 
-      - name: Align & Sign APK with Production Keystore (v1, v2, v3 Schemes)
+      - name: Align & Sign APK with Fixed Keystore (v1, v2, v3)
         run: |
           BUILD_TOOLS_DIR=$(find $ANDROID_SDK_ROOT/build-tools -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
           if [ -z "$BUILD_TOOLS_DIR" ]; then
@@ -61,7 +92,7 @@ jobs:
           fi
           echo "Using Android Build Tools: $BUILD_TOOLS_DIR"
           
-          # إنشاء شهادة توقيع إنتاجية دائمة صالحة لمدة 50 سنة
+          # مفتاح توقيع موحد وثابت للبرنامج
           keytool -genkeypair -v \
             -keystore starphone-release.jks \
             -alias starphone_key \
@@ -74,10 +105,8 @@ jobs:
           
           UNSIGNED_APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
           
-          # 1. محاذاة الملف الرسمية ZipAlign
           $BUILD_TOOLS_DIR/zipalign -v -p 4 "$UNSIGNED_APK" StarPhone-Aligned.apk
           
-          # 2. التوقيع الرقمي المتزامن بجميع بروتوكولات الأمان (v1 + v2 + v3)
           $BUILD_TOOLS_DIR/apksigner sign \
             --ks starphone-release.jks \
             --ks-key-alias starphone_key \
