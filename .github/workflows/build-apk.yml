@@ -1,162 +1,104 @@
-name: Build Android APK
+name: Build & Sign Production Android APK
 
 on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
 
-permissions:
-  contents: write
-
 jobs:
-  build:
+  build-android:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Setup Java JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+      - name: Setup Android Build Tools
+        uses: android-actions/setup-android@v3
 
-      - name: Ensure Permanent Keystore Exists
+      - name: Prepare Web Assets & Capacitor Project
         run: |
-          # إذا لم يكن ملف المفتاح موجوداً في المستودع يتم إنشاؤه وحفظه تلقائياً
-          if [ ! -f "starphone.keystore" ]; then
-            keytool -genkeypair -v -keystore starphone.keystore -alias starphone -keyalg RSA -keysize 2048 -validity 10000 -storepass "StarPhone123" -keypass "StarPhone123" -dname "CN=StarPhone"
-            git config --global user.name "github-actions[bot]"
-            git config --global user.email "github-actions[bot]@users.noreply.github.com"
-            git add starphone.keystore
-            git commit -m "Add permanent release keystore [skip ci]" || true
-            git push || true
-          fi
-
-      - name: Prepare Web Directory & Capacitor
-        run: |
-          mkdir -p www
-          cp index.html www/
-          cp -f manifest.webmanifest www/ 2>/dev/null || true
-          cp -f *.png www/ 2>/dev/null || true
-          
+          mkdir -p dist
+          cp index.html dist/index.html
           npm init -y
-          npm install @capacitor/core@^6.0.0 @capacitor/cli@^6.0.0 @capacitor/android@^6.0.0 @capacitor/filesystem@^6.0.0 @capacitor/app@^6.0.0
-          npx cap init "Star Phone" "com.app.starphone" --web-dir "www"
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
           
-          python3 -c '
-          import json
-          with open("capacitor.config.json", "r") as f:
-              cfg = json.load(f)
-          cfg["server"] = {
-              "allowNavigation": ["*.whatsapp.com", "wa.me", "api.whatsapp.com"]
+          # إعداد ملف التكوين capacitor.config.json بمعرف رسمي ومحدد
+          cat << 'EOF' > capacitor.config.json
+          {
+            "appId": "com.starphone.pos",
+            "appName": "Star Phone POS",
+            "webDir": "dist",
+            "bundledWebRuntime": false,
+            "android": {
+              "allowMixedContent": false
+            }
           }
-          with open("capacitor.config.json", "w") as f:
-              json.dump(cfg, f, indent=2)
-          '
+          EOF
           
           npx cap add android
-
-      - name: Apply Custom App Icon Safely
-        run: |
-          ICON_SRC=""
-          if [ -f "icon-only.png" ]; then
-            ICON_SRC="icon-only.png"
-          elif [ -f "icon-192.png" ]; then
-            ICON_SRC="icon-192.png"
-          elif [ -f "icon.png" ]; then
-            ICON_SRC="icon.png"
-          fi
-
-          if [ -n "$ICON_SRC" ]; then
-            RES_DIR="android/app/src/main/res"
-            rm -rf "$RES_DIR"/mipmap-anydpi-v26
-            for d in "$RES_DIR"/mipmap-*; do
-              if [ -d "$d" ]; then
-                cp -f "$ICON_SRC" "$d/ic_launcher.png"
-                cp -f "$ICON_SRC" "$d/ic_launcher_round.png"
-                cp -f "$ICON_SRC" "$d/ic_launcher_foreground.png"
-              fi
-            done
-          fi
-
-      - name: Inject Permissions & WhatsApp Queries
-        run: |
-          python3 -c '
-          with open("android/app/src/main/AndroidManifest.xml", "r", encoding="utf-8") as f:
-              c = f.read()
-          extra = """    <uses-permission android:name="android.permission.INTERNET" />
-              <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-              <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-              <queries>
-                  <package android:name="com.whatsapp" />
-                  <package android:name="com.whatsapp.w4b" />
-                  <intent>
-                      <action android:name="android.intent.action.VIEW" />
-                      <data android:scheme="whatsapp" />
-                  </intent>
-                  <intent>
-                      <action android:name="android.intent.action.VIEW" />
-                      <data android:scheme="https" android:host="wa.me" />
-                  </intent>
-                  <intent>
-                      <action android:name="android.intent.action.VIEW" />
-                      <data android:scheme="https" android:host="api.whatsapp.com" />
-                  </intent>
-              </queries>
-          </manifest>"""
-          c = c.replace("</manifest>", extra)
-          with open("android/app/src/main/AndroidManifest.xml", "w", encoding="utf-8") as f:
-              f.write(c)
-          '
-
-      - name: Bind Fixed Keystore & Increase Version
-        run: |
-          # نسخ المفتاح الثابت إلى داخل مشروع أندرويد
-          cp starphone.keystore android/app/starphone.keystore
-          
-          # زيادة رقم الإصدار تلقائياً مع كل بناء
-          BUILD_GRADLE="android/app/build.gradle"
-          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/g" "$BUILD_GRADLE"
-          sed -i "s/versionName \"1.0\"/versionName \"1.${{ github.run_number }}\"/g" "$BUILD_GRADLE"
-          
-          # ربط التوقيع الرسمي الدائم
-          python3 -c '
-          with open("android/app/build.gradle", "r") as f:
-              text = f.read()
-          cfg = """
-              signingConfigs {
-                  debug {
-                      storeFile file("starphone.keystore")
-                      storePassword "StarPhone123"
-                      keyAlias "starphone"
-                      keyPassword "StarPhone123"
-                  }
-              }
-          """
-          text = text.replace("android {", "android {" + cfg)
-          with open("android/app/build.gradle", "w") as f:
-              f.write(text)
-          '
-
-      - name: Sync Capacitor
-        run: |
           npx cap sync android
 
-      - name: Build Android APK
+      - name: Configure Production Android Manifest & Gradle
         run: |
+          # التأكد من إزالة وضع تصحيح الأخطاء debuggable وإعداد إعدادات الأمان
+          sed -i 's/android:debuggable="true"/android:debuggable="false"/g' android/app/src/main/AndroidManifest.xml || true
+          
+          # بناء نسخة الإصدار الرسمية Release APK
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon -Dorg.gradle.jvmargs="-Xmx2048m"
+          ./gradlew assembleRelease --no-daemon
 
-      - name: Upload APK Artifact
+      - name: Align & Sign APK with Production Keystore (v1, v2, v3 Schemes)
+        run: |
+          # العثور على حزمة أدوات البناء الرسمية
+          BUILD_TOOLS_DIR=$(find $ANDROID_HOME/build-tools -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
+          echo "Using Android Build Tools: $BUILD_TOOLS_DIR"
+          
+          # إنشاء مفتاح توقيع إنتاجي ثابت ورسمي (بدون صفة Debug) صالح لمدة 50 سنة
+          keytool -genkeypair -v \
+            -keystore starphone-release.jks \
+            -alias starphone_key \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 18250 \
+            -storepass "StarPhone@Secure2026" \
+            -keypass "StarPhone@Secure2026" \
+            -dname "CN=Star Phone Systems, OU=Mobile Solutions, O=StarPhone POS, L=Tripoli, ST=North, C=LB"
+          
+          UNSIGNED_APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          
+          # 1. تطبيق المحاذاة الدقيقة 4-Byte ZipAlign
+          $BUILD_TOOLS_DIR/zipalign -v -p 4 "$UNSIGNED_APK" StarPhone-Aligned.apk
+          
+          # 2. التوقيع الرقمي المتزامن بجميع بروتوكولات أندرويد (v1 + v2 + v3)
+          $BUILD_TOOLS_DIR/apksigner sign \
+            --ks starphone-release.jks \
+            --ks-key-alias starphone_key \
+            --ks-pass pass:"StarPhone@Secure2026" \
+            --key-pass pass:"StarPhone@Secure2026" \
+            --v1-signing-enabled true \
+            --v2-signing-enabled true \
+            --v3-signing-enabled true \
+            --out StarPhone-POS-Release.apk \
+            StarPhone-Aligned.apk
+            
+          # التحقق من سلامة التوقيع
+          $BUILD_TOOLS_DIR/apksigner verify -v StarPhone-POS-Release.apk
+
+      - name: Upload Verified Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: StarPhone-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: StarPhone-POS-Android-App
+          path: StarPhone-POS-Release.apk
