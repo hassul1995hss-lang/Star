@@ -1,4 +1,4 @@
-name: Build & Sign Production Android APK
+name: Build & Sign Android APK (Star POS)
 
 on:
   push:
@@ -8,6 +8,10 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+    env:
+      # مفتاح التوقيع الثابت. يُفضّل وضع القيم الحقيقية في GitHub Secrets (KEYSTORE_PASSWORD) وإلا تُستخدم هذه القيم.
+      KS_PASS: ${{ secrets.KEYSTORE_PASSWORD || '2wMcuNqEQ3sTIWouo3t2' }}
+      KS_ALIAS: star_pos
 
     steps:
       - name: Checkout Repository
@@ -24,96 +28,64 @@ jobs:
         with:
           node-version: 20
 
-      - name: Prepare Web Assets & Install Capacitor
+      - name: Prepare Web Assets & Capacitor
         run: |
           mkdir -p dist
-          cp index.html dist/index.html
-          [ -f icon-only.png ] && cp icon-only.png dist/icon-only.png || true
-          [ -f manifest.webmanifest ] && cp manifest.webmanifest dist/manifest.webmanifest || true
-          [ -f sw.js ] && cp sw.js dist/sw.js || true
-          cp -r *.png dist/ 2>/dev/null || true
-          cp -r *.json dist/ 2>/dev/null || true
-          
+          cp index.html manifest.webmanifest sw.js icon-192.png icon-512.png icon-only.png dist/
           npm init -y
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/filesystem@6 @capacitor/app@6
-          
           cat << 'EOF' > capacitor.config.json
           {
             "appId": "com.starphone.pos",
-            "appName": "Star Phone POS",
-            "webDir": "dist",
-            "bundledWebRuntime": false
+            "appName": "Star POS",
+            "webDir": "dist"
           }
           EOF
-          
-          if [ ! -d "android" ]; then
-            npx cap add android
-          fi
+          npx cap add android
           npx cap sync android
 
-      - name: Set App Icon From icon-only.png
+      - name: Set App Icon
         run: |
           rm -rf android/app/src/main/res/mipmap-anydpi-v26 || true
-          if [ -f icon-only.png ]; then
-            for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
-              dir="android/app/src/main/res/mipmap-$density"
-              if [ -d "$dir" ]; then
-                cp icon-only.png "$dir/ic_launcher.png" || true
-                cp icon-only.png "$dir/ic_launcher_round.png" || true
-                cp icon-only.png "$dir/ic_launcher_foreground.png" || true
-              fi
-            done
-            echo "Custom icon icon-only.png set without any conflicts."
-          fi
+          for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            dir="android/app/src/main/res/mipmap-$density"
+            if [ -d "$dir" ]; then
+              cp icon-only.png "$dir/ic_launcher.png"
+              cp icon-only.png "$dir/ic_launcher_round.png"
+              cp icon-only.png "$dir/ic_launcher_foreground.png"
+            fi
+          done
 
-      - name: Configure Manifest & Build Release APK
+      - name: Configure Version & Hardening
         run: |
-          RUN_NUM=${{ github.run_number }}
-          sed -i "s/versionCode [0-9]*/versionCode $RUN_NUM/g" android/app/build.gradle || true
-          sed -i 's/android:debuggable="true"/android:debuggable="false"/g' android/app/src/main/AndroidManifest.xml || true
-          
+          # versionCode يعتمد على الوقت فيزداد دائماً (شرط قبول التحديث فوق النسخة المثبتة)
+          VC=$(( $(date +%s) / 60 ))
+          VN="2.2.${{ github.run_number }}"
+          sed -i "s/versionCode [0-9]*/versionCode $VC/" android/app/build.gradle
+          sed -i "s/versionName \"[^\"]*\"/versionName \"$VN\"/" android/app/build.gradle
+          echo "versionCode=$VC versionName=$VN"
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i 's/android:allowBackup="true"/android:allowBackup="false"/' $M
+          sed -i 's/<application/<application android:usesCleartextTraffic="false"/' $M
+          sed -i 's/android:debuggable="true"/android:debuggable="false"/' $M || true
+
+      - name: Build Release APK
+        run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon
 
-      - name: Sign APK with Original Project Keystore
+      - name: Sign APK with the permanent Star POS key
         run: |
-          BUILD_TOOLS_DIR=$(find $ANDROID_SDK_ROOT/build-tools -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
-          if [ -z "$BUILD_TOOLS_DIR" ]; then
-            BUILD_TOOLS_DIR=$(find $ANDROID_HOME/build-tools -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
-          fi
-          echo "Using Android Build Tools: $BUILD_TOOLS_DIR"
-          
-          UNSIGNED_APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
-          $BUILD_TOOLS_DIR/zipalign -v -p 4 "$UNSIGNED_APK" StarPhone-Aligned.apk
-          
-          SIGNED=false
-          
-          # فحص وتجربة كلمات المرور مع ملف starphone.keystore بدون إيقاف السيرفر
-          if [ -f "starphone.keystore" ]; then
-            for PWD in "StarPhone@Secure2026" "android" "123456" "starphone"; do
-              ALIAS=$(keytool -list -keystore starphone.keystore -storepass "$PWD" 2>/dev/null | grep -i "PrivateKeyEntry" | head -n 1 | cut -d',' -f1 | tr -d ' ' || true)
-              if [ -n "$ALIAS" ]; then
-                echo "Found valid alias: $ALIAS"
-                if $BUILD_TOOLS_DIR/apksigner sign --ks starphone.keystore --ks-key-alias "$ALIAS" --ks-pass pass:"$PWD" --key-pass pass:"$PWD" --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true --out StarPhone-POS-Release.apk StarPhone-Aligned.apk 2>/dev/null; then
-                  SIGNED=true
-                  break
-                fi
-              fi
-            done
-          fi
-          
-          # في حال اختلاف كلمة مرور المفتاح القديم، يتم التوقيع بشهادة إنتاجية رسمية فوراً
-          if [ "$SIGNED" = false ]; then
-            echo "Using fresh production release certificate..."
-            keytool -genkeypair -v -keystore release-prod.jks -alias starphone_prod -keyalg RSA -keysize 2048 -validity 18250 -storepass "StarPhone@Secure2026" -keypass "StarPhone@Secure2026" -dname "CN=Star Phone Systems, OU=Mobile Solutions, O=StarPhone POS, L=Tripoli, ST=North, C=LB"
-            $BUILD_TOOLS_DIR/apksigner sign --ks release-prod.jks --ks-key-alias starphone_prod --ks-pass pass:"StarPhone@Secure2026" --key-pass pass:"StarPhone@Secure2026" --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true --out StarPhone-POS-Release.apk StarPhone-Aligned.apk
-          fi
-          
-          $BUILD_TOOLS_DIR/apksigner verify -v StarPhone-POS-Release.apk
+          BT=$(find $ANDROID_SDK_ROOT/build-tools -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
+          UNSIGNED=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          $BT/zipalign -p 4 "$UNSIGNED" StarPOS-Aligned.apk
+          # لا يتم أبداً توليد مفتاح جديد: إن فشل التوقيع يفشل البناء بدل إنتاج APK بتوقيع مختلف
+          $BT/apksigner sign --ks star-pos.keystore --ks-key-alias "$KS_ALIAS" --ks-pass pass:"$KS_PASS" --key-pass pass:"$KS_PASS" --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true --out StarPOS-Release.apk StarPOS-Aligned.apk
+          $BT/apksigner verify --print-certs StarPOS-Release.apk
 
-      - name: Upload Verified Release APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: StarPhone-POS-Android-App
-          path: StarPhone-POS-Release.apk
+          name: StarPOS-Android
+          path: StarPOS-Release.apk
