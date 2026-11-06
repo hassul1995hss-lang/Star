@@ -27,7 +27,6 @@ jobs:
       - name: Prepare Web Assets & Install Capacitor
         run: |
           mkdir -p dist
-          # نسخ كافة ملفات مشروعك الحقيقية
           cp index.html dist/index.html
           [ -f icon-only.png ] && cp icon-only.png dist/icon-only.png || true
           [ -f manifest.webmanifest ] && cp manifest.webmanifest dist/manifest.webmanifest || true
@@ -54,21 +53,24 @@ jobs:
 
       - name: Set App Icon From icon-only.png
         run: |
-          # حقن أيقونتك الحقيقية icon-only.png في كافة مقاسات أندرويد
+          # إزالة ملفات xml المتعارضة لمنع خطأ Duplicate resources
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26 || true
+          
+          # حقن الأيقونة في مجلدات كثافة الشاشة فقط
           if [ -f icon-only.png ]; then
-            for dir in android/app/src/main/res/mipmap-*; do
+            for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+              dir="android/app/src/main/res/mipmap-$density"
               if [ -d "$dir" ]; then
                 cp icon-only.png "$dir/ic_launcher.png" || true
                 cp icon-only.png "$dir/ic_launcher_round.png" || true
                 cp icon-only.png "$dir/ic_launcher_foreground.png" || true
               fi
             done
-            echo "Custom icon icon-only.png injected successfully."
+            echo "Custom icon icon-only.png set without any conflicts."
           fi
 
       - name: Configure Manifest & Build Release APK
         run: |
-          # زيادة رقم الإصدار تلقائياً ليقبل الهاتف التثبيت فوق القديم
           RUN_NUM=${{ github.run_number }}
           sed -i "s/versionCode [0-9]*/versionCode $RUN_NUM/g" android/app/build.gradle || true
           sed -i 's/android:debuggable="true"/android:debuggable="false"/g' android/app/src/main/AndroidManifest.xml || true
@@ -88,9 +90,8 @@ jobs:
           UNSIGNED_APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
           $BUILD_TOOLS_DIR/zipalign -v -p 4 "$UNSIGNED_APK" StarPhone-Aligned.apk
           
-          # استخدام مفتاحك الأصلي الموجود في المستودع starphone.keystore
           if [ -f "starphone.keystore" ]; then
-            echo "Using starphone.keystore from repository..."
+            echo "Signing with starphone.keystore..."
             $BUILD_TOOLS_DIR/apksigner sign \
               --ks starphone.keystore \
               --ks-pass pass:"StarPhone@Secure2026" \
@@ -110,6 +111,9 @@ jobs:
                   --out StarPhone-POS-Release.apk \
                   StarPhone-Aligned.apk
               }
+          else
+            keytool -genkeypair -v -keystore starphone.keystore -alias starphone_key -keyalg RSA -keysize 2048 -validity 18250 -storepass "StarPhone@Secure2026" -keypass "StarPhone@Secure2026" -dname "CN=Star Phone Systems, OU=Mobile Solutions, O=StarPhone POS, L=Tripoli, ST=North, C=LB"
+            $BUILD_TOOLS_DIR/apksigner sign --ks starphone.keystore --ks-key-alias starphone_key --ks-pass pass:"StarPhone@Secure2026" --key-pass pass:"StarPhone@Secure2026" --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true --out StarPhone-POS-Release.apk StarPhone-Aligned.apk
           fi
           
           $BUILD_TOOLS_DIR/apksigner verify -v StarPhone-POS-Release.apk
