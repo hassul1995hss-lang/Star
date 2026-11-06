@@ -10,21 +10,22 @@
 <meta name="mobile-web-app-capable" content="yes">
 <title>Star Phone POS</title>
 <style>
-:root{--bg:#f4f6fa;--card:#fff;--text:#1b2433;--mut:#6b7686;--line:#e2e7ef;--pri:#1d6fe0;--ok:#14915a;--bad:#d63c3c;
+:root{--bg:#f4f6fa;--card:#fff;--text:#1b2433;--mut:#6b7686;--line:#e2e7ef;--pri:#1d6fe0;--ok:#14915a;--bad:#d63c3c;--warn:#d97706;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10141c;--card:#1a212d;--text:#eaeff7;--mut:#93a0b4;--line:#2a3445;--pri:#5b9bff;--ok:#3ecf8e;--bad:#ff6b6b}}
-:root[data-theme="dark"]{--bg:#10141c;--card:#1a212d;--text:#eaeff7;--mut:#93a0b4;--line:#2a3445;--pri:#5b9bff;--ok:#3ecf8e;--bad:#ff6b6b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10141c;--card:#1a212d;--text:#eaeff7;--mut:#93a0b4;--line:#2a3445;--pri:#5b9bff;--ok:#3ecf8e;--bad:#ff6b6b;--warn:#f59e0b}}
+:root[data-theme="dark"]{--bg:#10141c;--card:#1a212d;--text:#eaeff7;--mut:#93a0b4;--line:#2a3445;--pri:#5b9bff;--ok:#3ecf8e;--bad:#ff6b6b;--warn:#f59e0b}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI",Tahoma,Arial,sans-serif;padding:12px;max-width:640px;margin-inline:auto}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI",Tahoma,Arial,sans-serif;padding:12px;padding-bottom:90px;max-width:640px;margin-inline:auto}
 html[dir="ltr"] body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-h1{font-size:19px;margin:6px 0 10px}
+h1{font-size:19px;margin:6px 0 10px;display:flex;align-items:center;gap:8px}
+.header-logo{width:34px;height:34px;border-radius:8px;object-fit:cover;display:none;border:1px solid var(--line)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}
 .stat small{color:var(--mut);display:block;font-size:12px}
 .stat b{font-size:18px}
 .net{grid-column:1/-1;text-align:center}.net b{font-size:26px}
-.ok{color:var(--ok)}.bad{color:var(--bad)}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
 .tabs{display:flex;gap:6px;margin-bottom:10px}
 .tabs button{flex:1;padding:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:10px;font:inherit;cursor:pointer}
 .tabs button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
@@ -45,7 +46,7 @@ h2{font-size:15px;margin:0 0 8px}
 .qb{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:8px;width:32px;height:32px;font-size:18px;cursor:pointer}
 .low{color:var(--bad)}.ctl{display:flex;align-items:center;gap:6px}.hint{color:var(--mut);font-size:12px;margin:8px 0 0}
 #navTabs button{padding:10px 1px;font-size:12px}
-.add.sec{background:var(--bg);color:var(--text);border:1px solid var(--line)}.add.dng{background:var(--bad)}
+.add.sec{background:var(--bg);color:var(--text);border:1px solid var(--line)}.add.dng{background:var(--bad)}.add.warn{background:var(--warn);color:#fff}
 body.ro #addBtn,body.ro #iAdd{opacity:.45}
 .wk #licBar,.wk #nB{display:none!important}
 .wk:not(.wk-prf) .prf{display:none!important}
@@ -54,6 +55,7 @@ body.ro #addBtn,body.ro #iAdd{opacity:.45}
 .wk:not(.wk-exp) #tExp{display:none!important}
 .wk:not(.wk-del) #list .del,.wk:not(.wk-del) #mList .del{display:none!important}
 .wk:not(.wk-stk) #iList .qb,.wk:not(.wk-stk) #iList .del,.wk:not(.wk-stk) #iAddCard{display:none!important}
+.wk:not(.wk-reg) #btnOpenCloseRegister{display:none!important}
 input[type=checkbox]{width:auto;padding:0;margin:0}
 .chk{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text);margin:10px 0}
 .stock-badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:bold}
@@ -62,78 +64,41 @@ html[dir="ltr"] .stock-badge{margin-left:auto}
 .stock-avail-box{background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:8px 12px;margin-top:6px;display:flex;justify-content:space-between;align-items:center;font-size:13px}
 .wa-link{display:inline-flex;align-items:center;gap:4px;color:#25d366;font-weight:600;text-decoration:none;padding:2px 6px;border-radius:6px;background:rgba(37,211,102,0.1)}
 .wa-link:hover{background:rgba(37,211,102,0.2)}
+.wa-btn-inv{border:0;background:rgba(37,211,102,0.12);color:#25d366;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:bold;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.wa-btn-inv:hover{background:rgba(37,211,102,0.22)}
 
-/* ميزات مخصصة لشاشات الكمبيوتر فقط (مثل نظام الباركود) */
+/* الشريط السفلي الثابت للأزرار */
+#bottomActionsBar{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);padding:8px 14px;display:flex;gap:10px;justify-content:center;align-items:center;z-index:999;box-shadow:0 -4px 15px rgba(0,0,0,0.06)}
+#bottomActionsBar button{flex:1;max-width:280px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+
 .desk-only { display: none !important; }
 body.is-desktop .desk-only { display: block !important; }
 body.is-desktop div.desk-only.row { display: grid !important; }
 body.is-desktop div.desk-only.flex { display: flex !important; }
 
-/* ===== تحسينات التوافق مع شاشات الكمبيوتر والأجهزة اللوحية (Desktop & Tablet) ===== */
 @media (min-width: 768px) {
-  body {
-    max-width: 1080px;
-    padding: 24px 20px;
-  }
-  h1 {
-    font-size: 24px;
-    margin-bottom: 16px;
-  }
-  .card {
-    padding: 16px;
-    border-radius: 16px;
-    margin-bottom: 16px;
-  }
-  #navTabs {
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-  #navTabs button {
-    padding: 12px 14px;
-    font-size: 15px;
-    font-weight: 600;
-  }
-  .grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-  }
-  .stat {
-    padding: 14px;
-  }
-  .stat b {
-    font-size: 22px;
-  }
-  .stat.net {
-    grid-column: span 2;
-  }
-  .stat.net b {
-    font-size: 30px;
-  }
-  .row {
-    gap: 14px;
-  }
-  input, select, textarea {
-    padding: 12px;
-    font-size: 15px;
-  }
-  table {
-    font-size: 14px;
-  }
-  th, td {
-    padding: 10px 8px;
-  }
+  body { max-width: 1080px; padding: 24px 20px; padding-bottom: 100px; }
+  h1 { font-size: 24px; margin-bottom: 16px; }
+  .card { padding: 16px; border-radius: 16px; margin-bottom: 16px; }
+  #navTabs { gap: 10px; margin-bottom: 16px; }
+  #navTabs button { padding: 12px 14px; font-size: 15px; font-weight: 600; }
+  .grid { grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .stat { padding: 14px; }
+  .stat b { font-size: 22px; }
+  .stat.net { grid-column: span 2; }
+  .stat.net b { font-size: 30px; }
+  .row { gap: 14px; }
+  input, select, textarea { padding: 12px; font-size: 15px; }
+  table { font-size: 14px; }
+  th, td { padding: 10px 8px; }
 }
 @media (min-width: 1024px) {
-  body {
-    max-width: 1180px;
-  }
-  .grid {
-    grid-template-columns: repeat(6, 1fr);
-  }
-  .stat.net {
-    grid-column: span 2;
-  }
+  body { max-width: 1180px; }
+  .grid { grid-template-columns: repeat(6, 1fr); }
+  .stat.net { grid-column: span 2; }
 }
+.lang-btn{border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:10px;font:inherit;cursor:pointer}
+.lang-btn.on{background:var(--pri);color:#fff;border-color:var(--pri)}
 </style>
 </head>
 <body>
@@ -158,13 +123,40 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
   </div>
 </div>
 
-
-
-<h1 id="appTitle" data-i18n="app_title">📱 محاسبة محل الاتصالات</h1>
-<div class="card" id="licBar" style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px">
-  <b style="font-size:13px;color:var(--ok)" data-i18n="lic_active">✓ مفعل مدى الحياة</b>
-  <button class="qb" id="wkOpen" style="width:auto;padding:0 12px;font-size:13px" data-i18n="wk_open">🔒 وضع العامل</button>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+  <img id="topShopLogo" class="header-logo" alt="Logo">
+  <h1 id="appTitle" style="margin:0"><span id="shopDisplayTitle">Star Phone POS</span></h1>
 </div>
+
+<div class="card" id="licBar" style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+  <b id="licBarText" style="font-size:13px;color:var(--ok)">✓ مفعل</b>
+  <small id="shiftStatusInfo" style="color:var(--mut);font-size:12px"></small>
+</div>
+
+<!-- نافذة إغلاق وجرد الصندوق اليومي -->
+<div id="registerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
+  <div class="card" style="max-width:440px;width:100%;margin:0;position:relative">
+    <button id="btnCloseRegisterModal" class="del" style="position:absolute;top:10px;left:10px;font-size:20px">✕</button>
+    <h2 style="color:var(--pri);margin-bottom:10px" data-i18n="h2_reg_close">📥 إغلاق وجرد الصندوق وتصفير الوردية</h2>
+    <p class="hint" style="margin-top:0" data-i18n="desc_reg_close">عند الإغلاق، يتم أرشفة جرد الوردية وتصفير المبيعات والأرباح الظاهرة بالواجهة لبدء يوم/وردية جديدة من الصفر.</p>
+    
+    <div style="background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;margin:10px 0;font-size:14px">
+      <div style="display:flex;justify-content:space-between;padding:4px 0"><span data-i18n="reg_sales_total">إجمالي المبيعات النقدية:</span><b id="regSalesVal">0</b></div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0"><span data-i18n="reg_mnt_total">إيراد الصيانة المقبوض:</span><b id="regMntVal">0</b></div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0"><span data-i18n="reg_returns_total">إجمالي المرتجعات:</span><b id="regReturnsVal" class="bad">0</b></div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0"><span data-i18n="reg_expenses_total">إجمالي المصاريف:</span><b id="regExpVal" class="bad">0</b></div>
+      <hr style="border:0;border-top:1px solid var(--line);margin:6px 0">
+      <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:16px"><span data-i18n="reg_net_cash">الصافي المفترض بالصندوق:</span><b id="regNetCashVal" class="ok" style="font-size:18px">0</b></div>
+    </div>
+
+    <label data-i18n="lbl_actual_cash">المبلغ الفعلي الموجود بالصندوق (العد اليدوي):</label>
+    <input id="actualCashInput" type="number" inputmode="decimal" placeholder="أدخل المبلغ الموجود بالدرج...">
+    <div id="cashDiffBox" style="font-size:13px;margin-top:6px;font-weight:600"></div>
+
+    <button class="add warn" id="btnSaveRegisterClose" style="margin-top:14px" data-i18n="btn_save_register">🔒 تأكيد الإغلاق وتصفير العمليات لليوم الجديد</button>
+  </div>
+</div>
+
 <div class="card" id="wkBar" style="display:none;padding:8px 12px;border-color:var(--bad);justify-content:space-between;align-items:center;gap:8px">
   <b id="wkTxt" style="font-size:13px" data-i18n="wk_active">🔒 وضع العامل مفعّل</b>
   <button class="qb" id="wkExit" style="width:auto;padding:0 12px;font-size:13px" data-i18n="wk_unlock">🔓 فك التقييد</button>
@@ -173,6 +165,7 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
   <p id="rsTxt" style="margin:0 0 8px"></p>
   <button class="add" id="rsBtn" style="margin-top:0" data-i18n="btn_restore_auto">استعادة النسخة التلقائية</button>
 </div>
+
 <div class="tabs" id="navTabs">
   <button id="nS" class="on" data-i18n="tab_sales">🧾 المبيعات</button>
   <button id="nI" data-i18n="tab_inv">📦 المخزون</button>
@@ -190,9 +183,11 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
   <div class="stat prf"><small data-i18n="st_cost">تكلفة البضاعة</small><b id="sCost">0</b></div>
   <div class="stat prf"><small data-i18n="st_gross">الربح الإجمالي</small><b id="sGross">0</b></div>
   <div class="stat"><small data-i18n="st_exp">المصاريف</small><b id="sExp">0</b></div>
-  <div class="stat"><small data-i18n="st_ret">المرتجعات (مبلغ مردود)</small><b id="sRet">0</b></div>
-  <div class="stat prf"><small data-i18n="st_dmg">التالف (بالتكلفة)</small><b id="sDmg">0</b></div>
-  <div class="stat net prf"><small data-i18n="st_net">صافي الربح اليوم</small><b id="sNet">0</b></div>
+  <div class="stat"><small data-i18n="st_ret">المرتجعات (مردود)</small><b id="sRet">0</b></div>
+  <div class="stat prf"><small data-i18n="st_dmg">التالف (تكلفة)</small><b id="sDmg">0</b></div>
+  <div class="stat net prf"><small data-i18n="st_net">صافي ربح المبيعات اليوم</small><b id="sNet">0</b></div>
+  <div class="stat prf"><small data-i18n="st_mnt_today">ربح الصيانة اليوم</small><b id="sMnt">0</b></div>
+  <div class="stat prf"><small data-i18n="st_tot_today">الصافي الكلي (مبيعات + صيانة)</small><b id="sTot">0</b></div>
 </div>
 
 <div class="card">
@@ -202,7 +197,6 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
     <button id="tRet" data-i18n="btn_ret_tab">↩ مرتجع</button>
   </div>
 
-  <!-- مسح الباركود لويندوز / الكمبيوتر -->
   <div class="desk-only" style="background:rgba(29,111,224,0.06);border:1px dashed var(--pri);border-radius:10px;padding:10px;margin-bottom:12px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <label style="margin:0;font-weight:bold;color:var(--pri)" data-i18n="lbl_scan_barcode">🔍 مسح باركود المنتج (Barcode Scanner)</label>
@@ -211,21 +205,25 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
     <input id="saleBarcode" data-i18n-ph="ph_scan_barcode" placeholder="اضغط هنا أو مرر الماسح الضوئي (قارئ الباركود)..." autocomplete="off" style="margin-top:6px;background:var(--card)">
   </div>
 
-  <label data-i18n="lbl_name_desc">الاسم / الوصف</label>
-  <input id="name" data-i18n-ph="ph_name_desc" placeholder="مثال: شريحة، شاحن، شحن رصيد">
-  
+  <!-- هيكل البيع الاحترافي: الخطوة 1: اختيار الفئة أولاً (مثال: إكسسوار) -->
   <div id="catWrap">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <label style="margin-top:8px" data-i18n="lbl_from_stock">من المخزون (اختياري)</label>
+    <label style="margin-top:0;font-weight:bold;color:var(--pri)" data-i18n="lbl_step1_cat">1. اختر الفئة أولاً (لتصفية الأصناف):</label>
+    <select id="cat" style="border-color:var(--pri);font-weight:600"></select>
+
+    <!-- الخطوة 2: عرض الأصناف التابعة لهذه الفئة فقط -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+      <label style="margin:0;font-weight:bold" data-i18n="lbl_step2_item">2. اختر الصنف التابع للفئة:</label>
       <span id="stockBadge" style="display:none" class="stock-badge"></span>
     </div>
-    <select id="stockSel"></select>
+    <select id="stockSel" style="margin-top:3px"></select>
+    
     <div id="stockInfoBox" style="display:none" class="stock-avail-box">
       <span data-i18n="lbl_stock_avail">الكمية المتوفرة بالمخزون:</span>
       <b id="stockCountTxt" style="font-size:15px">0</b>
     </div>
-    <label data-i18n="lbl_cat">الفئة</label>
-    <select id="cat"></select>
+
+    <label style="margin-top:8px" data-i18n="lbl_name_desc">اسم / تفصيل البيع:</label>
+    <input id="name" data-i18n-ph="ph_name_desc" placeholder="اسم الصنف أو وصف الخدمة">
   </div>
 
   <div id="retWrap" style="display:none">
@@ -255,10 +253,10 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
     <input id="amt" type="number" inputmode="decimal" min="0">
   </div>
 
-  <button class="add" id="addBtn" data-i18n="btn_add">إضافة</button>
+  <button class="add" id="addBtn" data-i18n="btn_add">إتمام الإضافة والبيع ✓</button>
 </div>
 
-<div class="card"><h2 data-i18n="h2_today_ops">عمليات اليوم</h2><div id="list"></div></div>
+<div class="card"><h2 data-i18n="h2_today_ops">عمليات اليوم (الوردية الحالية)</h2><div id="list"></div></div>
 <div class="card prf"><h2 data-i18n="h2_last7">آخر 7 أيام</h2><div class="scroll"><table id="hist"></table></div></div>
 </div>
 
@@ -273,7 +271,7 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
 </div>
 <div class="card" id="iAddCard"><h2 data-i18n="h2_add_stock">إضافة قطع للمخزون</h2>
   <label style="margin-top:0" data-i18n="lbl_item_name">اسم القطعة</label>
-  <input id="iname" data-i18n-ph="ph_item_name" placeholder="مثال: شاحن سامسونج">
+  <input id="iname" data-i18n-ph="ph_item_name" placeholder="مثال: شاحن أنكر">
   <label data-i18n="lbl_cat">الفئة</label><select id="icat"></select>
   <div class="row">
     <div><label data-i18n="lbl_qty">الكمية</label><input id="iqty" type="number" inputmode="numeric" min="0" value="1"></div>
@@ -293,6 +291,11 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
 
 <!-- 3. شاشة الجرد والتقارير -->
 <div id="vRep" style="display:none">
+<div class="tabs" id="sTabs">
+  <button data-s="g" class="on" data-i18n="sec_g">📋 جرد عام للمحل</button>
+  <button data-s="s" data-i18n="sec_s">🧾 جرد المبيعات</button>
+  <button data-s="m" data-i18n="sec_m">🔧 جرد الصيانة</button>
+</div>
 <div class="tabs" id="pTabs">
   <button data-p="d" class="on" data-i18n="btn_p_d">يومي</button>
   <button data-p="w" data-i18n="btn_p_w">أسبوعي</button>
@@ -304,19 +307,13 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
   <input type="date" id="rday">
   <p class="hint" id="rRange"></p>
 </div>
-<div class="grid" style="margin-bottom:12px">
-  <div class="stat"><small data-i18n="st_sales">المبيعات</small><b id="rSales">0</b></div>
-  <div class="stat"><small data-i18n="st_ret">المرتجعات</small><b id="rRet">0</b></div>
-  <div class="stat"><small data-i18n="st_cost">تكلفة البضاعة</small><b id="rCost">0</b></div>
-  <div class="stat"><small data-i18n="st_gross">الربح الإجمالي</small><b id="rGross">0</b></div>
-  <div class="stat"><small data-i18n="st_exp">المصاريف</small><b id="rExp">0</b></div>
-  <div class="stat"><small data-i18n="st_dmg">التالف (بالتكلفة)</small><b id="rDmg">0</b></div>
-  <div class="stat net"><small data-i18n="st_r_net">صافي الربح للفترة</small><b id="rNet">0</b></div>
-</div>
-<div class="card"><h2 data-i18n="h2_by_cat">حسب الفئة</h2><div class="scroll"><table id="rCat"></table></div></div>
-<div class="card"><h2 data-i18n="h2_top_sel">الأكثر مبيعاً</h2><div id="rTop"></div></div>
+<div class="grid" id="rGrid" style="margin-bottom:12px"></div>
+<div class="card" id="rCatCard"><h2 data-i18n="h2_by_cat">حسب الفئة</h2><div class="scroll"><table id="rCat"></table></div></div>
+<div class="card" id="rTopCard"><h2 data-i18n="h2_top_sel">الأكثر مبيعاً</h2><div id="rTop"></div></div>
+<div class="card" id="rMntCard" style="display:none"><h2 data-i18n="h2_mnt_detail">تفصيل أوامر الصيانة المسلّمة</h2><div class="scroll"><table id="rMntTbl"></table></div>
+  <h2 style="margin-top:14px" data-i18n="h2_parts_used">القطع المستخدمة من المخزون</h2><div class="scroll"><table id="rPartsTbl"></table></div></div>
 <div class="card" id="rBreakCard"><h2 data-i18n="h2_breakdown">التفصيل</h2><div class="scroll"><table id="rBreak"></table></div></div>
-<div class="card"><h2 data-i18n="h2_stock_audit">جرد المخزون الحالي</h2>
+<div class="card"><h2 id="rStockTitle" data-i18n="h2_stock_audit">جرد المخزون الحالي</h2>
   <div class="grid">
     <div class="stat"><small data-i18n="st_r_cap">رأس المال (جملة)</small><b id="rCap">0</b></div>
     <div class="stat"><small data-i18n="st_r_val">قيمة المفرق</small><b id="rVal">0</b></div>
@@ -325,6 +322,7 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
   </div>
   <div id="rLow" style="margin-top:8px"></div>
 </div>
+<div class="card"><h2 data-i18n="h2_reg_archive">🗂 أرشيف إغلاقات الصندوق</h2><div id="regArchiveList"></div></div>
 </div>
 
 <!-- 4. شاشة الصيانة -->
@@ -333,6 +331,9 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
   <div class="stat"><small data-i18n="st_m_work">قيد العمل</small><b id="mWork">0</b></div>
   <div class="stat"><small data-i18n="st_m_ready">جاهزة للتسليم</small><b id="mReady" class="ok">0</b></div>
   <div class="stat net"><small data-i18n="st_m_due">مستحق عند تسليم الأجهزة الجاهزة</small><b id="mDue">0</b></div>
+  <div class="stat"><small data-i18n="m_rev">إيراد الصيانة (اليوم)</small><b id="mRev">0</b></div>
+  <div class="stat prf"><small data-i18n="m_pcost">تكلفة القطع (اليوم)</small><b id="mPCost">0</b></div>
+  <div class="stat net prf"><small data-i18n="m_prof">ربح الصيانة (اليوم)</small><b id="mProf">0</b></div>
 </div>
 <div class="card">
   <button class="add" id="mNew" style="margin-top:0" data-i18n="btn_m_new">+ استلام جهاز جديد</button>
@@ -375,6 +376,7 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
     <h2 id="mDT"></h2>
     <label data-i18n="lbl_m_fp">السعر النهائي (شامل العربون)</label><input id="mFP" type="number" inputmode="decimal" min="0">
     <label data-i18n="lbl_m_pc">تكلفة القطع المستخدمة</label><input id="mPC" type="number" inputmode="decimal" min="0">
+    <p class="hint" id="mDP" style="margin-bottom:0"></p>
     <p class="hint" id="mDS"></p>
     <div class="row" style="grid-template-columns:1fr 1fr">
       <button class="add" id="mDOk" style="margin-top:6px" data-i18n="btn_m_confirm_del">تأكيد التسليم</button>
@@ -400,6 +402,7 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
     <label class="chk"><input type="checkbox" id="pStk"> <span data-i18n="perm_stk">تعديل المخزون (إضافة وتعديل الكميات والحذف)</span></label>
     <label class="chk"><input type="checkbox" id="pPrf"> <span data-i18n="perm_prf">رؤية الأرباح والتكلفة وسعر الجملة ورأس المال</span></label>
     <label class="chk"><input type="checkbox" id="pRep"> <span data-i18n="perm_rep">فتح تبويب الجرد والتقارير</span></label>
+    <label class="chk"><input type="checkbox" id="pReg"> <span data-i18n="perm_reg">إغلاق وجرد الصندوق اليومي</span></label>
     <button class="add dng" id="wkOn" data-i18n="btn_wk_on">🔒 تفعيل وضع العامل الآن</button>
     <details style="margin-top:12px"><summary style="cursor:pointer;font-size:14px" data-i18n="sum_wk_chg">تغيير كود المالك</summary>
       <label data-i18n="lbl_wk_old">الكود الحالي</label><input id="wkOldP" type="password" inputmode="numeric" autocomplete="off">
@@ -410,6 +413,16 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
   <p id="wkMsg" style="font-size:14px;margin:10px 0 0"></p>
 </div>
 <button class="add sec" id="wkBack" data-i18n="btn_back">رجوع</button>
+</div>
+<div id="mPartsDlg" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.5);z-index:55;align-items:center;justify-content:center;padding:16px">
+  <div class="card" style="width:100%;max-width:420px;margin:0;max-height:90vh;overflow:auto">
+    <h2 id="mPT"></h2>
+    <label style="margin-top:0" data-i18n="lbl_part_item">اختر القطعة من المخزون</label><select id="mPSel"></select>
+    <label data-i18n="lbl_qty">الكمية</label><input id="mPQty" type="number" inputmode="numeric" min="1" value="1">
+    <button class="add" id="mPAdd" data-i18n="parts_add">إضافة القطعة للجهاز</button>
+    <div id="mPList" style="margin-top:10px"></div>
+    <button class="add sec" id="mPClose" data-i18n="parts_close">إغلاق</button>
+  </div>
 </div>
 <div id="wkDlg" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.55);z-index:60;align-items:center;justify-content:center;padding:16px">
   <div class="card" style="width:100%;max-width:380px;margin:0">
@@ -431,17 +444,52 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
 <div id="vBak" style="display:none">
 <p id="bkMsg" class="hint" style="font-size:14px;margin:0 0 10px"></p>
 
-<!-- 1. إعدادات اللغة (Language Switcher) -->
+<!-- 1. هوية المحل والفواتير عبر واتساب -->
+<div class="card" style="border-color:var(--pri)">
+  <h2 data-i18n="h2_shop_profile">🏪 بيانات المحل والفواتير عبر واتساب</h2>
+  <label style="margin-top:0" data-i18n="lbl_shop_name">اسم المحل / المتجر:</label>
+  <input id="inShopName" placeholder="مثال: ستار فون STAR PHONE">
+
+  <label data-i18n="lbl_shop_phone">رقم هاتف المحل للواتساب (مع الرمز الدولي):</label>
+  <input id="inShopPhone" type="tel" placeholder="مثال: 0980955323 أو 96170123456">
+
+  <label data-i18n="lbl_shop_logo">لوغو المحل (اختر صورة اللوغو):</label>
+  <input type="file" id="inShopLogoFile" accept="image/*">
+  <div id="logoPreviewWrap" style="margin-top:8px;display:none;align-items:center;gap:10px">
+    <img id="logoPreviewImg" style="width:50px;height:50px;border-radius:10px;object-fit:cover;border:1px solid var(--line)" alt="Logo">
+    <button class="qb" id="btnRemoveLogo" style="width:auto;padding:0 8px;font-size:12px;color:var(--bad)">حذف اللوغو ✕</button>
+  </div>
+  <button class="add sec" id="btnSaveShopProfile" style="margin-top:12px" data-i18n="btn_save_shop_profile">حفظ بيانات المحل واللوغو ✓</button>
+</div>
+
+<!-- 2. إعدادات العملة (بدون تعقيد سعر الصرف) -->
+<div class="card">
+  <h2 data-i18n="h2_currency">💱 عملة البرنامج</h2>
+  <p class="hint" style="margin-top:0" data-i18n="desc_currency">اختر العملة المستخدمة في المحل. تبقى المبيعات القديمة محفوظة بعملتها الأصلية لتفادي أي أخطاء في الصندوق.</p>
+  
+  <label data-i18n="lbl_curr_symbol">رمز العملة:</label>
+  <select id="selCurrency">
+    <option value="$">دولار أمريكي ($)</option>
+    <option value="ل.ل">ليرة لبنانية (ل.ل)</option>
+    <option value="ل.س">ليرة سورية (ل.س)</option>
+    <option value="ر.س">ريال سعودي (ر.س)</option>
+    <option value="د.ع">دينار عراقي (د.ع)</option>
+    <option value="€">يورو (€)</option>
+  </select>
+  <button class="add sec" id="btnSaveCurrency" style="margin-top:10px" data-i18n="btn_save_currency">حفظ العملة ✓</button>
+</div>
+
+<!-- 3. إعدادات اللغة -->
 <div class="card">
   <h2 data-i18n="h2_lang">🌐 لغة التطبيق (Language)</h2>
   <label style="margin-top:0" data-i18n="lbl_lang">اختر لغة واجهة البرنامج / Select Interface Language:</label>
   <div class="row" style="grid-template-columns:1fr 1fr;margin-top:6px">
-    <button class="tabs button on" id="btnLangAr" style="padding:10px;font-size:14px;font-weight:bold;cursor:pointer">العربية (Arabic)</button>
-    <button class="tabs button" id="btnLangEn" style="padding:10px;font-size:14px;cursor:pointer">English (الإنجليزية)</button>
+    <button class="lang-btn on" id="btnLangAr" style="padding:10px;font-size:14px;font-weight:bold;cursor:pointer">العربية (Arabic)</button>
+    <button class="lang-btn" id="btnLangEn" style="padding:10px;font-size:14px;cursor:pointer">English (الإنجليزية)</button>
   </div>
 </div>
 
-<!-- 2. معلومات وتحديث التطبيق (App Version) -->
+<!-- 4. معلومات وتحديث التطبيق -->
 <div class="card">
   <h2 data-i18n="h2_app_info">ℹ️ معلومات التطبيق والإصدار</h2>
   <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)">
@@ -450,16 +498,16 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
   </div>
   <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)">
     <span data-i18n="lbl_app_ver">رقم الإصدار (Version):</span>
-    <b id="appVersionTxt" style="direction:ltr;color:var(--ok)">v1.6</b>
+    <b id="appVersionTxt" style="direction:ltr;color:var(--ok)">v2.2</b>
   </div>
   <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)">
     <span data-i18n="lbl_lic_status">حالة الترخيص:</span>
-    <b id="val_lic_status_txt" style="color:var(--ok)" data-i18n="val_lic_status">مفعّل دائم (Lifetime) ✓</b>
+    <b id="val_lic_status_txt" style="color:var(--ok)" data-i18n="val_lic_status">نشط ✓</b>
   </div>
   <button class="add sec" id="btnOpenActivateModal" style="margin-top:10px">🔑 إدخال أو تجديد مفتاح التفعيل</button>
 </div>
 
-<!-- 3. الحفظ التلقائي الفوري بالهاتف عند كل تعديل -->
+<!-- 5. الحفظ التلقائي الفوري -->
 <div class="card" id="autoCard" style="border-color:var(--ok)">
   <h2 data-i18n="h2_instant_bk">⚡ النسخ الاحتياطي التلقائي الفوري</h2>
   <p class="hint" style="margin-top:0" data-i18n="desc_instant_bk">يحفظ نسخة في ذاكرة الهاتف بمجلد <b>Download/StarPhoneBackup</b> تلقائياً وفوراً بعد أي عملية بيع، شراء، تعديل مخزون أو صيانة دون الحاجة لجدولة أو تدخل منك.</p>
@@ -477,7 +525,7 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
   <div id="schList"></div>
 </div>
 
-<!-- 4. نسخ عند الطلب والمزامنة بين الهاتف والحاسوب -->
+<!-- 6. نسخ عند الطلب والمزامنة -->
 <div class="card">
   <h2 data-i18n="h2_sync">🔄 مزامنة ونقل بيانات (جوال ⇄ كمبيوتر)</h2>
   <p class="hint" style="margin-top:0" data-i18n="desc_sync">لحفظ ملف يدوي للمشاركة، أو نقل المبيعات والمخزون بين أجهزتك. احفظ الملف أو انسخ النص وأرسله للجهاز الآخر ثم اضغط «دمج».</p>
@@ -505,7 +553,7 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
   <p class="hint" style="margin-top:8px" data-i18n="hint_merge">«دمج» يجمع العمليات الناقصة دون حذف ما لديك، ويحدث المخزون حسب آخر تعديل.</p>
 </div>
 
-<!-- 5. ضبط المصنع داخل قسم الإعدادات -->
+<!-- 7. ضبط المصنع -->
 <div class="card" style="border-color:var(--bad)">
   <h2 style="color:var(--bad)" data-i18n="h2_factory">🗑 ضبط المصنع وإعادة التهيئة</h2>
   <button class="add dng" id="rstBtn" style="margin-top:4px" data-i18n="btn_factory">🗑 مسح كافة البيانات (ضبط المصنع)</button>
@@ -521,12 +569,18 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
 
 </div>
 
+<!-- الشريط السفلي الدائم لزر إغلاق الصندوق ووضع العامل -->
+<div id="bottomActionsBar">
+  <button id="btnOpenCloseRegister" class="add warn" style="margin-top:0" data-i18n="btn_register_close">📥 إغلاق وجرد الصندوق</button>
+  <button id="wkOpen" class="add sec" style="margin-top:0" data-i18n="wk_open">🔒 وضع العامل</button>
+</div>
+
 <script>
-/* ===== قاموس اللغات الشامل (العربية / English) ===== */
+/* ===== قاموس اللغات الشامل ===== */
 var I18N = {
   ar: {
     app_title: "📱 محاسبة محل الاتصالات",
-    lic_active: "✓ مفعل مدى الحياة",
+    lic_active: "✓ مفعل",
     wk_open: "🔒 وضع العامل",
     wk_active: "🔒 وضع العامل مفعّل",
     wk_unlock: "🔓 فك التقييد",
@@ -540,17 +594,17 @@ var I18N = {
     st_cost: "تكلفة البضاعة",
     st_gross: "الربح الإجمالي",
     st_exp: "المصاريف",
-    st_ret: "المرتجعات (مبلغ مردود)",
-    st_dmg: "التالف (بالتكلفة)",
-    st_net: "صافي الربح اليوم",
+    st_ret: "المرتجعات (مردود)",
+    st_dmg: "التالف (تكلفة)",
     btn_sale_tab: "+ عملية بيع",
     btn_exp_tab: "+ مصروف",
     btn_ret_tab: "↩ مرتجع",
     lbl_scan_barcode: "🔍 مسح باركود المنتج (Barcode Scanner)",
     ph_scan_barcode: "اضغط هنا أو مرر الماسح الضوئي (قارئ الباركود)...",
-    lbl_name_desc: "الاسم / الوصف",
-    ph_name_desc: "مثال: شريحة، شاحن، شحن رصيد",
-    lbl_from_stock: "من المخزون (اختياري)",
+    lbl_step1_cat: "1. اختر الفئة أولاً (لتصفية الأصناف):",
+    lbl_step2_item: "2. اختر الصنف التابع للفئة:",
+    lbl_name_desc: "اسم / تفصيل البيع:",
+    ph_name_desc: "اسم الصنف أو وصف الخدمة",
     lbl_stock_avail: "الكمية المتوفرة بالمخزون:",
     opt_no_stock: "— بدون —",
     lbl_cat: "الفئة",
@@ -562,10 +616,10 @@ var I18N = {
     lbl_cost_price: "سعر الشراء",
     lbl_qty: "الكمية",
     lbl_amt: "المبلغ",
-    btn_add: "إضافة",
+    btn_add: "إتمام الإضافة والبيع ✓",
     btn_add_ret: "تسجيل المرتجع",
-    h2_today_ops: "عمليات اليوم",
-    empty_today: "لا توجد عمليات في هذا اليوم",
+    h2_today_ops: "عمليات اليوم (الوردية الحالية)",
+    empty_today: "لا توجد عمليات في هذه الوردية",
     h2_last7: "آخر 7 أيام",
     th_day: "اليوم",
     th_sales: "مبيعات",
@@ -582,7 +636,7 @@ var I18N = {
     st_kinds: "عدد الأصناف",
     h2_add_stock: "إضافة قطع للمخزون",
     lbl_item_name: "اسم القطعة",
-    ph_item_name: "مثال: شاحن سامسونج",
+    ph_item_name: "مثال: شاحن أنكر",
     lbl_whole: "سعر الجملة",
     lbl_retail: "سعر المفرق",
     lbl_barcode: "رمز الباركود (امسحه بالماسح أو اكتبه يدوياً)",
@@ -633,7 +687,6 @@ var I18N = {
     ph_m_search: "بحث: اسم، هاتف، جهاز",
     empty_mnt: "لا توجد طلبات",
     lbl_m_fp: "السعر النهائي (شامل العربون)",
-    lbl_m_pc: "تكلفة القطع المستخدمة",
     btn_m_confirm_del: "تأكيد التسليم",
     wk_title: "🔒 وضع العامل",
     wk_desc: "عند التفعيل يبقى للعامل: تسجيل البيع، واستلام أجهزة الصيانة وتغيير حالتها وتسليمها. وتُخفى النسخ الاحتياطي والتفعيل وضبط المصنع دائماً، ولا يفك التقييد إلا كود المالك.",
@@ -647,6 +700,7 @@ var I18N = {
     perm_stk: "تعديل المخزون (إضافة وتعديل الكميات والحذف)",
     perm_prf: "رؤية الأرباح والتكلفة وسعر الجملة ورأس المال",
     perm_rep: "فتح تبويب الجرد والتقارير",
+    perm_reg: "إغلاق وجرد الصندوق اليومي",
     btn_wk_on: "🔒 تفعيل وضع العامل الآن",
     sum_wk_chg: "تغيير كود المالك",
     lbl_wk_old: "الكود الحالي",
@@ -659,13 +713,22 @@ var I18N = {
     sum_wk_forgot: "نسيت الكود؟",
     lbl_wk_rec: "رمز الاسترجاع",
     btn_wk_rec_do: "استرجاع",
+    h2_shop_profile: "🏪 بيانات المحل والفواتير عبر واتساب",
+    lbl_shop_name: "اسم المحل / المتجر:",
+    lbl_shop_phone: "رقم هاتف المحل للواتساب (مع الرمز الدولي):",
+    lbl_shop_logo: "لوغو المحل (اختر صورة اللوغو):",
+    btn_save_shop_profile: "حفظ بيانات المحل واللوغو ✓",
+    h2_currency: "💱 عملة البرنامج",
+    desc_currency: "اختر العملة المستخدمة في المحل. تبقى المبيعات القديمة محفوظة بعملتها الأصلية لتفادي أي أخطاء في الصندوق.",
+    lbl_curr_symbol: "رمز العملة:",
+    btn_save_currency: "حفظ العملة ✓",
     h2_lang: "🌐 لغة التطبيق (Language)",
     lbl_lang: "اختر لغة واجهة البرنامج / Select Interface Language:",
     h2_app_info: "ℹ️ معلومات التطبيق والإصدار",
     lbl_app_name: "اسم البرنامج:",
     lbl_app_ver: "رقم الإصدار (Version):",
     lbl_lic_status: "حالة الترخيص:",
-    val_lic_status: "مفعّل دائم (Lifetime) ✓",
+    val_lic_status: "نشط ✓",
     h2_instant_bk: "⚡ النسخ الاحتياطي التلقائي الفوري",
     desc_instant_bk: "يحفظ نسخة في ذاكرة الهاتف بمجلد <b>Download/StarPhoneBackup</b> تلقائياً وفوراً بعد أي عملية بيع، شراء، تعديل مخزون أو صيانة دون الحاجة لجدولة أو تدخل منك.",
     lbl_auto_active: "الحفظ التلقائي بعد كل تعديل: نشط ومفعّل",
@@ -694,11 +757,35 @@ var I18N = {
     txt_ret_back: "مرتجع — عاد للمخزون",
     txt_ret_dmg: "تالف — لم يعد للمخزون",
     txt_pieces: "قطعة",
-    txt_available: "المتوفر:"
+    txt_available: "المتوفر:",
+    btn_register_close: "📥 إغلاق وجرد الصندوق",
+    h2_reg_close: "📥 إغلاق وجرد الصندوق وتصفير الوردية",
+    desc_reg_close: "عند الإغلاق، يتم أرشفة جرد الوردية وتصفير المبيعات والأرباح الظاهرة بالواجهة لبدء يوم/وردية جديدة من الصفر.",
+    reg_sales_total: "إجمالي المبيعات النقدية:",
+    reg_returns_total: "إجمالي المرتجعات:",
+    reg_expenses_total: "إجمالي المصاريف:",
+    reg_net_cash: "الصافي المفترض بالصندوق:",
+    lbl_actual_cash: "المبلغ الفعلي الموجود بالصندوق (العد اليدوي):",
+    btn_save_register: "🔒 تأكيد الإغلاق وتصفير العمليات لليوم الجديد",
+    h2_reg_archive: "🗂 أرشيف إغلاقات الصندوق",
+    st_net: "صافي ربح المبيعات اليوم",
+    st_mnt_today: "ربح الصيانة اليوم",
+    st_tot_today: "الصافي الكلي (مبيعات + صيانة)",
+    m_rev: "إيراد الصيانة (اليوم)", m_pcost: "تكلفة القطع (اليوم)", m_prof: "ربح الصيانة (اليوم)",
+    sec_g: "📋 جرد عام للمحل", sec_s: "🧾 جرد المبيعات", sec_m: "🔧 جرد الصيانة",
+    stock_audit_g: "الجرد العام للمحل (كل المخزون)", stock_audit_s: "جرد مخزون المبيعات", stock_audit_m: "جرد مخزون الصيانة (قطع الغيار)",
+    h2_mnt_detail: "تفصيل أوامر الصيانة المسلّمة", h2_parts_used: "القطع المستخدمة من المخزون",
+    lbl_m_pc: "تكلفة إضافية (قطع من خارج المخزون)",
+    btn_parts: "🔩 قطع من المخزون", lbl_part_item: "اختر القطعة من المخزون", parts_add: "إضافة القطعة للجهاز", parts_close: "إغلاق",
+    reg_mnt_total: "إيراد الصيانة المقبوض:",
+    th_mnt: "صيانة", th_rev: "الإيراد", th_cost: "التكلفة", th_dev: "الجهاز", th_qty: "الكمية",
+    st_rev_all: "إجمالي الإيرادات", st_cost_all: "إجمالي التكاليف", st_s_prof: "صافي ربح المبيعات", st_m_prof: "ربح الصيانة", st_tot_net: "صافي ربح المحل الكلي",
+    st_m_recv: "أجهزة مستلمة بالفترة", st_m_deliv: "أجهزة مسلّمة بالفترة", st_m_unrep: "غير قابلة للإصلاح",
+    btn_wa_invoice: "فاتورة واتساب 📄"
   },
   en: {
     app_title: "📱 Star Phone POS",
-    lic_active: "✓ Lifetime Active",
+    lic_active: "✓ Active",
     wk_open: "🔒 Worker Mode",
     wk_active: "🔒 Worker Mode Active",
     wk_unlock: "🔓 Unlock Restrictions",
@@ -714,15 +801,15 @@ var I18N = {
     st_exp: "Expenses",
     st_ret: "Returns (Refunded)",
     st_dmg: "Damaged (at Cost)",
-    st_net: "Net Profit Today",
     btn_sale_tab: "+ Sale",
     btn_exp_tab: "+ Expense",
     btn_ret_tab: "↩ Return",
     lbl_scan_barcode: "🔍 Barcode Scanner",
     ph_scan_barcode: "Scan barcode here or press Enter...",
-    lbl_name_desc: "Name / Description",
-    ph_name_desc: "e.g., SIM Card, Charger, Top-up",
-    lbl_from_stock: "From Inventory (Optional)",
+    lbl_step1_cat: "1. Select Category First (to filter items):",
+    lbl_step2_item: "2. Select Item from Category:",
+    lbl_name_desc: "Item Name / Description:",
+    ph_name_desc: "Item name or service description",
     lbl_stock_avail: "Available Stock:",
     opt_no_stock: "— None —",
     lbl_cat: "Category",
@@ -734,10 +821,10 @@ var I18N = {
     lbl_cost_price: "Cost Price",
     lbl_qty: "Quantity",
     lbl_amt: "Amount",
-    btn_add: "Add",
+    btn_add: "Complete Sale ✓",
     btn_add_ret: "Record Return",
-    h2_today_ops: "Today's Transactions",
-    empty_today: "No transactions recorded today",
+    h2_today_ops: "Today's Operations (Current Shift)",
+    empty_today: "No transactions in this shift",
     h2_last7: "Last 7 Days",
     th_day: "Date",
     th_sales: "Sales",
@@ -754,7 +841,7 @@ var I18N = {
     st_kinds: "Item Types",
     h2_add_stock: "Add Items to Inventory",
     lbl_item_name: "Item Name",
-    ph_item_name: "e.g., Samsung Fast Charger",
+    ph_item_name: "e.g., Anker Fast Charger",
     lbl_whole: "Wholesale Price",
     lbl_retail: "Retail Price",
     lbl_barcode: "Barcode (Scan or Type)",
@@ -805,7 +892,6 @@ var I18N = {
     ph_m_search: "Search: name, phone, device...",
     empty_mnt: "No repair orders found",
     lbl_m_fp: "Final Price (incl. deposit)",
-    lbl_m_pc: "Parts Cost",
     btn_m_confirm_del: "Confirm Delivery",
     wk_title: "🔒 Worker Mode",
     wk_desc: "When enabled, worker can: record sales, receive and update repairs. Backup, settings, and factory reset are hidden.",
@@ -819,6 +905,7 @@ var I18N = {
     perm_stk: "Modify Inventory (Add/Edit/Delete)",
     perm_prf: "View Profit, Cost & Capital",
     perm_rep: "View Reports & Inventory Count",
+    perm_reg: "Close Daily Register & Shift",
     btn_wk_on: "🔒 Enable Worker Mode Now",
     sum_wk_chg: "Change Owner PIN",
     lbl_wk_old: "Current PIN",
@@ -831,13 +918,22 @@ var I18N = {
     sum_wk_forgot: "Forgot PIN?",
     lbl_wk_rec: "Recovery Code",
     btn_wk_rec_do: "Recover",
+    h2_shop_profile: "🏪 Shop Profile & WhatsApp Invoices",
+    lbl_shop_name: "Shop / Store Name:",
+    lbl_shop_phone: "Shop WhatsApp Number:",
+    lbl_shop_logo: "Shop Logo (Choose image):",
+    btn_save_shop_profile: "Save Profile & Logo ✓",
+    h2_currency: "💱 App Currency",
+    desc_currency: "Select primary currency symbol. Historical sales records remain securely in their original currency.",
+    lbl_curr_symbol: "Currency Symbol:",
+    btn_save_currency: "Save Currency ✓",
     h2_lang: "🌐 Interface Language",
     lbl_lang: "Select Interface Language:",
     h2_app_info: "ℹ️ Application & Version Info",
     lbl_app_name: "App Name:",
     lbl_app_ver: "Version:",
     lbl_lic_status: "License Status:",
-    val_lic_status: "Lifetime Active ✓",
+    val_lic_status: "Active ✓",
     h2_instant_bk: "⚡ Instant Automatic Backup",
     desc_instant_bk: "Saves a copy in phone storage at <b>Download/StarPhoneBackup</b> instantly after every sale, purchase, stock update, or repair without scheduling.",
     lbl_auto_active: "Instant auto-save: Active & Running",
@@ -866,13 +962,37 @@ var I18N = {
     txt_ret_back: "Return — Restocked",
     txt_ret_dmg: "Damaged — Scrapped",
     txt_pieces: "pcs",
-    txt_available: "Available:"
+    txt_available: "Available:",
+    btn_register_close: "📥 Close Register",
+    h2_reg_close: "📥 Close Register & Reset Shift",
+    desc_reg_close: "Closing register archives current shift and resets active operations and profits to 0 for a new shift.",
+    reg_sales_total: "Total Cash Sales:",
+    reg_returns_total: "Total Returns:",
+    reg_expenses_total: "Total Expenses:",
+    reg_net_cash: "Expected Net Cash:",
+    lbl_actual_cash: "Actual Cash Count in Drawer:",
+    btn_save_register: "🔒 Confirm Close & Start New Shift",
+    h2_reg_archive: "🗂 Register Closures Archive",
+    st_net: "Net Sales Profit Today",
+    st_mnt_today: "Repair Profit Today",
+    st_tot_today: "Total Net (Sales + Repairs)",
+    m_rev: "Repair Revenue (Today)", m_pcost: "Parts Cost (Today)", m_prof: "Repair Profit (Today)",
+    sec_g: "📋 Shop-wide Audit", sec_s: "🧾 Sales Audit", sec_m: "🔧 Repairs Audit",
+    stock_audit_g: "Shop-wide Stock Audit (All Inventory)", stock_audit_s: "Sales Stock Audit", stock_audit_m: "Repairs Stock Audit (Spare Parts)",
+    h2_mnt_detail: "Delivered Repair Orders", h2_parts_used: "Parts Used From Stock",
+    lbl_m_pc: "Extra cost (parts not from stock)",
+    btn_parts: "🔩 Stock Parts", lbl_part_item: "Choose part from inventory", parts_add: "Add Part to Device", parts_close: "Close",
+    reg_mnt_total: "Repair Cash Collected:",
+    th_mnt: "Repairs", th_rev: "Revenue", th_cost: "Cost", th_dev: "Device", th_qty: "Qty",
+    st_rev_all: "Total Revenue", st_cost_all: "Total Costs", st_s_prof: "Net Sales Profit", st_m_prof: "Repair Profit", st_tot_net: "Total Shop Net Profit",
+    st_m_recv: "Devices Received", st_m_deliv: "Devices Delivered", st_m_unrep: "Unrepairable",
+    btn_wa_invoice: "WhatsApp Invoice 📄"
   }
 };
 
 var CATEGORIES_DATA = {
-  ar: ["جهاز", "شريحة", "بطاقة شحن / رصيد", "إكسسوار", "صيانة", "أخرى"],
-  en: ["Device", "SIM Card", "Top-up / Balance", "Accessory", "Repair", "Other"]
+  ar: ["إكسسوار", "جهاز", "شريحة", "بطاقة شحن / رصيد", "قطع غيار", "أخرى", "صيانة"],
+  en: ["Accessory", "Device", "SIM Card", "Top-up / Balance", "Spare Parts", "Other", "Repair"]
 };
 
 var MS_LANG = {
@@ -883,12 +1003,46 @@ var MS_LANG = {
 var currentLang = localStorage.getItem("telecom_lang") || "ar";
 function t(k){ return (I18N[currentLang] && I18N[currentLang][k]) || (I18N.ar[k] || k); }
 
+// إعدادات المتجر وهوية الفاتورة
+var shopProfile = {
+  name: localStorage.getItem("star_shop_name") || "STAR PHONE",
+  phone: localStorage.getItem("star_shop_phone") || "0980955323",
+  logo: localStorage.getItem("star_shop_logo") || ""
+};
+
+// عملة البرنامج المحددة فقط
+var curSymbol = localStorage.getItem("star_curr_sym") || "$";
+
 var KEY="telecom_acc_v1", data=[], mode="sale";
 var INV="telecom_inv_v1", inv=[];
 try{ data=JSON.parse(localStorage.getItem(KEY)||"[]"); }catch(e){ data=[]; }
 try{ inv=JSON.parse(localStorage.getItem(INV)||"[]"); }catch(e){ inv=[]; }
 var REPK="telecom_rep_v1", rep=[];
 try{ rep=JSON.parse(localStorage.getItem(REPK)||"[]"); }catch(e){ rep=[]; }
+var REG_ARCHIVE_KEY = "telecom_reg_closes_v1", regArchive = [];
+try{ regArchive=JSON.parse(localStorage.getItem(REG_ARCHIVE_KEY)||"[]"); }catch(e){ regArchive=[]; }
+if(!Array.isArray(data)) data=[]; if(!Array.isArray(inv)) inv=[]; if(!Array.isArray(rep)) rep=[]; if(!Array.isArray(regArchive)) regArchive=[];
+
+/* الفئات تُخزَّن دائماً بقيمتها العربية (مستقلة عن لغة الواجهة) ويُترجم العرض فقط */
+var PARTS = "قطع غيار", REPAIR_CAT = "صيانة";
+function normCat(c){ var i=CATEGORIES_DATA.en.indexOf(c); return i>=0?CATEGORIES_DATA.ar[i]:c; }
+function catName(c){ var i=CATEGORIES_DATA.ar.indexOf(c); return i>=0?CATEGORIES_DATA[currentLang||"ar"][i]:c; }
+function isPart(i){ return i.cat===PARTS; }
+/* ترحيل البيانات القديمة: توحيد الفئات + فصل مبيعات الصيانة عن المبيعات */
+function migrate(o){
+  o.data.forEach(function(e){
+    if(e.cat) e.cat=normCat(e.cat);
+    if(e.type==="sale" && (e.rid || e.cat===REPAIR_CAT)){ e.type="mnt"; e.cat=REPAIR_CAT; if(!e.parts) e.parts=[]; }
+  });
+  o.inv.forEach(function(i){ i.cat=normCat(i.cat); if(i.cat===REPAIR_CAT) i.cat=PARTS; });
+  o.rep.forEach(function(r){ if(!Array.isArray(r.parts)) r.parts=[]; });
+}
+migrate({data:data,inv:inv,rep:rep});
+function markBackup(){ try{ localStorage.setItem(LB,new Date().toISOString()); }catch(e){} try{ bkInfo(); }catch(e){} }
+
+// توقيت بداية الوردية النشطة الحالية (لتصفير الشاشة عند الإغلاق اليومي)
+var currentShiftStart = parseInt(localStorage.getItem("star_current_shift_start")) || 0;
+
 var MS = MS_LANG[currentLang] || MS_LANG.ar;
 var WKK="telecom_wk", WK={on:false,perms:{}};
 try{ var _w=JSON.parse(localStorage.getItem(WKK)||"null"); if(_w) WK=_w; }catch(e){}
@@ -901,21 +1055,61 @@ function save(){
     localStorage.setItem(INV,JSON.stringify(inv));
     localStorage.setItem(TOMB,JSON.stringify(tomb));
     localStorage.setItem(REPK,JSON.stringify(rep));
+    localStorage.setItem(REG_ARCHIVE_KEY,JSON.stringify(regArchive));
   }catch(e){}
 }
 function today(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
-function fmt(n){ return Number(n||0).toLocaleString("en-US",{maximumFractionDigits:2}); }
+function fmt(n){ return Number(n||0).toLocaleString("en-US",{maximumFractionDigits:2}) + " " + curSymbol; }
 function $(id){ return document.getElementById(id); }
 $("day").value=today();
 $("day").onchange=renderAll;
 
-function sums(day){
-  var s=0,c=0,x=0,rt=0,dm=0;
-  data.forEach(function(e){ if(e.date!==day) return;
+// تصفية عمليات اليوم: التصفير بعد إغلاق الصندوق يخص "اليوم الحالي" فقط ولا يخفي الأيام السابقة
+function getActiveShiftData(day){
+  return data.filter(function(e){
+    if(e.date !== day) return false;
+    if(day === today() && currentShiftStart > 0 && e.id < currentShiftStart) return false;
+    return true;
+  });
+}
+function calc(list){
+  var s=0,c=0,x=0,rt=0,dm=0,ms=0,mc=0;
+  list.forEach(function(e){
     if(e.type==="sale"){ s+=e.price*e.qty; c+=e.cost*e.qty; }
+    else if(e.type==="mnt"){ ms+=e.price*e.qty; mc+=e.cost*e.qty; }
     else if(e.type==="ret"){ rt+=e.price*e.qty; if(e.kind==="back") c-=e.cost*e.qty; else dm+=e.cost*e.qty; }
-    else x+=e.amt; });
-  return {s:s,rt:rt,dm:dm,c:c,g:s-rt-c,x:x,n:s-rt-c-x};
+    else if(e.type==="exp") x+=e.amt;
+  });
+  var n=s-rt-c-x, mp=ms-mc;
+  return {s:s,rt:rt,c:c,x:x,dm:dm,ms:ms,mc:mc,mp:mp,g:s-rt-c,n:n,tn:n+mp};
+}
+function sums(day){ return calc(getActiveShiftData(day)); }
+
+/* تحديث الأصناف المعروضة بناءً على الفئة المختارة أولاً */
+function updateItemsForSelectedCategory(){
+  var selectedCat = $("cat") ? $("cat").value : "";
+  var stockSel = $("stockSel");
+  if(!stockSel) return;
+
+  var currentVal = stockSel.value;
+  var filteredItems = inv.filter(function(item){
+    if(selectedCat && item.cat !== selectedCat) return false;
+    return mode === "ret" || item.qty > 0;
+  });
+
+  var h = '<option value="">' + t("opt_no_stock") + '</option>';
+  filteredItems.forEach(function(i){
+    h += '<option value="' + i.id + '">' + esc(i.name) + ' [' + t("txt_available") + ' ' + i.qty + ']</option>';
+  });
+
+  stockSel.innerHTML = h;
+
+  // إذا كان الصنف المختار سابقاً لا يزال ضمن القائمة المختارة نحافظ عليه
+  var exists = filteredItems.some(function(i){ return String(i.id) === currentVal; });
+  if(exists) stockSel.value = currentVal;
+  else stockSel.value = "";
+
+  updateStockDisplay();
 }
 
 function updateStockDisplay(){
@@ -961,43 +1155,69 @@ function setMode(m){
   $("expRow").style.display=m==="exp"?"":"none";
   $("retWrap").style.display=m==="ret"?"":"none";
   $("addBtn").textContent=m==="ret"?t("btn_add_ret"):t("btn_add");
-  renderInv();
-  updateStockDisplay();
+  updateItemsForSelectedCategory();
 }
 $("tSale").onclick=function(){setMode("sale")};
 $("tExp").onclick=function(){setMode("exp")};
 $("tRet").onclick=function(){setMode("ret")};
 
+// عند تغيير الفئة نقوم بتصفية الأصناف فوراً
+$("cat").onchange = function(){
+  updateItemsForSelectedCategory();
+};
+
+$("stockSel").onchange=function(){
+  var it=inv.filter(function(i){return String(i.id)===$("stockSel").value})[0];
+  if(it){
+    $("name").value=it.name;
+    $("price").value=it.retail;
+    $("cost").value=it.whole;
+  }
+  updateStockDisplay();
+};
+
 $("addBtn").onclick=function(){
   var name=$("name").value.trim(), day=$("day").value||today();
+  var catVal=$("cat").value;
+  var newSaleItem = null;
+
   if(mode==="ret"){
-    var p=parseFloat($("price").value), c=parseFloat($("cost").value)||0, q=parseInt($("qty").value)||1, k=$("kind").value;
-    if(isNaN(p)){ $("price").focus(); return; }
+    var p=parseFloat($("price").value), c=parseFloat($("cost").value)||0, q=Math.max(1,parseInt($("qty").value)||1), k=$("kind").value;
+    if(isNaN(p)||p<0){ $("price").focus(); return; }
     var sid=$("stockSel").value, it=sid?inv.filter(function(i){return String(i.id)===sid})[0]:null;
     if(it){ if(k==="back") it.qty+=q; else it.dmg=(it.dmg||0)+q; }
-    data.push({id:Date.now(),date:day,type:"ret",name:name||$("cat").value,cat:$("cat").value,price:p,cost:c,qty:q,kind:k,note:$("inote").value.trim(),sid:it?it.id:null});
+    data.push({id:Date.now(),date:day,type:"ret",name:name||catVal,cat:catVal,price:p,cost:c,qty:q,kind:k,note:$("inote").value.trim(),sid:it?it.id:null,curr:curSymbol});
     $("stockSel").value=""; $("inote").value="";
   } else if(mode==="sale"){
-    var p=parseFloat($("price").value), c=parseFloat($("cost").value)||0, q=parseInt($("qty").value)||1;
-    if(isNaN(p)){ $("price").focus(); return; }
+    var p=parseFloat($("price").value), c=parseFloat($("cost").value)||0, q=Math.max(1,parseInt($("qty").value)||1);
+    if(isNaN(p)||p<0){ $("price").focus(); return; }
     var sid=$("stockSel").value, it=null, tk=0;
-    if(sid){
-      it=inv.filter(function(i){return String(i.id)===sid})[0];
+    if(sid){ it=inv.filter(function(i){return String(i.id)===sid})[0]||null; }
+    if(it&&it.qty<q){
       var confirmMsg = (currentLang==="en") ? ("Available stock is only " + it.qty + ". Continue?") : ("الكمية المتوفرة " + it.qty + " فقط. متابعة؟");
-      if(it&&it.qty<q&&!confirm(confirmMsg)) return;
+      if(!confirm(confirmMsg)) return;
     }
     if(it){ tk=Math.min(q,it.qty); it.qty-=tk; }
-    data.push({id:Date.now(),date:day,type:"sale",name:name||$("cat").value,cat:$("cat").value,price:p,cost:c,qty:q,sid:it?it.id:null,tk:tk});
+    newSaleItem = {id:Date.now(),date:day,type:"sale",name:name||catVal,cat:catVal,price:p,cost:c,qty:q,sid:it?it.id:null,tk:tk,curr:curSymbol};
+    data.push(newSaleItem);
     $("stockSel").value="";
   } else {
     var a=parseFloat($("amt").value);
-    if(isNaN(a)){ $("amt").focus(); return; }
-    data.push({id:Date.now(),date:day,type:"exp",name:name||t("txt_expense"),amt:a});
+    if(isNaN(a)||a<0){ $("amt").focus(); return; }
+    data.push({id:Date.now(),date:day,type:"exp",name:name||t("txt_expense"),amt:a,curr:curSymbol});
   }
   save();
   ["name","price","cost","amt"].forEach(function(i){$(i).value=""});
   $("qty").value=1;
   renderAll();
+
+  // اقتراح إرسال فاتورة واتساب مباشرة بعد إتمام عملية البيع
+  if(newSaleItem && mode==="sale"){
+    var sendConfirm = currentLang==="en" ? "Sale recorded! Do you want to send a WhatsApp invoice?" : "تم تسجيل البيع بنجاح! هل تود إصدار فاتورة واتساب للعميل؟";
+    if(confirm(sendConfirm)){
+      sendWhatsAppInvoice(newSaleItem);
+    }
+  }
 };
 
 function del(id){
@@ -1019,6 +1239,52 @@ function del(id){
   renderAll();
 }
 
+/* توليد وإرسال فاتورة واتساب للبيع */
+function sendWhatsAppInvoice(item){
+  var custPhone = prompt(currentLang==="en" ? "Enter Customer WhatsApp Number:" : "أدخل رقم هاتف العميل لإرسال الفاتورة عبر واتساب:", "");
+  if(custPhone === null) return;
+  custPhone = custPhone.replace(/\D/g, "");
+  
+  var shop = shopProfile.name || "STAR PHONE";
+  var total = (item.price * item.qty).toLocaleString("en-US", {maximumFractionDigits:2}) + " " + (item.curr || curSymbol);
+  
+  var invoiceTxt = currentLang === "en"
+    ? ("🧾 *INVOICE FROM " + shop + "* 🧾\n" +
+       "----------------------------\n" +
+       "📅 Date: " + item.date + "\n" +
+       "📦 Item: " + item.name + "\n" +
+       "🏷 Category: " + item.cat + "\n" +
+       "🔢 Quantity: " + item.qty + "\n" +
+       "💰 Price: " + item.price + " " + (item.curr || curSymbol) + "\n" +
+       "----------------------------\n" +
+       "💳 *TOTAL: " + total + "*\n" +
+       "Thank you for choosing us! ✨")
+    : ("🧾 *فاتورة مبيعات من " + shop + "* 🧾\n" +
+       "----------------------------\n" +
+       "📅 التاريخ: " + item.date + "\n" +
+       "📦 الصنف: " + item.name + "\n" +
+       "🏷 الفئة: " + item.cat + "\n" +
+       "🔢 الكمية: " + item.qty + "\n" +
+       "💰 السعر: " + item.price + " " + (item.curr || curSymbol) + "\n" +
+       "----------------------------\n" +
+       "💳 *المجموع الكلي: " + total + "*\n" +
+       "شكراً لتعاملكم معنا ونسعد بخدمتكم دائماً! ✨");
+
+  openWhatsAppMessage(custPhone, invoiceTxt);
+}
+
+function openWhatsAppMessage(phone, text){
+  var p = String(phone||"").replace(/\D/g, "");
+  if(p.startsWith("00")) p = p.slice(2);
+  if(/^0[3-9]\d{6}$/.test(p)) p = "961" + p.slice(1);
+  else if(/^[378]\d{6,7}$/.test(p)) p = "961" + p;
+  else if(/^09\d{8}$/.test(p)) p = "963" + p.slice(1);
+  
+  var enc = encodeURIComponent(text);
+  var waUrl = p ? ("https://api.whatsapp.com/send?phone=" + p + "&text=" + enc) : ("https://api.whatsapp.com/send?text=" + enc);
+  window.open(waUrl, "_blank");
+}
+
 function render(){
   var day=$("day").value||today(), s=sums(day);
   $("sSales").textContent=fmt(s.s);
@@ -1029,28 +1295,40 @@ function render(){
   $("sDmg").textContent=fmt(s.dm);
   $("sNet").textContent=fmt(s.n);
   $("sNet").className=s.n>=0?"ok":"bad";
+  $("sMnt").textContent=fmt(s.mp); $("sMnt").className=s.mp>=0?"ok":"bad";
+  $("sTot").textContent=fmt(s.tn); $("sTot").className=s.tn>=0?"ok":"bad";
   
-  var items=data.filter(function(e){return e.date===day}).reverse();
+  var items=getActiveShiftData(day).filter(function(e){return e.type!=="mnt";}).reverse();
   $("list").innerHTML=items.length?"":'<div class="empty">'+t("empty_today")+'</div>';
   
   items.forEach(function(e){
     var d=document.createElement("div"); d.className="item";
+    var cur = e.curr || curSymbol;
+    var waInvoiceBtn = (e.type==="sale") 
+      ? ' <button class="wa-btn-inv" data-id="'+e.id+'">'+t("btn_wa_invoice")+'</button>' 
+      : '';
+
     var left=e.type==="ret"
       ? '<div><b>↩ '+esc(e.name)+'</b><small>'+(e.kind==="back"?t("txt_ret_back"):t("txt_ret_dmg"))+' · '+e.qty+' × '+fmt(e.price)+(e.note?' · '+esc(e.note):'')+'</small></div><b class="bad">-'+fmt(e.price*e.qty)+'</b>'
       : e.type==="sale"
-      ? '<div><b>'+esc(e.name)+'</b><small>'+esc(e.cat)+' · '+e.qty+' × '+fmt(e.price)+(wkHidePrf()?'':' · '+t("txt_profit")+' '+fmt((e.price-e.cost)*e.qty))+'</small></div><b class="ok">'+fmt(e.price*e.qty)+'</b>'
-      : '<div><b>'+esc(e.name)+'</b><small>'+t("txt_expense")+'</small></div><b class="bad">-'+fmt(e.amt)+'</b>';
+      ? '<div><b>'+esc(e.name)+'</b><small>'+esc(catName(e.cat))+' · '+e.qty+' × '+fmt(e.price)+(wkHidePrf()?'':' · '+t("txt_profit")+' '+fmt((e.price-e.cost)*e.qty))+'</small><div style="margin-top:4px">'+waInvoiceBtn+'</div></div><b class="ok">'+fmt(e.price*e.qty)+'</b>'
+      : '<div><b>'+esc(e.name)+'</b><small>'+t("txt_expense")+'</small></div><b class="bad">-'+Number(e.amt||0).toLocaleString("en-US",{maximumFractionDigits:2})+' '+cur+'</b>';
     d.innerHTML=left+'<button class="del" aria-label="Delete">✕</button>';
+    
+    var btnWa = d.querySelector(".wa-btn-inv");
+    if(btnWa){
+      btnWa.onclick = function(){ sendWhatsAppInvoice(e); };
+    }
     d.querySelector(".del").onclick=function(){del(e.id)};
     $("list").appendChild(d);
   });
   
-  var h='<tr><th>'+t("th_day")+'</th><th>'+t("th_sales")+'</th><th>'+t("th_exp")+'</th><th>'+t("th_net")+'</th></tr>', d0=new Date();
+  var h='<tr><th>'+t("th_day")+'</th><th>'+t("th_sales")+'</th><th>'+t("th_exp")+'</th><th>'+t("th_net")+'</th><th>'+t("th_mnt")+'</th></tr>', d0=new Date();
   for(var i=0;i<7;i++){
     var d=new Date(d0.getFullYear(),d0.getMonth(),d0.getDate()-i);
     var k=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-    var r=sums(k);
-    h+='<tr><td>'+k.slice(5)+'</td><td>'+fmt(r.s-r.rt)+'</td><td>'+fmt(r.x)+'</td><td class="'+(r.n>=0?"ok":"bad")+'">'+fmt(r.n)+'</td></tr>';
+    var r=calc(data.filter(function(e){return e.date===k;}));
+    h+='<tr><td>'+k.slice(5)+'</td><td>'+fmt(r.s-r.rt)+'</td><td>'+fmt(r.x)+'</td><td class="'+(r.n>=0?"ok":"bad")+'">'+fmt(r.n)+'</td><td class="'+(r.mp>=0?"ok":"bad")+'">'+fmt(r.mp)+'</td></tr>';
   }
   $("hist").innerHTML=h;
 }
@@ -1060,65 +1338,12 @@ function renderAll(){
   renderInv();
   renderMnt();
   renderRep();
-  updateStockDisplay();
+  updateItemsForSelectedCategory();
+  renderShopProfile();
 }
 
-function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]}); }
+function esc(s){ return String(s||"").replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]}); }
 
-/* WhatsApp Direct Launcher */
-function openWhatsApp(phone, devName, custName){
-  var p = String(phone||"").replace(/\D/g, "");
-  if(!p) return;
-  if(p.startsWith("00")) p = p.slice(2);
-  if(/^0[3-9]\d{6}$/.test(p)) p = "961" + p.slice(1);
-  else if(/^[378]\d{6,7}$/.test(p)) p = "961" + p;
-  else if(/^09\d{8}$/.test(p)) p = "963" + p.slice(1);
-  
-  var text = (currentLang==="en") 
-    ? ("Hello " + (custName || "") + ", regarding your device " + (devName || "") + " at the service center:")
-    : ("مرحباً " + (custName || "") + "، بخصوص جهازك " + (devName || "") + " في مركز الصيانة:");
-  var encText = encodeURIComponent(text);
-  
-  var waCustomScheme = "whatsapp://send?phone=" + p + "&text=" + encText;
-  var intentUrl = "intent://send?phone=" + p + "&text=" + encText + "#Intent;package=com.whatsapp;scheme=whatsapp;end";
-  var waWebUrl = "https://api.whatsapp.com/send?phone=" + p + "&text=" + encText;
-  var waMeUrl = "https://wa.me/" + p + "?text=" + encText;
-
-  try {
-    if(window.Capacitor && window.Capacitor.Plugins){
-      if(window.Capacitor.Plugins.AppLauncher && window.Capacitor.Plugins.AppLauncher.openUrl){
-        window.Capacitor.Plugins.AppLauncher.openUrl({ url: waCustomScheme });
-        return;
-      }
-      if(window.Capacitor.Plugins.App && window.Capacitor.Plugins.App.openUrl){
-        window.Capacitor.Plugins.App.openUrl({ url: waCustomScheme });
-        return;
-      }
-    }
-  } catch(err){}
-
-  try {
-    var a = document.createElement("a");
-    a.href = intentUrl;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  } catch(e){}
-
-  setTimeout(function(){
-    try { window.location.href = waCustomScheme; }
-    catch(e){ window.open(waMeUrl, "_system"); }
-  }, 150);
-
-  setTimeout(function(){
-    try { window.open(waWebUrl, "_system"); }
-    catch(e){ window.open(waWebUrl, "_blank"); }
-  }, 600);
-}
-
-/* ===== المخزون ===== */
 function setView(v){
   [["s","vSales","nS"],["i","vInv","nI"],["m","vMnt","nM"],["r","vRep","nR"],["b","vBak","nB"]].forEach(function(a){
     $(a[1]).style.display=v===a[0]?"":"none";
@@ -1148,6 +1373,7 @@ $("iAdd").onclick=function(){
   ["iname","iwhole","iretail","ibarcode"].forEach(function(i){var el=$(i);if(el)el.value=""});
   $("iqty").value=1;
   renderAll();
+  updateItemsForSelectedCategory();
 };
 
 function stk(id,d){ var it=inv.filter(function(i){return i.id===id})[0]; if(!it) return; it.qty=Math.max(0,it.qty+d); save(); renderAll(); }
@@ -1158,15 +1384,8 @@ function delItem(id){
   tomb[id]=Date.now();
   save();
   renderAll();
+  updateItemsForSelectedCategory();
 }
-
-$("stockSel").onchange=function(){
-  var it=inv.filter(function(i){return String(i.id)===$("stockSel").value})[0];
-  if(it){
-    $("name").value=it.name; $("price").value=it.retail; $("cost").value=it.whole; $("cat").value=it.cat;
-  }
-  updateStockDisplay();
-};
 
 function renderInv(){
   var cap=0,val=0,cnt=0;
@@ -1186,7 +1405,7 @@ function renderInv(){
     var wholeTxt = (currentLang==="en") ? "Cost " : "جملة ";
     var retailTxt = (currentLang==="en") ? "Retail " : "مفرق ";
     var dmgTxt = (currentLang==="en") ? "Scrap " : "تالف ";
-    d.innerHTML='<div><b>'+esc(i.name)+bcTag+'</b><small>'+esc(i.cat)+(wkHidePrf()?'':' · '+wholeTxt+fmt(i.whole))+' · '+retailTxt+fmt(i.retail)+(i.dmg?' · '+dmgTxt+i.dmg:'')+'</small></div>'
+    d.innerHTML='<div><b>'+esc(i.name)+bcTag+'</b><small>'+esc(catName(i.cat))+(wkHidePrf()?'':' · '+wholeTxt+fmt(i.whole))+' · '+retailTxt+fmt(i.retail)+(i.dmg?' · '+dmgTxt+i.dmg:'')+'</small></div>'
       +'<div class="ctl"><button class="qb" data-d="-1">−</button><b class="'+(i.qty<=2?"low":"")+'">'+i.qty+'</b><button class="qb" data-d="1">+</button><button class="del" aria-label="Delete">✕</button></div>';
     d.querySelectorAll(".qb").forEach(function(b){ b.onclick=function(){ stk(i.id,parseInt(b.getAttribute("data-d"))); }; });
     d.querySelector(".del").onclick=function(){ delItem(i.id); };
@@ -1202,14 +1421,8 @@ function renderInv(){
     r.innerHTML='<div><b>'+esc(e.name)+'</b><small>'+e.date+' · '+e.qty+(e.note?' · '+esc(e.note):'')+'</small></div><b class="bad">'+fmt(e.cost*e.qty)+'</b>';
     D.appendChild(r);
   });
-  
-  var cur=$("stockSel").value, h='<option value="">'+t("opt_no_stock")+'</option>';
-  inv.forEach(function(i){ if(mode==="ret"||i.qty>0) h+='<option value="'+i.id+'">'+esc(i.name)+' ['+t("txt_available")+' '+i.qty+']</option>'; });
-  $("stockSel").innerHTML=h;
-  $("stockSel").value=cur;
 }
 
-/* ===== الجرد ===== */
 var per="d";
 $("rday").value=today();
 function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
@@ -1221,61 +1434,79 @@ function range(p,ref){
   else { a=new Date(y,0,1); b=new Date(y,11,31); }
   return [ymd(a),ymd(b)];
 }
-function calc(list){
-  var s=0,c=0,x=0,rt=0,dm=0;
-  list.forEach(function(e){
-    if(e.type==="sale"){ s+=e.price*e.qty; c+=e.cost*e.qty; }
-    else if(e.type==="ret"){ rt+=e.price*e.qty; if(e.kind==="back") c-=e.cost*e.qty; else dm+=e.cost*e.qty; }
-    else x+=e.amt; });
-  return {s:s,rt:rt,c:c,x:x,dm:dm,g:s-rt-c,n:s-rt-c-x};
-}
+var sec="g";
+function sCard(l,v,c,net){ return '<div class="stat'+(net?' net':'')+'"><small>'+l+'</small><b class="'+(c||'')+'">'+v+'</b></div>'; }
 function renderRep(){
-  var rg=range(per,$("rday").value||today()), lo=rg[0], hi=rg[1];
-  var L=data.filter(function(e){return e.date>=lo&&e.date<=hi}), tCal=calc(L);
-  $("rRange").textContent=lo===hi?lo:((currentLang==="en"?"From ":"من ")+lo+(currentLang==="en"?" to ":" إلى ")+hi);
-  $("rSales").textContent=fmt(tCal.s);
-  $("rRet").textContent=fmt(tCal.rt);
-  $("rCost").textContent=fmt(tCal.c);
-  $("rGross").textContent=fmt(tCal.g);
-  $("rExp").textContent=fmt(tCal.x);
-  $("rDmg").textContent=fmt(tCal.dm);
-  $("rNet").textContent=fmt(tCal.n);
-  $("rNet").className=tCal.n>=0?"ok":"bad";
-  
+  var rg=range(per,$("rday").value||today()), lo=rg[0], hi=rg[1], en=currentLang==="en";
+  var L=data.filter(function(e){return e.date>=lo&&e.date<=hi});
+  var LS=sec==="s"?L.filter(function(e){return e.type!=="mnt";}):(sec==="m"?L.filter(function(e){return e.type==="mnt";}):L);
+  var k=calc(LS), g="";
+  $("rRange").textContent=lo===hi?lo:((en?"From ":"من ")+lo+(en?" to ":" إلى ")+hi);
+  var cl=function(v){ return v>=0?"ok":"bad"; };
+  if(sec==="s"){
+    g=sCard(t("st_sales"),fmt(k.s))+sCard(t("st_ret"),fmt(k.rt))+sCard(t("st_cost"),fmt(k.c))+sCard(t("st_gross"),fmt(k.g))+sCard(t("st_exp"),fmt(k.x))+sCard(t("st_dmg"),fmt(k.dm))+sCard(t("st_s_prof"),fmt(k.n),cl(k.n),1);
+  } else if(sec==="m"){
+    var rc=rep.filter(function(r){return r.date>=lo&&r.date<=hi;}), unr=rc.filter(function(r){return r.status==="unrep";}).length;
+    g=sCard(t("st_m_recv"),rc.length)+sCard(t("st_m_deliv"),LS.length)+sCard(t("th_rev"),fmt(k.ms))+sCard(t("th_cost")+" ("+t("lbl_m_pc").split(" (")[0].slice(0,0)+(currentLang==="en"?"parts":"القطع")+")",fmt(k.mc))+sCard(t("st_m_unrep"),unr)+sCard(t("st_m_prof"),fmt(k.mp),cl(k.mp),1);
+  } else {
+    g=sCard(t("st_rev_all"),fmt(k.s-k.rt+k.ms))+sCard(t("st_cost_all"),fmt(k.c+k.mc))+sCard(t("st_s_prof"),fmt(k.n),cl(k.n))+sCard(t("st_m_prof"),fmt(k.mp),cl(k.mp))+sCard(t("st_exp"),fmt(k.x))+sCard(t("st_dmg"),fmt(k.dm))+sCard(t("st_tot_net"),fmt(k.tn),cl(k.tn),1);
+  }
+  $("rGrid").innerHTML=g;
+  $("rCatCard").style.display=sec==="m"?"none":""; $("rTopCard").style.display=sec==="m"?"none":""; $("rMntCard").style.display=sec==="m"?"":"none";
+
   var cats={}, tops={};
-  L.forEach(function(e){ if(e.type==="exp") return;
+  if(sec!=="m") LS.forEach(function(e){ if(e.type==="exp") return;
     var c=cats[e.cat]=cats[e.cat]||{s:0,rt:0,c:0};
-    if(e.type==="sale"){ c.s+=e.price*e.qty; c.c+=e.cost*e.qty; var o=tops[e.name]=tops[e.name]||{q:0,v:0}; o.q+=e.qty; o.v+=e.price*e.qty; }
+    if(e.type==="sale"||e.type==="mnt"){ c.s+=e.price*e.qty; c.c+=e.cost*e.qty; if(e.type==="sale"){ var o=tops[e.name]=tops[e.name]||{q:0,v:0}; o.q+=e.qty; o.v+=e.price*e.qty; } }
     else { c.rt+=e.price*e.qty; if(e.kind==="back") c.c-=e.cost*e.qty; } });
-  
   var h='<tr><th>'+t("th_cat")+'</th><th>'+t("th_sales")+'</th><th>'+t("th_ret")+'</th><th>'+t("th_profit")+'</th></tr>', ks=Object.keys(cats);
-  ks.forEach(function(k){ var c=cats[k], p=c.s-c.rt-c.c; h+='<tr><td>'+esc(k)+'</td><td>'+fmt(c.s)+'</td><td>'+fmt(c.rt)+'</td><td class="'+(p>=0?"ok":"bad")+'">'+fmt(p)+'</td></tr>'; });
-  $("rCat").innerHTML=ks.length?h:'<tr><td class="empty">'+(currentLang==="en"?"No data for this period":"لا توجد بيانات في هذه الفترة")+'</td></tr>';
-  
+  ks.forEach(function(kk){ var c=cats[kk], pr=c.s-c.rt-c.c; h+='<tr><td>'+esc(catName(kk))+'</td><td>'+fmt(c.s)+'</td><td>'+fmt(c.rt)+'</td><td class="'+cl(pr)+'">'+fmt(pr)+'</td></tr>'; });
+  $("rCat").innerHTML=ks.length?h:'<tr><td class="empty">'+(en?"No data for this period":"لا توجد بيانات في هذه الفترة")+'</td></tr>';
   var tk=Object.keys(tops).sort(function(a,b){return tops[b].q-tops[a].q}).slice(0,5), T=$("rTop");
   T.innerHTML=tk.length?"":'<div class="empty">'+t("empty_top")+'</div>';
-  tk.forEach(function(k){
+  tk.forEach(function(kk){
     var d=document.createElement("div"); d.className="item";
-    d.innerHTML='<div><b>'+esc(k)+'</b><small>'+(currentLang==="en"?"Quantity: ":"الكمية: ")+tops[k].q+'</small></div><b class="ok">'+fmt(tops[k].v)+'</b>';
+    d.innerHTML='<div><b>'+esc(kk)+'</b><small>'+(en?"Quantity: ":"الكمية: ")+tops[kk].q+'</small></div><b class="ok">'+fmt(tops[kk].v)+'</b>';
     T.appendChild(d);
   });
-  
+
+  if(sec==="m"){
+    var mh='<tr><th>'+t("th_day")+'</th><th>'+t("th_dev")+'</th><th>'+t("th_rev")+'</th><th>'+t("th_cost")+'</th><th>'+t("th_profit")+'</th></tr>', parts={};
+    LS.slice().sort(function(a,b){return a.id-b.id;}).forEach(function(e){
+      mh+='<tr><td>'+e.date.slice(5)+'</td><td>'+esc(e.name.replace(/^[^:]*:\s*/,""))+'</td><td>'+fmt(e.price)+'</td><td>'+fmt(e.cost)+'</td><td class="'+cl(e.price-e.cost)+'">'+fmt(e.price-e.cost)+'</td></tr>';
+      (e.parts||[]).forEach(function(pt){ var o=parts[pt.name]=parts[pt.name]||{q:0,c:0}; o.q+=pt.qty; o.c+=pt.qty*pt.cost; });
+    });
+    $("rMntTbl").innerHTML=LS.length?mh:'<tr><td class="empty">'+(en?"No delivered repairs in this period":"لا توجد أجهزة مسلّمة في هذه الفترة")+'</td></tr>';
+    var pk=Object.keys(parts), ph='<tr><th>'+t("lbl_item_name")+'</th><th>'+t("th_qty")+'</th><th>'+t("th_cost")+'</th></tr>';
+    pk.forEach(function(n){ ph+='<tr><td>'+esc(n)+'</td><td>'+parts[n].q+'</td><td>'+fmt(parts[n].c)+'</td></tr>'; });
+    $("rPartsTbl").innerHTML=pk.length?ph:'<tr><td class="empty">'+(en?"No stock parts used":"لا توجد قطع مستخدمة من المخزون")+'</td></tr>';
+  }
+
   $("rBreakCard").style.display=per==="d"?"none":"";
   if(per!=="d"){
-    var grp={}; L.forEach(function(e){ var k=per==="y"?e.date.slice(0,7):e.date; (grp[k]=grp[k]||[]).push(e); });
-    var bh='<tr><th>'+(per==="y"?t("th_month"):t("th_day"))+'</th><th>'+t("th_sales")+'</th><th>'+t("th_exp")+'</th><th>'+t("th_net")+'</th></tr>', gk=Object.keys(grp).sort();
-    gk.forEach(function(k){ var r=calc(grp[k]); bh+='<tr><td>'+k+'</td><td>'+fmt(r.s-r.rt)+'</td><td>'+fmt(r.x)+'</td><td class="'+(r.n>=0?"ok":"bad")+'">'+fmt(r.n)+'</td></tr>'; });
-    $("rBreak").innerHTML=gk.length?bh:'<tr><td class="empty">'+(currentLang==="en"?"No data":"لا توجد بيانات")+'</td></tr>';
+    var grp={}; LS.forEach(function(e){ var kk=per==="y"?e.date.slice(0,7):e.date; (grp[kk]=grp[kk]||[]).push(e); });
+    var hd=sec==="m"?[t("th_rev"),t("th_cost"),t("th_profit")]:(sec==="g"?[t("th_rev"),t("th_exp"),t("th_net")]:[t("th_sales"),t("th_exp"),t("th_net")]);
+    var bh='<tr><th>'+(per==="y"?t("th_month"):t("th_day"))+'</th><th>'+hd[0]+'</th><th>'+hd[1]+'</th><th>'+hd[2]+'</th></tr>', gk=Object.keys(grp).sort();
+    gk.forEach(function(kk){ var r=calc(grp[kk]), c3=sec==="m"?[r.ms,r.mc,r.mp]:(sec==="g"?[r.s-r.rt+r.ms,r.x,r.tn]:[r.s-r.rt,r.x,r.n]);
+      bh+='<tr><td>'+kk+'</td><td>'+fmt(c3[0])+'</td><td>'+fmt(c3[1])+'</td><td class="'+cl(c3[2])+'">'+fmt(c3[2])+'</td></tr>'; });
+    $("rBreak").innerHTML=gk.length?bh:'<tr><td class="empty">'+(en?"No data":"لا توجد بيانات")+'</td></tr>';
   }
-  
-  var cap=0,val=0,cnt=0,low=inv.filter(function(i){return i.qty<=2});
-  inv.forEach(function(i){ cap+=i.qty*i.whole; val+=i.qty*i.retail; cnt+=i.qty; });
-  $("rCap").textContent=fmt(cap);
-  $("rVal").textContent=fmt(val);
-  $("rCnt").textContent=fmt(cnt);
-  $("rLowN").textContent=low.length;
+
+  var items=inv.filter(function(i){ return sec==="s"?!isPart(i):(sec==="m"?isPart(i):true); });
+  var cap=0,val=0,cnt=0,low=items.filter(function(i){return i.qty<=2});
+  items.forEach(function(i){ cap+=i.qty*i.whole; val+=i.qty*i.retail; cnt+=i.qty; });
+  $("rStockTitle").textContent=t("stock_audit_"+sec);
+  $("rCap").textContent=fmt(cap); $("rVal").textContent=fmt(val); $("rCnt").textContent=fmt(cnt); $("rLowN").textContent=low.length;
   $("rLow").innerHTML=low.map(function(i){ return '<div class="item"><b>'+esc(i.name)+'</b><b class="low">'+i.qty+'</b></div>'; }).join("");
+  renderRegisterArchive();
 }
+document.querySelectorAll("#sTabs button").forEach(function(b){
+  b.onclick=function(){
+    sec=b.getAttribute("data-s");
+    document.querySelectorAll("#sTabs button").forEach(function(x){ x.className=x===b?"on":""; });
+    renderRep();
+  };
+});
 document.querySelectorAll("#pTabs button").forEach(function(b){
   b.onclick=function(){
     per=b.getAttribute("data-p");
@@ -1285,7 +1516,23 @@ document.querySelectorAll("#pTabs button").forEach(function(b){
 });
 $("rday").onchange=renderRep;
 
-/* ===== النسخ الاحتياطي والمزامنة ===== */
+function renderRegisterArchive(){
+  var box = $("regArchiveList");
+  if(!box) return;
+  if(!regArchive.length){
+    box.innerHTML = '<div class="empty">'+(currentLang==="en"?"No register closures yet":"لا توجد إغلاقات مسجلة بعد")+'</div>';
+    return;
+  }
+  var h = "";
+  regArchive.slice().reverse().forEach(function(reg){
+    h += '<div class="item" style="display:block;padding:8px 0">' +
+      '<div style="display:flex;justify-content:space-between"><b>📅 ' + reg.date + ' ' + (reg.time||"") + '</b><b class="ok">' + fmt(reg.net) + '</b></div>' +
+      '<small>' + (currentLang==="en"?"Sales: ":"المبيعات: ") + fmt(reg.sales) + (reg.mnt?' · ' + (currentLang==="en"?"Repairs: ":"الصيانة: ") + fmt(reg.mnt):'') + ' · ' + (currentLang==="en"?"Expenses: ":"المصاريف: ") + fmt(reg.exp) + ' · ' + (currentLang==="en"?"Actual Cash: ":"العد الفعلي: ") + fmt(reg.actual) + '</small>' +
+    '</div>';
+  });
+  box.innerHTML = h;
+}
+
 var TOMB="telecom_tomb_v1", LB="telecom_lastbackup", tomb={}, snap={};
 try{ tomb=JSON.parse(localStorage.getItem(TOMB)||"{}"); }catch(e){}
 function inv1(i){ var u=i.upd; delete i.upd; var j=JSON.stringify(i); if(u) i.upd=u; return j; }
@@ -1293,7 +1540,7 @@ function fresh(){ inv.forEach(function(i){ snap[i.id]=inv1(i); }); }
 function stamp(){ inv.forEach(function(i){ var j=inv1(i); if(snap[i.id]!==j){ snap[i.id]=j; i.upd=Date.now(); } }); }
 fresh();
 function bmsg(tMsg){ var el=$("bkMsg"); if(el) el.textContent=tMsg; }
-function pack(){ return JSON.stringify({app:"telecom-acc",v:1,exported:new Date().toISOString(),data:data,inv:inv,rep:rep,tomb:tomb}); }
+function pack(){ return JSON.stringify({app:"telecom-acc",v:1,exported:new Date().toISOString(),data:data,inv:inv,rep:rep,regArchive:regArchive,tomb:tomb}); }
 function bkInfo(){
   var tVal=null; try{ tVal=localStorage.getItem(LB); }catch(e){}
   var el=$("bkLast"); if(!el) return;
@@ -1302,7 +1549,6 @@ function bkInfo(){
   el.textContent=(currentLang==="en")?("Last backup: "+tVal.slice(0,10)+(days>0?" ("+days+" days ago)":" (Today)")):("آخر حفظ: "+tVal.slice(0,10)+(days>0?" (قبل "+days+" يوم)":" (اليوم)"));
   el.className=days>7?"low":"";
 }
-function markBackup(){ try{ localStorage.setItem(LB,new Date().toISOString()); }catch(e){} bkInfo(); }
 bkInfo();
 
 var CAP=window.Capacitor, FS=(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform())?CAP.Plugins.Filesystem:null;
@@ -1356,7 +1602,6 @@ function fsDelete(name){
   });
 }
 
-/* النسخ الاحتياطي التلقائي الفوري */
 var autoTimer = null, lastAutoHash = "", SNAPKEEP = 60;
 function pad(n){ return String(n).padStart(2, "0"); }
 function stampName(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"_"+pad(d.getHours())+"-"+pad(d.getMinutes()); }
@@ -1432,12 +1677,14 @@ function restoreSnap(name){
   fsRead(name).then(function(r){
     var o = JSON.parse(r.data);
     if(!o || o.app !== "telecom-acc" || !Array.isArray(o.data) || !Array.isArray(o.inv)) throw 0;
+    if(!Array.isArray(o.rep)) o.rep=[]; migrate(o);
     var confirmMsg = (currentLang==="en")
       ? ("Replace current data with snapshot (" + name.replace("telecom-snap-", "").replace(".json", "").replace("_", " ") + ")?")
       : ("استبدال بياناتك الحالية بالنسخة (" + name.replace("telecom-snap-", "").replace(".json", "").replace("_", " ") + ")؟");
     if(!confirm(confirmMsg)) return;
     data = o.data; inv = o.inv; rep = Array.isArray(o.rep) ? o.rep : []; tomb = o.tomb || {};
-    fresh(); save(); render(); listSnaps();
+    regArchive = Array.isArray(o.regArchive) ? o.regArchive : [];
+    fresh(); save(); renderAll(); listSnaps();
     bmsg((currentLang==="en")?"Restored successfully ✓":"تمت الاستعادة بنجاح ✓");
   }).catch(function(){
     bmsg((currentLang==="en")?"Could not read this snapshot.":"تعذّرت قراءة هذه النسخة.");
@@ -1473,21 +1720,6 @@ function saveBackupUniversal(){
       bmsg((currentLang==="en")?"Data copied to clipboard ✓":"تم نسخ كامل بياناتك للحافظة ✓");
     });
     return;
-  }
-
-  if(/android/i.test(navigator.userAgent)){
-    try {
-      var intentUrl = "intent:#Intent;action=android.intent.action.SEND;type=text/plain;S.android.intent.extra.TEXT=" + 
-                      encodeURIComponent(dataStr) + 
-                      ";S.android.intent.extra.SUBJECT=" + encodeURIComponent(fileName) + ";end";
-      var a = document.createElement("a");
-      a.href = intentUrl;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      bmsg((currentLang==="en")?"Data copied to clipboard ✓ & Share dialog opened.":"تم نسخ البيانات للحافظة ✓ وفُتحت نافذة المشاركة والحفظ.");
-      return;
-    } catch(e){}
   }
 
   fallbackDownloadBlob(dataStr, fileName);
@@ -1560,6 +1792,8 @@ function readIn(){
     if(!o||o.app!=="telecom-acc"||!Array.isArray(o.data)||!Array.isArray(o.inv)) throw 0;
     o.tomb=o.tomb||{};
     o.rep=Array.isArray(o.rep)?o.rep:[];
+    o.regArchive=Array.isArray(o.regArchive)?o.regArchive:[];
+    migrate(o);
     return o;
   } catch(e){
     bmsg((currentLang==="en")?"Invalid backup data.":"النص أو الملف غير صالح. تأكد أنه نسخة من هذا البرنامج.");
@@ -1587,7 +1821,9 @@ $("impMerge").onclick=function(){
   var rm={}; rep.forEach(function(tVal){ rm[tVal.id]=tVal; });
   o.rep.forEach(function(tVal){ if(tomb[tVal.id]) return; var l=rm[tVal.id]; if(!l) rep.push(tVal); else if((tVal.upd||0)>(l.upd||0)){ Object.keys(l).forEach(function(k){ delete l[k]; }); Object.keys(tVal).forEach(function(k){ l[k]=tVal[k]; }); } });
   rep=rep.filter(function(tVal){ return !tomb[tVal.id]; });
-  fresh(); save(); render();
+  var ra={}; regArchive.forEach(function(x){ ra[x.id]=1; });
+  o.regArchive.forEach(function(x){ if(!ra[x.id]) regArchive.push(x); }); regArchive.sort(function(a,b){ return a.id-b.id; });
+  fresh(); save(); renderAll();
   bmsg((currentLang==="en")?("Synced ✓ Added "+add+" transactions, "+addi+" items, updated "+upd+" items."):("تمت المزامنة ✓ أُضيفت "+add+" عملية و"+addi+" صنف جديد، وحُدّث "+upd+" صنف."));
 };
 $("impRep").onclick=function(){
@@ -1596,7 +1832,7 @@ $("impRep").onclick=function(){
     ? ("All current data will be overwritten with the backup (" + o.data.length + " transactions, " + o.inv.length + " items). Sure?")
     : ("سيتم حذف كل بياناتك الحالية على هذا الجهاز واستبدالها بالنسخة ("+o.data.length+" عملية، "+o.inv.length+" صنف). متأكد؟");
   if(!confirm(confirmMsg)) return;
-  data=o.data; inv=o.inv; rep=o.rep; tomb=o.tomb; fresh(); save(); render();
+  data=o.data; inv=o.inv; rep=o.rep; tomb=o.tomb; regArchive=o.regArchive||[]; fresh(); save(); renderAll();
   bmsg((currentLang==="en")?"Data replaced ✓":"تم استبدال البيانات ✓");
 };
 
@@ -1620,7 +1856,7 @@ function repAdd(){
     if(tItem){ Object.keys(f).forEach(function(k){ tItem[k]=f[k]; }); tItem.upd=Date.now(); }
   } else {
     var no=rep.reduce(function(m,x){ return Math.max(m,x.no||0); },0)+1;
-    var n={id:Date.now(),no:no,date:today(),status:"received",upd:Date.now()};
+    var n={id:Date.now(),no:no,date:today(),status:"received",parts:[],upd:Date.now()};
     Object.keys(f).forEach(function(k){ n[k]=f[k]; });
     rep.push(n);
   }
@@ -1633,6 +1869,7 @@ function repEdit(id){
   mFormShow(true);
   try{ $("mForm").scrollIntoView(); }catch(e){}
 }
+function partsTotal(r){ return (r.parts||[]).reduce(function(a,p){ return a+p.cost*p.qty; },0); }
 function undeliver(tItem){
   if(tItem.sale){ data=data.filter(function(e){ return e.id!==tItem.sale; }); tomb[tItem.sale]=Date.now(); tItem.sale=null; }
   tItem.delivered=null; tItem.fprice=null; tItem.pcost=null;
@@ -1642,7 +1879,7 @@ function repStatus(id,st){
   if(st==="delivered"){
     mDelId=id;
     $("mDT").textContent=(currentLang==="en"?"Deliver: ":"تسليم: ")+tItem.dev;
-    $("mFP").value=tItem.price||""; $("mPC").value=tItem.pcost||"";
+    $("mFP").value=tItem.price||""; $("mPC").value=tItem.xcost||"";
     dlgHint(); $("mDlg").style.display="flex"; return;
   }
   if(tItem.status==="delivered") undeliver(tItem);
@@ -1650,29 +1887,74 @@ function repStatus(id,st){
 }
 function dlgHint(){
   var tItem=mFind(mDelId); if(!tItem) return;
-  var depTxt = (currentLang==="en") ? "Deposit Paid: " : "العربون المدفوع: ";
-  var dueTxt = (currentLang==="en") ? " — Collect Now: " : " — يُقبض الآن: ";
-  $("mDS").textContent=depTxt+fmt(tItem.dep)+dueTxt+fmt(mNum($("mFP").value)-tItem.dep);
+  var en=currentLang==="en", pt=partsTotal(tItem), fp=mNum($("mFP").value), pc=pt+mNum($("mPC").value);
+  $("mDP").textContent=(tItem.parts&&tItem.parts.length)?((en?"Stock parts used: ":"قطع مستخدمة من المخزون: ")+tItem.parts.map(function(p){ return p.name+"×"+p.qty; }).join("، ")+(wkHidePrf()?"":" = "+fmt(pt))):"";
+  $("mDS").textContent=(en?"Deposit Paid: ":"العربون المدفوع: ")+fmt(tItem.dep)+(en?" — Collect Now: ":" — يُقبض الآن: ")+fmt(fp-tItem.dep)+(wkHidePrf()?"":(en?" — Profit: ":" — الربح: ")+fmt(fp-pc));
 }
 function repDeliver(){
   var tItem=mFind(mDelId); if(!tItem) return;
-  var fp=parseFloat($("mFP").value); if(isNaN(fp)){ $("mFP").focus(); return; }
-  var pc=mNum($("mPC").value);
-  var repairCatName = (currentLang==="en") ? "Repair" : "صيانة";
-  var e={id:Date.now(),date:today(),type:"sale",name:repairCatName+": "+tItem.dev,cat:repairCatName,price:fp,cost:pc,qty:1,sid:null,tk:0,rid:tItem.id};
-  data.push(e); tItem.sale=e.id; tItem.fprice=fp; tItem.pcost=pc; tItem.delivered=today(); tItem.status="delivered"; tItem.upd=Date.now();
+  var fp=parseFloat($("mFP").value); if(isNaN(fp)||fp<0){ $("mFP").focus(); return; }
+  var xc=Math.max(0,mNum($("mPC").value)), pc=partsTotal(tItem)+xc;
+  var e={id:Date.now(),date:today(),type:"mnt",name:(currentLang==="en"?"Repair":"صيانة")+": "+tItem.dev,cat:REPAIR_CAT,price:fp,cost:pc,qty:1,sid:null,tk:0,rid:tItem.id,
+         parts:(tItem.parts||[]).map(function(p){ return {sid:p.sid,name:p.name,qty:p.qty,cost:p.cost}; }),curr:curSymbol};
+  data.push(e); tItem.sale=e.id; tItem.fprice=fp; tItem.pcost=pc; tItem.xcost=xc; tItem.delivered=today(); tItem.status="delivered"; tItem.upd=Date.now();
   $("mDlg").style.display="none"; mDelId=null; save(); renderAll();
 }
 function repDel(id){
-  var confirmMsg = (currentLang==="en") ? "Delete this repair order?" : "حذف هذا الطلب؟ (قيد البيع المسجّل عند التسليم يبقى في المبيعات)";
+  var tItem=mFind(id); if(!tItem) return;
+  var confirmMsg = (currentLang==="en") ? "Delete this repair order? (Stock parts not yet delivered return to inventory)" : "حذف هذا الطلب؟ (القطع المسحوبة من المخزون ترجع للمخزون إن لم يُسلَّم الجهاز، وقيد التسليم المسجّل يبقى)";
   if(!confirm(confirmMsg)) return;
+  if(tItem.status!=="delivered"){
+    (tItem.parts||[]).forEach(function(p){ var it=inv.filter(function(i){return i.id===p.sid;})[0]; if(it) it.qty+=p.qty; });
+  }
   rep=rep.filter(function(x){ return x.id!==id; }); tomb[id]=Date.now(); save(); renderAll();
 }
+
+/* ===== قطع الصيانة من المخزون ===== */
+var mPartsId=null;
+function partsOpen(id){ mPartsId=id; renderParts(); $("mPartsDlg").style.display="flex"; }
+function renderParts(){
+  var r=mFind(mPartsId); if(!r){ $("mPartsDlg").style.display="none"; return; }
+  $("mPT").textContent="🔩 "+r.dev;
+  var o='<option value="">'+t("opt_no_stock")+'</option>';
+  inv.filter(function(i){ return i.qty>0; }).sort(function(a,b){ return (isPart(b)?1:0)-(isPart(a)?1:0); }).forEach(function(i){
+    o+='<option value="'+i.id+'">'+esc(i.name)+' ['+t("txt_available")+' '+i.qty+']'+(wkHidePrf()?'':' · '+fmt(i.whole))+'</option>';
+  });
+  $("mPSel").innerHTML=o; $("mPQty").value=1;
+  var L=$("mPList"), tot=0; L.innerHTML="";
+  (r.parts||[]).forEach(function(p,ix){
+    tot+=p.cost*p.qty;
+    var d=document.createElement("div"); d.className="item";
+    d.innerHTML='<div><b>'+esc(p.name)+'</b><small>'+p.qty+(wkHidePrf()?'':' × '+fmt(p.cost)+' = '+fmt(p.cost*p.qty))+'</small></div><button class="del" aria-label="Remove">✕</button>';
+    d.querySelector(".del").onclick=function(){ partsRemove(ix); };
+    L.appendChild(d);
+  });
+  if(!(r.parts||[]).length) L.innerHTML='<div class="empty">'+(currentLang==="en"?"No parts used yet":"لم تُستخدم قطع من المخزون بعد")+'</div>';
+  else if(!wkHidePrf()) L.innerHTML+='<div class="item"><b>'+(currentLang==="en"?"Total parts cost":"إجمالي تكلفة القطع")+'</b><b>'+fmt(tot)+'</b></div>';
+}
+function partsAdd(){
+  var r=mFind(mPartsId); if(!r) return;
+  var it=inv.filter(function(i){ return String(i.id)===$("mPSel").value; })[0], q=parseInt($("mPQty").value);
+  if(!it){ $("mPSel").focus(); return; }
+  if(!(q>=1)){ $("mPQty").focus(); return; }
+  if(q>it.qty){ alert((currentLang==="en"?"Available stock is only ":"الكمية المتوفرة فقط ")+it.qty); return; }
+  it.qty-=q; r.parts=r.parts||[];
+  var ex=r.parts.filter(function(p){ return p.sid===it.id; })[0];
+  if(ex){ ex.qty+=q; ex.cost=it.whole; } else r.parts.push({sid:it.id,name:it.name,qty:q,cost:it.whole});
+  r.upd=Date.now(); save(); renderAll(); renderParts();
+}
+function partsRemove(ix){
+  var r=mFind(mPartsId); if(!r||!r.parts[ix]) return;
+  var p=r.parts[ix], it=inv.filter(function(i){ return i.id===p.sid; })[0];
+  if(it) it.qty+=p.qty;
+  r.parts.splice(ix,1); r.upd=Date.now(); save(); renderAll(); renderParts();
+}
 function receipt(tItem){
+  var sName = shopProfile.name || "Star Phone";
   if(currentLang==="en"){
-    return "Device Repair Receipt #"+tItem.no+"\nDate: "+tItem.date+"\nCustomer: "+tItem.name+(tItem.phone?" ("+tItem.phone+")":"")+"\nDevice: "+tItem.dev+(tItem.imei?"\nIMEI: "+tItem.imei:"")+"\nIssue: "+(tItem.issue||"-")+(tItem.acc?"\nAccessories: "+tItem.acc:"")+"\nAgreed Price: "+fmt(tItem.price)+"\nDeposit: "+fmt(tItem.dep)+"\nRemaining: "+fmt(tItem.price-tItem.dep);
+    return sName + " - Repair Receipt #" + tItem.no + "\nDate: " + tItem.date + "\nCustomer: " + tItem.name + (tItem.phone?" ("+tItem.phone+")":"") + "\nDevice: " + tItem.dev + (tItem.imei?"\nIMEI: "+tItem.imei:"") + "\nIssue: " + (tItem.issue||"-") + (tItem.acc?"\nAccessories: "+tItem.acc:"") + "\nAgreed Price: " + fmt(tItem.price) + "\nDeposit: " + fmt(tItem.dep) + "\nRemaining: " + fmt(tItem.price-tItem.dep);
   }
-  return "إيصال استلام جهاز #"+tItem.no+"\nالتاريخ: "+tItem.date+"\nالعميل: "+tItem.name+(tItem.phone?" ("+tItem.phone+")":"")+"\nالجهاز: "+tItem.dev+(tItem.imei?"\nIMEI: "+tItem.imei:"")+"\nالعطل: "+(tItem.issue||"-")+(tItem.acc?"\nالملحقات: "+tItem.acc:"")+"\nالسعر المتفق عليه: "+fmt(tItem.price)+"\nالعربون: "+fmt(tItem.dep)+"\nالمتبقي: "+fmt(tItem.price-tItem.dep);
+  return sName + " - إيصال استلام جهاز #" + tItem.no + "\nالتاريخ: " + tItem.date + "\nالعميل: " + tItem.name + (tItem.phone?" ("+tItem.phone+")":"") + "\nالجهاز: " + tItem.dev + (tItem.imei?"\nIMEI: "+tItem.imei:"") + "\nالعطل: " + (tItem.issue||"-") + (tItem.acc?"\nالملحقات: "+tItem.acc:"") + "\nالسعر المتفق عليه: " + fmt(tItem.price) + "\nالعربون: " + fmt(tItem.dep) + "\nالمتبقي: " + fmt(tItem.price-tItem.dep);
 }
 function copyToClipboard(text, onSuccess, onFail){
   if(navigator.clipboard && window.isSecureContext){
@@ -1701,6 +1983,8 @@ function renderMnt(){
   var w=0,r=0,due=0;
   rep.forEach(function(tItem){ if(tItem.status==="received"||tItem.status==="working") w++; if(tItem.status==="ready"){ r++; due+=tItem.price-tItem.dep; } });
   $("mWork").textContent=w; $("mReady").textContent=r; $("mDue").textContent=fmt(due);
+  var sd=sums($("day").value||today());
+  $("mRev").textContent=fmt(sd.ms); $("mPCost").textContent=fmt(sd.mc); $("mProf").textContent=fmt(sd.mp); $("mProf").className=sd.mp>=0?"ok":"bad";
   var f=$("mFilter").value, q=String($("mSearch").value||"").trim().toLowerCase();
   var L=rep.filter(function(tItem){
     if(f==="act"&&!(tItem.status==="received"||tItem.status==="working"||tItem.status==="ready")) return false;
@@ -1727,20 +2011,21 @@ function renderMnt(){
       +'<small>'+esc(tItem.name)+phoneHtml+'</small>'
       +(tItem.issue?'<small>'+issueTxt+esc(tItem.issue)+'</small>':'')+(tItem.acc?'<small>'+accTxt+esc(tItem.acc)+'</small>':'')
       +'<small>'+recTxt+tItem.date+(tItem.delivered?delivTxt+tItem.delivered:'')+'</small>'
-      +'<small>'+priceDetails+'</small>'
-      +'<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center"><select class="ms" style="flex:1;min-width:130px">'+opts+'</select><button class="qb" data-a="e" style="width:auto;padding:0 10px;font-size:13px">'+t("btn_edit")+'</button><button class="qb" data-a="r" style="width:auto;padding:0 10px;font-size:13px">'+t("btn_receipt")+'</button><button class="del" data-a="d" aria-label="Delete">✕</button></div>';
+      +'<small>'+priceDetails+'</small>'+((tItem.parts&&tItem.parts.length)?'<small>🔩 '+tItem.parts.map(function(p){ return esc(p.name)+'×'+p.qty; }).join('، ')+'</small>':'')
+      +'<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center"><select class="ms" style="flex:1;min-width:130px">'+opts+'</select><button class="qb" data-a="e" style="width:auto;padding:0 10px;font-size:13px">'+t("btn_edit")+'</button><button class="qb" data-a="r" style="width:auto;padding:0 10px;font-size:13px">'+t("btn_receipt")+'</button>'+(fin?'':'<button class="qb" data-a="p" style="width:auto;padding:0 10px;font-size:13px">'+t("btn_parts")+'</button>')+'<button class="del" data-a="d" aria-label="Delete">✕</button></div>';
 
     var waBtn = d.querySelector(".wa-link");
     if(waBtn){
       waBtn.onclick = function(e){
         e.preventDefault();
-        openWhatsApp(this.getAttribute("data-ph"), this.getAttribute("data-dev"), this.getAttribute("data-name"));
+        openWhatsAppMessage(this.getAttribute("data-ph"), (currentLang==="en"?"Regarding device ":"بخصوص جهاز ") + this.getAttribute("data-dev"));
       };
     }
     d.querySelector(".ms").onchange=function(){ repStatus(tItem.id,this.value); };
     d.querySelector('[data-a="e"]').onclick=function(){ repEdit(tItem.id); };
     d.querySelector('[data-a="r"]').onclick=function(){ copyReceipt(tItem); };
     d.querySelector('[data-a="d"]').onclick=function(){ repDel(tItem.id); };
+    var pb=d.querySelector('[data-a="p"]'); if(pb) pb.onclick=function(){ partsOpen(tItem.id); };
     C.appendChild(d);
   });
 }
@@ -1748,13 +2033,15 @@ $("mNew").onclick=function(){ mClear(); mFormShow(true); $("mName").focus(); };
 $("mCancel").onclick=function(){ mClear(); mFormShow(false); };
 $("mSave").onclick=function(){ repAdd(); };
 $("mFilter").onchange=renderMnt; $("mSearch").oninput=renderMnt;
-$("mFP").oninput=dlgHint;
+$("mFP").oninput=dlgHint; $("mPC").oninput=dlgHint;
+$("mPAdd").onclick=function(){ partsAdd(); };
+$("mPClose").onclick=function(){ $("mPartsDlg").style.display="none"; mPartsId=null; renderAll(); };
 $("mDNo").onclick=function(){ $("mDlg").style.display="none"; mDelId=null; renderAll(); };
 $("mDOk").onclick=function(){ repDeliver(); };
 renderMnt();
 
 /* ===== وضع العامل ===== */
-var WKDEF={ret:false,exp:false,del:false,stk:false,prf:false,rep:false}, wkFail=0, wkUntil=0;
+var WKDEF={ret:false,exp:false,del:false,stk:false,prf:false,rep:false,reg:false}, wkFail=0, wkUntil=0;
 try{ wkUntil=parseInt(localStorage.getItem("telecom_wk_until"))||0; }catch(e){}
 function wkSave(){ try{ localStorage.setItem(WKK,JSON.stringify(WK)); }catch(e){} }
 function b2h(u){ return Array.prototype.map.call(new Uint8Array(u),function(x){ return ("0"+x.toString(16)).slice(-2); }).join(""); }
@@ -1781,7 +2068,7 @@ function wkDeny(){
 }
 function wkApply(){
   var on=!!WK.on, b=document.body.classList, P=WK.perms||{};
-  b.toggle("wk",on); ["ret","exp","del","stk","prf","rep"].forEach(function(k){ b.toggle("wk-"+k,on&&!!P[k]); });
+  b.toggle("wk",on); ["ret","exp","del","stk","prf","rep","reg"].forEach(function(k){ b.toggle("wk-"+k,on&&!!P[k]); });
   $("wkBar").style.display=on?"flex":"none";
   try{ $("rstBtn").parentNode.style.display=on?"none":""; }catch(e){}
   if(on){ setMode("sale"); setView("s"); }
@@ -1790,7 +2077,7 @@ function wkApply(){
 function wkPaint(){
   var has=!!WK.hash, P=WK.perms||{};
   $("wkNoPin").style.display=has?"none":""; $("wkHasPin").style.display=has?"":"none";
-  [["pRet","ret"],["pExp","exp"],["pDel","del"],["pStk","stk"],["pPrf","prf"],["pRep","rep"]].forEach(function(a){ $(a[0]).checked=!!P[a[1]]; });
+  [["pRet","ret"],["pExp","exp"],["pDel","del"],["pStk","stk"],["pPrf","prf"],["pRep","rep"],["pReg","reg"]].forEach(function(a){ $(a[0]).checked=!!P[a[1]]; });
 }
 
 var _sv2=setView;
@@ -1802,7 +2089,7 @@ var WKB={del:"del",repDel:"del",stk:"stk",delItem:"stk",restoreSnap:"x"};
 Object.keys(WKB).forEach(function(n){ var f=window[n], need=WKB[n]; if(typeof f!=="function") return;
   window[n]=function(){ if(WK.on&&(need==="x"||!(WK.perms&&WK.perms[need]))){ wkDeny(); return; } return f.apply(this,arguments); }; });
 [["iAdd","stk"],["impMerge","x"],["impRep","x"],["rstYes","x"],["rsBtn","x"]].forEach(function(a){ var f=$(a[0]).onclick, need=a[1];
-  $(a[0]).onclick=function(ev){ if(WK.on&&(need==="x"||!(WK.perms&&WK.perms[need]))){ wkDeny(); return; } return f.call(this,ev); }; });
+  $(a[0]).onclick=function(ev){ if(WK.on&&(need==="x"||!(WK.perms&&WK.perms[need]))){ wkDeny(); return; } return f&&f.call(this,ev); }; });
 var _ab=$("addBtn").onclick;
 $("addBtn").onclick=function(ev){ var P=WK.perms||{}; if(WK.on&&((mode==="ret"&&!P.ret)||(mode==="exp"&&!P.exp))){ wkDeny(); return; } return _ab.call(this,ev); };
 
@@ -1818,7 +2105,7 @@ $("wkSavePin").onclick=function(){
     m.textContent=(currentLang==="en")?("PIN saved ✓ Recovery code: "+rc):("تم حفظ الكود ✓ رمز الاسترجاع (يظهر مرة واحدة): "+rc+" — اكتبه واحتفظ به، تحتاجه إن نسيت الكود.");
   });
 };
-[["pRet","ret"],["pExp","exp"],["pDel","del"],["pStk","stk"],["pPrf","prf"],["pRep","rep"]].forEach(function(a){ $(a[0]).onchange=function(){ WK.perms=WK.perms||{}; WK.perms[a[1]]=this.checked; wkSave(); }; });
+[["pRet","ret"],["pExp","exp"],["pDel","del"],["pStk","stk"],["pPrf","prf"],["pRep","rep"],["pReg","reg"]].forEach(function(a){ $(a[0]).onchange=function(){ WK.perms=WK.perms||{}; WK.perms[a[1]]=this.checked; wkSave(); }; });
 $("wkOn").onclick=function(){ WK.on=true; wkSave(); $("wkMsg").textContent=""; wkApply(); };
 $("wkChg").onclick=function(){
   var o=$("wkOldP").value, n=$("wkNewP").value, m=$("wkMsg");
@@ -1857,8 +2144,8 @@ wkApply();
 $("rstBtn").onclick = function(){ $("rstBox").style.display = ""; $("rstBtn").style.display = "none"; $("rstMsg").textContent = ""; };
 $("rstNo").onclick = function(){ $("rstBox").style.display = "none"; $("rstBtn").style.display = ""; };
 $("rstYes").onclick = function(){
-  [KEY, INV, TOMB, LB, REPK].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
-  data = []; inv = []; rep = []; tomb = {}; snap = {};
+  [KEY, INV, TOMB, LB, REPK, REG_ARCHIVE_KEY, "star_current_shift_start"].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+  data = []; inv = []; rep = []; regArchive = []; tomb = {}; snap = {}; currentShiftStart = 0;
   ["name","price","cost","amt","inote","iname","iwhole","iretail","bkIn","bkOut"].forEach(function(i){ var el=$(i); if(el) el.value=""; });
   if($("qty")) $("qty").value = 1; if($("iqty")) $("iqty").value = 1;
   if($("day")) $("day").value = today(); if($("rday")) $("rday").value = today();
@@ -1869,7 +2156,6 @@ $("rstYes").onclick = function(){
   if(typeof runAutoBackup === "function") runAutoBackup(true);
 };
 
-/* ===== قراءة وتحديث رقم الإصدار تلقائياً ===== */
 if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App){
   window.Capacitor.Plugins.App.getInfo().then(function(info){
     if(info && info.version){
@@ -1878,7 +2164,6 @@ if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App)
   }).catch(function(){});
 }
 
-/* ===== تبديل لغة الواجهة الكامل الشامل ===== */
 function applyLang(lang){
   currentLang = lang;
   try{ localStorage.setItem("telecom_lang", lang); }catch(e){}
@@ -1887,34 +2172,33 @@ function applyLang(lang){
   document.documentElement.lang = isEn ? "en" : "ar";
   document.documentElement.dir = isEn ? "ltr" : "rtl";
   
-  if($("btnLangAr")) $("btnLangAr").className = isEn ? "tabs button" : "tabs button on";
-  if($("btnLangEn")) $("btnLangEn").className = isEn ? "tabs button on" : "tabs button";
+  if($("btnLangAr")) $("btnLangAr").className = isEn ? "lang-btn" : "lang-btn on";
+  if($("btnLangEn")) $("btnLangEn").className = isEn ? "lang-btn on" : "lang-btn";
 
   MS = MS_LANG[lang] || MS_LANG.ar;
 
-  // ترجمة جميع العناصر الحاملة لوسم data-i18n
   var dict = I18N[lang] || I18N.ar;
   document.querySelectorAll("[data-i18n]").forEach(function(el){
     var k = el.getAttribute("data-i18n");
     if(dict[k]){
       if(el.tagName === "INPUT" || el.tagName === "TEXTAREA"){
         el.value = dict[k];
+      } else if(dict[k].indexOf("<b>") > -1){
+        el.innerHTML = dict[k];
       } else {
         el.textContent = dict[k];
       }
     }
   });
 
-  // ترجمة التلميحات (Placeholders)
   document.querySelectorAll("[data-i18n-ph]").forEach(function(el){
     var phKey = el.getAttribute("data-i18n-ph");
     if(dict[phKey]) el.placeholder = dict[phKey];
   });
 
-  // إعادة بناء الفئات
   var currentCatVal = $("cat") ? $("cat").value : "";
   var cats = CATEGORIES_DATA[lang] || CATEGORIES_DATA.ar;
-  var catHtml = cats.map(function(c){ return '<option value="'+c+'">'+c+'</option>'; }).join("");
+  var catHtml = CATEGORIES_DATA.ar.slice(0,6).map(function(c,ix){ return '<option value="'+c+'">'+cats[ix]+'</option>'; }).join("");
   if($("cat")) $("cat").innerHTML = catHtml;
   if($("icat")) $("icat").innerHTML = catHtml;
   if(currentCatVal && $("cat")) $("cat").value = currentCatVal;
@@ -1922,12 +2206,129 @@ function applyLang(lang){
   if(mode === "ret") $("addBtn").textContent = t("btn_add_ret");
   else $("addBtn").textContent = t("btn_add");
 
+  updateItemsForSelectedCategory();
   renderAll();
   bkInfo();
 }
 
 if($("btnLangAr")) $("btnLangAr").onclick = function(){ applyLang("ar"); };
 if($("btnLangEn")) $("btnLangEn").onclick = function(){ applyLang("en"); };
+
+/* ===== إعدادات هوية المحل واللوغو ===== */
+function renderShopProfile(){
+  if($("inShopName")) $("inShopName").value = shopProfile.name;
+  if($("inShopPhone")) $("inShopPhone").value = shopProfile.phone;
+  if($("shopDisplayTitle")) $("shopDisplayTitle").textContent = shopProfile.name;
+  
+  var topImg = $("topShopLogo");
+  var prevImg = $("logoPreviewImg");
+  var prevWrap = $("logoPreviewWrap");
+
+  if(shopProfile.logo){
+    if(topImg){ topImg.src = shopProfile.logo; topImg.style.display = "block"; }
+    if(prevImg){ prevImg.src = shopProfile.logo; }
+    if(prevWrap){ prevWrap.style.display = "flex"; }
+  } else {
+    if(topImg){ topImg.style.display = "none"; }
+    if(prevWrap){ prevWrap.style.display = "none"; }
+  }
+}
+
+if($("inShopLogoFile")){
+  $("inShopLogoFile").onchange = function(){
+    var file = this.files && this.files[0];
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e){
+      shopProfile.logo = e.target.result;
+      renderShopProfile();
+    };
+    reader.readAsDataURL(file);
+  };
+}
+
+if($("btnRemoveLogo")){
+  $("btnRemoveLogo").onclick = function(){
+    shopProfile.logo = "";
+    if($("inShopLogoFile")) $("inShopLogoFile").value = "";
+    renderShopProfile();
+  };
+}
+
+if($("btnSaveShopProfile")){
+  $("btnSaveShopProfile").onclick = function(){
+    shopProfile.name = ($("inShopName").value.trim()) || "STAR PHONE";
+    shopProfile.phone = $("inShopPhone").value.trim();
+    try {
+      localStorage.setItem("star_shop_name", shopProfile.name);
+      localStorage.setItem("star_shop_phone", shopProfile.phone);
+      localStorage.setItem("star_shop_logo", shopProfile.logo || "");
+    } catch(e){}
+    renderShopProfile();
+    bmsg(currentLang==="en" ? "Shop profile & logo saved ✓" : "تم حفظ بيانات المحل واللوغو بنجاح ✓");
+  };
+}
+
+/* ===== إعدادات العملة بدون سعر صرف ===== */
+$("selCurrency").value = curSymbol;
+$("btnSaveCurrency").onclick = function(){
+  curSymbol = $("selCurrency").value;
+  try {
+    localStorage.setItem("star_curr_sym", curSymbol);
+  } catch(e){}
+  bmsg(currentLang==="en" ? "Currency saved ✓" : "تم حفظ العملة بنجاح ✓");
+  renderAll();
+};
+
+/* ===== ميزة إغلاق وصندوق اليوم مع تصفير الوردية ===== */
+function shiftBase(){ if(currentShiftStart>0) return currentShiftStart; var d=new Date(); return new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(); }
+/* النقد المتوقع بالصندوق منذ آخر إغلاق: مبيعات + (عربون الصيانة عند الاستلام + المتبقي عند التسليم) - مرتجعات - مصاريف */
+function shiftCash(){
+  var base=shiftBase(), L=data.filter(function(e){ return e.id>=base; }), k=calc(L), cm=0;
+  L.forEach(function(e){ if(e.type==="mnt"){ var r=e.rid?mFind(e.rid):null; cm+=e.price*e.qty-(r?(r.dep||0):0); } });
+  rep.forEach(function(r){ if(r.id>=base) cm+=(r.dep||0); });
+  return {s:k.s,rt:k.rt,x:k.x,m:cm,net:k.s-k.rt-k.x+cm};
+}
+$("btnOpenCloseRegister").onclick = function(){
+  if(WK.on && !(WK.perms && WK.perms.reg)){ wkDeny(); return; }
+  var c = shiftCash();
+  $("regSalesVal").textContent = fmt(c.s);
+  $("regMntVal").textContent = fmt(c.m);
+  $("regReturnsVal").textContent = "-" + fmt(c.rt);
+  $("regExpVal").textContent = "-" + fmt(c.x);
+  $("regNetCashVal").textContent = fmt(c.net);
+  $("actualCashInput").value = Math.round(c.net*100)/100;
+  $("cashDiffBox").textContent = "";
+  $("registerModal").style.display = "flex";
+};
+$("btnCloseRegisterModal").onclick = function(){ $("registerModal").style.display = "none"; };
+$("actualCashInput").oninput = function(){
+  var c = shiftCash(), actual = parseFloat($("actualCashInput").value);
+  var diffBox = $("cashDiffBox");
+  if(isNaN(actual)){ diffBox.textContent=""; return; }
+  var diff = Math.round((actual - c.net)*100)/100;
+  if(diff === 0){ diffBox.textContent = currentLang==="en" ? "✓ Cash matches perfectly!" : "✓ الصندوق مطابق تماماً للمبيعات!"; diffBox.className = "ok"; }
+  else if(diff > 0){ diffBox.textContent = (currentLang==="en" ? "Surplus: +" : "زيادة بالصندوق: +") + fmt(diff); diffBox.className = "ok"; }
+  else { diffBox.textContent = (currentLang==="en" ? "Shortage: " : "عجز بالصندوق: ") + fmt(diff); diffBox.className = "bad"; }
+};
+$("btnSaveRegisterClose").onclick = function(){
+  if(WK.on && !(WK.perms && WK.perms.reg)){ wkDeny(); return; }
+  var confirmMsg = currentLang==="en"
+    ? "Are you sure you want to close the register? Today's active sales & profit view will reset to 0 for a new shift!"
+    : "هل أنت متأكد من إغلاق الصندوق؟ سيتم حفظ التقرير في الأرشيف وتصفير العمليات والأرباح الظاهرة لبدء وردية جديدة من الصفر!";
+  if(!confirm(confirmMsg)) return;
+  var c = shiftCash(), actual = parseFloat($("actualCashInput").value);
+  if(isNaN(actual)) actual = c.net;
+  var now = new Date();
+  regArchive.push({ id: Date.now(), date: today(), time: now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+    sales: c.s, mnt: c.m, ret: c.rt, exp: c.x, net: c.net, actual: actual, curr: curSymbol });
+  currentShiftStart = Date.now();
+  try { localStorage.setItem("star_current_shift_start", String(currentShiftStart)); } catch(e){}
+  save();
+  $("registerModal").style.display = "none";
+  renderAll();
+  alert(currentLang==="en" ? "Register closed! Active shift reset to 0 ✓" : "تم إغلاق الصندوق بنجاح وتصفير حركة اليوم لبدء يوم جديد ✓");
+};
 
 /* ===== نظام الباركود الحصري لنسخة ويندوز / سطح المكتب ===== */
 (function initDesktopBarcode(){
@@ -1947,11 +2348,12 @@ if($("btnLangEn")) $("btnLangEn").onclick = function(){ applyLang("en"); };
     var statusEl = $("barStatus");
     
     if(match){
+      if($("cat")) $("cat").value = match.cat;
+      updateItemsForSelectedCategory();
       $("stockSel").value = String(match.id);
       $("name").value = match.name;
       $("price").value = match.retail;
       $("cost").value = match.whole;
-      $("cat").value = match.cat;
       updateStockDisplay();
       
       if(statusEl){
@@ -1977,18 +2379,13 @@ if($("btnLangEn")) $("btnLangEn").onclick = function(){ applyLang("en"); };
   });
 })();
 
-// تطبيق اللغة المحفوظة عند فتح التطبيق
 applyLang(currentLang);
 
-
-
-/* ===== نظام التراخيص والحماية برمز العتاد الثابت + فترة تجريبية 30 يوماً ===== */
+/* ===== نظام التراخيص والحماية برمز العتاد + عداد الأيام التلقائي ===== */
 var MASTER_SECRET = "STARPHONE-KEY-95323-LEB-2026";
 var cachedFixedHwId = null;
 var cachedInstanceId = null;
-var isCurrentlyInTrial = false;
 
-// 1. القسم الثابت: مستخرج من العتاد الفيزيائي ومحمي ضد تدوير الشاشة ومحفوظ بالذاكرة
 function getDeterministicHwId(){
   var saved = null;
   try { saved = localStorage.getItem("star_fixed_hw_id"); } catch(e){}
@@ -2008,7 +2405,6 @@ function getDeterministicHwId(){
     }
   } catch(e){}
 
-  // ترتيب الأبعاد من الأصغر للأكبر لضمان ثبات الكود عند تدوير الشاشة
   var minDim = Math.min(screen.width || 0, screen.height || 0);
   var maxDim = Math.max(screen.width || 0, screen.height || 0);
 
@@ -2032,7 +2428,6 @@ function getDeterministicHwId(){
   return cachedFixedHwId;
 }
 
-// 2. القسم المتغير للجلسة
 function getInstallInstanceId(){
   if(cachedInstanceId) return cachedInstanceId;
   var stored = null;
@@ -2046,12 +2441,10 @@ function getInstallInstanceId(){
   return cachedInstanceId;
 }
 
-// 3. كود العميل الكامل (القسم الثابت + القسم المتغير)
 function getFullClientCode(){
   return getDeterministicHwId() + "-" + getInstallInstanceId();
 }
 
-// 4. توقيع التشفير HMAC-SHA256
 async function hmacSha256(text){
   var enc = new TextEncoder();
   var key = await crypto.subtle.importKey(
@@ -2063,9 +2456,8 @@ async function hmacSha256(text){
   return Array.from(new Uint8Array(sigBuf)).map(function(b){ return b.toString(16).padStart(2, '0'); }).join('').slice(0, 16);
 }
 
-// 5. التحقق المباشر والصريح من المفتاح المدخل
 async function verifyKeyString(key){
-  if(!key) return { valid: false, msg: (currentLang==="en" ? "Empty key" : "يرجى إدخال المفتاح") };
+  if(!key) return { valid: false, msg: "Empty key" };
   key = key.trim().replace(/\s+/g, "");
   
   var raw = "";
@@ -2073,17 +2465,17 @@ async function verifyKeyString(key){
     raw = decodeURIComponent(escape(atob(key)));
   } catch(e) {
     try { raw = atob(key); } catch(e2){
-      return { valid: false, msg: (currentLang==="en" ? "Invalid key format" : "صيغة المفتاح غير صالحة") };
+      return { valid: false, msg: "Invalid key format" };
     }
   }
 
   var parts = raw.split("|");
   if(parts.length !== 3){
-    return { valid: false, msg: (currentLang==="en" ? "Corrupted key structure" : "بنية المفتاح غير صحيحة") };
+    return { valid: false, msg: "Corrupted key structure" };
   }
 
   var keyHw = parts[0].trim().toUpperCase();
-  var expDate = parts[1].trim();
+  var totalSeconds = parseInt(parts[1]) || 0;
   var sig = parts[2].trim();
   var myFixedHw = getDeterministicHwId();
 
@@ -2091,54 +2483,48 @@ async function verifyKeyString(key){
     return { valid: false, msg: (currentLang==="en" ? "This key belongs to another device!" : "هذا المفتاح مخصص لجهاز آخر ولا يعمل على هذا الجهاز!") };
   }
 
-  var expectedSig = await hmacSha256(keyHw + "|" + expDate);
+  var expectedSig = await hmacSha256(keyHw + "|" + totalSeconds);
   if(sig !== expectedSig){
-    return { valid: false, msg: (currentLang==="en" ? "Invalid signature or tampered key" : "توقيع المفتاح غير صالح أو تم التلاعب به") };
+    return { valid: false, msg: (currentLang==="en" ? "Invalid signature" : "توقيع المفتاح غير صالح أو تم التلاعب به") };
   }
 
-  if(expDate !== "9999-12-31" && today() > expDate){
-    return { valid: false, msg: (currentLang==="en" ? ("Key expired on: " + expDate) : ("مفتاح التفعيل منتهي الصلاحية بتاريخ: " + expDate)) };
-  }
-
-  return { valid: true, expDate: expDate };
+  return { valid: true, seconds: totalSeconds };
 }
 
-// 6. إدارة الفترة التجريبية
-function getTrialInfo(){
+function getLicenseRemainingSeconds(){
+  var savedKeyData = null;
+  try { savedKeyData = JSON.parse(localStorage.getItem("star_lic_sec_data") || "null"); } catch(e){}
+  
+  var now = Date.now();
+  if(savedKeyData && savedKeyData.activationTime && savedKeyData.totalSeconds){
+    var elapsedSec = Math.floor((now - savedKeyData.activationTime) / 1000);
+    var remainingSec = savedKeyData.totalSeconds - elapsedSec;
+    if(remainingSec > 0) return remainingSec;
+  }
+
   var trialStart = null;
   try { trialStart = parseInt(localStorage.getItem("star_trial_start")); } catch(e){}
-  var now = Date.now();
-  var lastSeen = null;
-  try { lastSeen = parseInt(localStorage.getItem("star_last_seen")); } catch(e){}
-
-  if(lastSeen && (now < lastSeen - 86400000)){
-    return { active: false, daysLeft: 0, reason: "clock_tampered" };
-  }
-  try { localStorage.setItem("star_last_seen", String(now)); } catch(e){}
-
+  
   if(!trialStart || isNaN(trialStart)){
     trialStart = now;
     try { localStorage.setItem("star_trial_start", String(trialStart)); } catch(e){}
-    if(typeof fsWrite === "function"){
-      fsWrite(".trial_start.json", JSON.stringify({ start: trialStart, hw: getDeterministicHwId() })).catch(function(){});
-    }
   }
 
-  var elapsedDays = Math.floor((now - trialStart) / 86400000);
-  var daysLeft = 30 - elapsedDays;
-  if(daysLeft < 0) daysLeft = 0;
-
-  return { active: (daysLeft > 0), daysLeft: daysLeft };
+  var trialTotalSec = 7 * 86400; // أسبوع تجربة مجانية تلقائية
+  var trialElapsed = Math.floor((now - trialStart) / 1000);
+  var trialRemaining = trialTotalSec - trialElapsed;
+  
+  return trialRemaining > 0 ? trialRemaining : 0;
 }
 
-function showLockScreen(msg, allowClose){
+function showLockScreen(msg, closable){
   var modal = $("licLockModal");
   if(modal){
     modal.style.display = "flex";
     if($("licStatusDesc")) $("licStatusDesc").textContent = msg;
     if($("myHwId")) $("myHwId").value = getFullClientCode();
-    if($("btnCloseLicModal")) $("btnCloseLicModal").style.display = allowClose ? "block" : "none";
-    if($("btnContinueTrial")) $("btnContinueTrial").style.display = allowClose ? "block" : "none";
+    if($("btnCloseLicModal")) $("btnCloseLicModal").style.display = closable ? "block" : "none";
+    if($("btnContinueTrial")) $("btnContinueTrial").style.display = "none";
   }
 }
 
@@ -2146,85 +2532,109 @@ function hideLockScreen(){
   var modal = $("licLockModal");
   if(modal) modal.style.display = "none";
 }
+if($("btnCloseLicModal")) $("btnCloseLicModal").onclick = hideLockScreen;
 
-// 7. تحديث واجهة وحالة الترخيص
 async function checkLicenseStatus(manualOpen){
   var fullCode = getFullClientCode();
   if($("myHwId")) $("myHwId").value = fullCode;
 
   var savedKey = localStorage.getItem("star_license_key");
-  var keyCheck = await verifyKeyString(savedKey);
-
-  // إذا وجد مفتاح صالح وموثق
-  if(keyCheck.valid){
-    isCurrentlyInTrial = false;
-    hideLockScreen();
-    
-    var expDate = keyCheck.expDate;
-    var licText = (expDate === "9999-12-31")
-      ? ((currentLang==="en") ? "✓ Lifetime License Active" : "✓ ترخيص مفعل مدى الحياة")
-      : ((currentLang==="en") ? ("✓ Active until: " + expDate) : ("✓ مفعل لغاية: " + expDate));
-
-    var licEl = document.querySelector("#licBar b");
-    if(licEl){ licEl.textContent = licText; licEl.style.color = "var(--ok)"; }
-
-    var setLicEl = $("val_lic_status_txt");
-    if(!setLicEl) setLicEl = document.querySelector('[data-i18n="val_lic_status"]');
-    if(setLicEl){ setLicEl.textContent = licText; setLicEl.style.color = "var(--ok)"; }
-
-    if(manualOpen) showLockScreen(licText, true);
-    return true;
-  }
-
-  // إذا لم يوجد مفتاح صالح، نفحص التجربة
-  var trial = getTrialInfo();
-  if(trial.active && trial.daysLeft > 0){
-    isCurrentlyInTrial = true;
-    if(!manualOpen) hideLockScreen();
-    
-    var trialText = (currentLang==="en")
-      ? ("⏳ Free Trial: " + trial.daysLeft + " days left")
-      : ("⏳ فترة تجريبية: متبقي " + trial.daysLeft + " يوم");
-
-    var licEl = document.querySelector("#licBar b");
-    if(licEl){ licEl.textContent = trialText; licEl.style.color = "var(--pri)"; }
-
-    var setLicEl = $("val_lic_status_txt");
-    if(!setLicEl) setLicEl = document.querySelector('[data-i18n="val_lic_status"]');
-    if(setLicEl){ setLicEl.textContent = trialText; setLicEl.style.color = "var(--pri)"; }
-
-    if(manualOpen){
-      showLockScreen((currentLang==="en") ? ("You have " + trial.daysLeft + " days left in your trial.") : ("أنت في الفترة التجريبية (متبقي " + trial.daysLeft + " يوم)."), true);
+  if(savedKey){
+    var res = await verifyKeyString(savedKey);
+    if(res.valid){
+      var savedData = null;
+      try { savedData = JSON.parse(localStorage.getItem("star_lic_sec_data") || "null"); } catch(e){}
+      if(!savedData){
+        savedData = { activationTime: Date.now(), totalSeconds: res.seconds };
+        try { localStorage.setItem("star_lic_sec_data", JSON.stringify(savedData)); } catch(e){}
+      }
+      
+      var remSec = getLicenseRemainingSeconds();
+      if(remSec > 0){
+        hideLockScreen();
+        updateLicBarDisplay(remSec, false);
+        if(manualOpen) showLockScreen(currentLang==="en" ? "License is active ✓" : "الترخيص مفعل وصالح ✓", true);
+        return true;
+      }
     }
+  }
+
+  var remSec = getLicenseRemainingSeconds();
+  if(remSec > 0){
+    hideLockScreen();
+    updateLicBarDisplay(remSec, true);
+    if(manualOpen) showLockScreen(currentLang==="en" ? "Free trial active." : "الفترة التجريبية المجانية نشطة.", true);
     return true;
   }
 
-  // انتهت التجربة ولا يوجد مفتاح صالح
-  isCurrentlyInTrial = false;
-  showLockScreen((currentLang==="en") ? "Trial expired. Please enter license key." : "انتهت الفترة التجريبية المجانية (30 يوماً). يرجى إدخال مفتاح التفعيل للمتابعة.", false);
+  showLockScreen(currentLang==="en" ? "Subscription expired. Please renew your license." : "انتهت فترة الاشتراك أو التجربة المجانية. يرجى إدخال مفتاح التفعيل الجديد.", false);
   return false;
 }
 
-// 8. زر التفعيل الصريح
+function updateLicBarDisplay(sec, isTrial){
+  var days = Math.floor(sec / 86400);
+  var hours = Math.floor((sec % 86400) / 3600);
+  
+  var licEl = document.querySelector("#licBar b");
+  var setLicEl = $("val_lic_status_txt");
+  if(!setLicEl) setLicEl = document.querySelector('[data-i18n="val_lic_status"]');
+
+  var text = "";
+  var colorStyle = "var(--ok)";
+
+  if(days > 15){
+    text = isTrial 
+      ? (currentLang==="en" ? ("⏳ Free Trial: " + days + " days left") : ("⏳ تجربة مجانية: متبقي " + days + " يوم"))
+      : (currentLang==="en" ? ("✓ Active: " + days + " days left") : ("✓ مفعل: متبقي " + days + " يوم"));
+    colorStyle = "var(--ok)";
+  } else if(days > 0){
+    text = (currentLang==="en")
+      ? ("⚠️ RENEW SOON: " + days + " days left!")
+      : ("⚠️ تنبيه: متبقي " + days + " يوم فقط على انتهاء الاشتراك! يرجى التجديد");
+    colorStyle = "var(--warn)";
+  } else {
+    text = (currentLang==="en")
+      ? ("⚠️ RENEW TODAY: " + hours + " hours left!")
+      : ("⚠️ تنبيه عاجل: متبقي أقل من يوم (" + hours + " ساعة) على انتهاء الاشتراك!");
+    colorStyle = "var(--bad)";
+  }
+
+  if(licEl){ licEl.textContent = text; licEl.style.color = colorStyle; }
+  if(setLicEl){ setLicEl.textContent = text; setLicEl.style.color = colorStyle; }
+}
+
 if($("btnActivateApp")){
   $("btnActivateApp").onclick = async function(){
     var key = $("inLicKey").value.trim();
     if(!key){
-      alert((currentLang==="en") ? "Please paste the activation key first!" : "يرجى لصق مفتاح التفعيل أولاً!");
+      alert(currentLang==="en" ? "Please paste the key first!" : "يرجى لصق مفتاح التفعيل أولاً!");
       return;
     }
 
     var res = await verifyKeyString(key);
     if(res.valid){
+      var normKey = key.replace(/\s+/g, ""), usedKeys = [];
+      try { usedKeys = JSON.parse(localStorage.getItem("star_used_keys") || "[]"); } catch(e){}
+      if(usedKeys.indexOf(normKey) > -1){
+        alert(currentLang==="en" ? "This key was already used on this device." : "هذا المفتاح استُخدم مسبقاً على هذا الجهاز ولا يمكن استخدامه مرة أخرى.");
+        return;
+      }
+      usedKeys.push(normKey);
+      try { localStorage.setItem("star_used_keys", JSON.stringify(usedKeys)); } catch(e){}
       localStorage.setItem("star_license_key", key);
+      
+      var currentRem = getLicenseRemainingSeconds();
+      if(currentRem < 0) currentRem = 0;
+      var totalNewSec = res.seconds + currentRem;
+      
+      var newData = { activationTime: Date.now(), totalSeconds: totalNewSec };
+      localStorage.setItem("star_lic_sec_data", JSON.stringify(newData));
+      
       if(typeof fsWrite === "function"){
         fsWrite(".license.key", key).catch(function(){});
       }
       await checkLicenseStatus(false);
-      var successMsg = (res.expDate === "9999-12-31")
-        ? (currentLang==="en" ? "App activated permanently! ✓" : "تم تفعيل البرنامج بنجاح مدى الحياة! ✓")
-        : (currentLang==="en" ? ("App activated until " + res.expDate + " ✓") : ("تم تفعيل البرنامج بنجاح لغاية " + res.expDate + " ✓"));
-      alert(successMsg);
+      alert(currentLang==="en" ? "App activated successfully! ✓" : "تم تفعيل البرنامج وتمديد الاشتراك بنجاح ✓");
       renderAll();
     } else {
       alert("❌ " + res.msg);
@@ -2235,20 +2645,8 @@ if($("btnActivateApp")){
 if($("btnCopyHw")){
   $("btnCopyHw").onclick = function(){
     copyToClipboard($("myHwId").value, function(){
-      alert((currentLang==="en") ? "Client code copied!" : "تم نسخ كود العميل بنجاح! أرسله للموزع لتوليد المفتاح.");
+      alert(currentLang==="en" ? "Client code copied!" : "تم نسخ كود الجهاز بنجاح! أرسله للموزع.");
     }, function(){});
-  };
-}
-
-if($("btnCloseLicModal")){
-  $("btnCloseLicModal").onclick = function(){
-    if(isCurrentlyInTrial) hideLockScreen();
-  };
-}
-
-if($("btnContinueTrial")){
-  $("btnContinueTrial").onclick = function(){
-    if(isCurrentlyInTrial) hideLockScreen();
   };
 }
 
@@ -2259,7 +2657,7 @@ if($("btnOpenActivateModal")){
 }
 
 checkLicenseStatus(false);
-setInterval(function(){ checkLicenseStatus(false); }, 1800000);
+setInterval(function(){ checkLicenseStatus(false); }, 60000);
 
 </script>
 </body>
