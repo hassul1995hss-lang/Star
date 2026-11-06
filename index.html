@@ -1982,14 +1982,20 @@ applyLang(currentLang);
 
 
 
-/* ===== نظام التراخيص والحماية: كود عتاد ثابت + كود تثبيت متغير + فترة تجريبية 30 يوماً ===== */
+/* ===== نظام التراخيص والحماية برمز العتاد الثابت + فترة تجريبية 30 يوماً ===== */
 var MASTER_SECRET = "STARPHONE-KEY-95323-LEB-2026";
 var cachedFixedHwId = null;
 var cachedInstanceId = null;
 var isCurrentlyInTrial = false;
 
-// 1. القسم الثابت (Fixed Hardware ID): مستخرج من مواصفات العتاد الفيزيائي ولا يتغير أبداً
+// 1. القسم الثابت: مستخرج من العتاد الفيزيائي ومحمي ضد تدوير الشاشة ومحفوظ بالذاكرة
 function getDeterministicHwId(){
+  var saved = null;
+  try { saved = localStorage.getItem("star_fixed_hw_id"); } catch(e){}
+  if(saved && /^STAR-[A-F0-9]{8}$/.test(saved)) {
+    cachedFixedHwId = saved;
+    return saved;
+  }
   if(cachedFixedHwId) return cachedFixedHwId;
   
   var glRenderer = "no-gl";
@@ -2002,31 +2008,17 @@ function getDeterministicHwId(){
     }
   } catch(e){}
 
-  var canvasSig = "no-cv";
-  try {
-    var cv = document.createElement("canvas");
-    cv.width = 200; cv.height = 40;
-    var ctx = cv.getContext("2d");
-    if(ctx){
-      ctx.textBaseline = "top";
-      ctx.font = "14px 'Arial'";
-      ctx.fillStyle = "#f60";
-      ctx.fillRect(100, 1, 50, 15);
-      ctx.fillStyle = "#069";
-      ctx.fillText("StarPhonePOS-FixedHW", 2, 10);
-      canvasSig = cv.toDataURL().slice(-50);
-    }
-  } catch(e){}
+  // ترتيب الأبعاد من الأصغر للأكبر لضمان ثبات الكود عند تدوير الشاشة
+  var minDim = Math.min(screen.width || 0, screen.height || 0);
+  var maxDim = Math.max(screen.width || 0, screen.height || 0);
 
   var rawComponents = [
-    screen.width + "x" + screen.height,
+    minDim + "x" + maxDim,
     screen.colorDepth || 24,
     window.devicePixelRatio || 1,
     navigator.hardwareConcurrency || 4,
     (navigator.platform || ""),
-    (new Date().getTimezoneOffset()),
-    glRenderer,
-    canvasSig
+    glRenderer
   ].join("###");
 
   var h = 0x811c9dc5;
@@ -2036,10 +2028,11 @@ function getDeterministicHwId(){
   }
   var hex = (h >>> 0).toString(16).toUpperCase().padStart(8, "0");
   cachedFixedHwId = "STAR-" + hex;
+  try { localStorage.setItem("star_fixed_hw_id", cachedFixedHwId); } catch(e){}
   return cachedFixedHwId;
 }
 
-// 2. القسم المتغير (Variable Instance ID): يتغير عند مسح بيانات التطبيق أو إعادة تثبيته
+// 2. القسم المتغير للجلسة
 function getInstallInstanceId(){
   if(cachedInstanceId) return cachedInstanceId;
   var stored = null;
@@ -2058,7 +2051,7 @@ function getFullClientCode(){
   return getDeterministicHwId() + "-" + getInstallInstanceId();
 }
 
-// 4. التحقق من التوقيع المشفر HMAC-SHA256 المربوط بالقسم الثابت حصراً
+// 4. توقيع التشفير HMAC-SHA256
 async function hmacSha256(text){
   var enc = new TextEncoder();
   var key = await crypto.subtle.importKey(
@@ -2070,15 +2063,54 @@ async function hmacSha256(text){
   return Array.from(new Uint8Array(sigBuf)).map(function(b){ return b.toString(16).padStart(2, '0'); }).join('').slice(0, 16);
 }
 
-// 5. إدارة وحفظ الفترة التجريبية (30 يوماً)
+// 5. التحقق المباشر والصريح من المفتاح المدخل
+async function verifyKeyString(key){
+  if(!key) return { valid: false, msg: (currentLang==="en" ? "Empty key" : "يرجى إدخال المفتاح") };
+  key = key.trim().replace(/\s+/g, "");
+  
+  var raw = "";
+  try {
+    raw = decodeURIComponent(escape(atob(key)));
+  } catch(e) {
+    try { raw = atob(key); } catch(e2){
+      return { valid: false, msg: (currentLang==="en" ? "Invalid key format" : "صيغة المفتاح غير صالحة") };
+    }
+  }
+
+  var parts = raw.split("|");
+  if(parts.length !== 3){
+    return { valid: false, msg: (currentLang==="en" ? "Corrupted key structure" : "بنية المفتاح غير صحيحة") };
+  }
+
+  var keyHw = parts[0].trim().toUpperCase();
+  var expDate = parts[1].trim();
+  var sig = parts[2].trim();
+  var myFixedHw = getDeterministicHwId();
+
+  if(keyHw !== myFixedHw){
+    return { valid: false, msg: (currentLang==="en" ? "This key belongs to another device!" : "هذا المفتاح مخصص لجهاز آخر ولا يعمل على هذا الجهاز!") };
+  }
+
+  var expectedSig = await hmacSha256(keyHw + "|" + expDate);
+  if(sig !== expectedSig){
+    return { valid: false, msg: (currentLang==="en" ? "Invalid signature or tampered key" : "توقيع المفتاح غير صالح أو تم التلاعب به") };
+  }
+
+  if(expDate !== "9999-12-31" && today() > expDate){
+    return { valid: false, msg: (currentLang==="en" ? ("Key expired on: " + expDate) : ("مفتاح التفعيل منتهي الصلاحية بتاريخ: " + expDate)) };
+  }
+
+  return { valid: true, expDate: expDate };
+}
+
+// 6. إدارة الفترة التجريبية
 function getTrialInfo(){
   var trialStart = null;
   try { trialStart = parseInt(localStorage.getItem("star_trial_start")); } catch(e){}
-  
   var now = Date.now();
   var lastSeen = null;
   try { lastSeen = parseInt(localStorage.getItem("star_last_seen")); } catch(e){}
-  
+
   if(lastSeen && (now < lastSeen - 86400000)){
     return { active: false, daysLeft: 0, reason: "clock_tampered" };
   }
@@ -2096,22 +2128,7 @@ function getTrialInfo(){
   var daysLeft = 30 - elapsedDays;
   if(daysLeft < 0) daysLeft = 0;
 
-  return { active: (daysLeft > 0), daysLeft: daysLeft, elapsedDays: elapsedDays };
-}
-
-function tryRestoreTrialFromFS(){
-  if(typeof fsRead !== "function") return Promise.resolve(null);
-  return fsRead(".trial_start.json").then(function(res){
-    try {
-      var d = JSON.parse(res.data);
-      if(d && d.start){
-        var stored = parseInt(localStorage.getItem("star_trial_start"));
-        if(!stored || stored > d.start){
-          localStorage.setItem("star_trial_start", String(d.start));
-        }
-      }
-    } catch(e){}
-  }).catch(function(){});
+  return { active: (daysLeft > 0), daysLeft: daysLeft };
 }
 
 function showLockScreen(msg, allowClose){
@@ -2130,42 +2147,20 @@ function hideLockScreen(){
   if(modal) modal.style.display = "none";
 }
 
-// 6. فحص الترخيص: يتم التحقق من تطابق المفتاح مع القسم الثابت فقط
+// 7. تحديث واجهة وحالة الترخيص
 async function checkLicenseStatus(manualOpen){
-  var fixedHw = getDeterministicHwId();
   var fullCode = getFullClientCode();
   if($("myHwId")) $("myHwId").value = fullCode;
 
   var savedKey = localStorage.getItem("star_license_key");
-  var isKeyValid = false;
-  var expDate = "";
+  var keyCheck = await verifyKeyString(savedKey);
 
-  if(savedKey){
-    try {
-      var decoded = decodeURIComponent(escape(atob(savedKey)));
-      var parts = decoded.split("|");
-      if(parts.length === 3){
-        var keyHw = parts[0], kExp = parts[1], sig = parts[2];
-        // المفتاح صالح إذا طابق القسم الثابت من الجهاز
-        if(keyHw === fixedHw){
-          var expectedSig = await hmacSha256(keyHw + "|" + kExp);
-          if(sig === expectedSig){
-            var todayStr = today();
-            if(kExp === "9999-12-31" || todayStr <= kExp){
-              isKeyValid = true;
-              expDate = kExp;
-            }
-          }
-        }
-      }
-    } catch(e){}
-  }
-
-  // الحالة الأولى: التطبيق مفعّل بمفتاح مرخص صالح
-  if(isKeyValid){
+  // إذا وجد مفتاح صالح وموثق
+  if(keyCheck.valid){
     isCurrentlyInTrial = false;
     hideLockScreen();
     
+    var expDate = keyCheck.expDate;
     var licText = (expDate === "9999-12-31")
       ? ((currentLang==="en") ? "✓ Lifetime License Active" : "✓ ترخيص مفعل مدى الحياة")
       : ((currentLang==="en") ? ("✓ Active until: " + expDate) : ("✓ مفعل لغاية: " + expDate));
@@ -2181,7 +2176,7 @@ async function checkLicenseStatus(manualOpen){
     return true;
   }
 
-  // الحالة الثانية: غير مفعّل، فحص الفترة التجريبية (30 يوماً)
+  // إذا لم يوجد مفتاح صالح، نفحص التجربة
   var trial = getTrialInfo();
   if(trial.active && trial.daysLeft > 0){
     isCurrentlyInTrial = true;
@@ -2204,25 +2199,13 @@ async function checkLicenseStatus(manualOpen){
     return true;
   }
 
-  // الحالة الثالثة: انتهاء التجربة ولا يوجد مفتاح
+  // انتهت التجربة ولا يوجد مفتاح صالح
   isCurrentlyInTrial = false;
-  var lockMsg = (trial.reason === "clock_tampered")
-    ? ((currentLang==="en") ? "System clock change detected. Please activate the app." : "تم رصد تغيير في ساعة الجهاز. يرجى تفعيل البرنامج.")
-    : ((currentLang==="en") ? "30-day trial period has expired. Please enter license key." : "انتهت الفترة التجريبية المجانية (30 يوماً). يرجى إدخال مفتاح التفعيل للمتابعة.");
-
-  showLockScreen(lockMsg, false);
+  showLockScreen((currentLang==="en") ? "Trial expired. Please enter license key." : "انتهت الفترة التجريبية المجانية (30 يوماً). يرجى إدخال مفتاح التفعيل للمتابعة.", false);
   return false;
 }
 
-// أحداث الأزرار
-if($("btnCopyHw")){
-  $("btnCopyHw").onclick = function(){
-    copyToClipboard($("myHwId").value, function(){
-      alert((currentLang==="en") ? "Client code copied! Send it to the seller." : "تم نسخ كود العميل كاملاً! أرسله للموزع لتوليد المفتاح.");
-    }, function(){});
-  };
-}
-
+// 8. زر التفعيل الصريح
 if($("btnActivateApp")){
   $("btnActivateApp").onclick = async function(){
     var key = $("inLicKey").value.trim();
@@ -2230,17 +2213,30 @@ if($("btnActivateApp")){
       alert((currentLang==="en") ? "Please paste the activation key first!" : "يرجى لصق مفتاح التفعيل أولاً!");
       return;
     }
-    localStorage.setItem("star_license_key", key);
-    if(typeof fsWrite === "function"){
-      fsWrite(".license.key", key).catch(function(){});
-    }
-    var ok = await checkLicenseStatus(false);
-    if(ok){
-      alert((currentLang==="en") ? "App activated successfully! ✓" : "تم تفعيل البرنامج بنجاح! ✓");
+
+    var res = await verifyKeyString(key);
+    if(res.valid){
+      localStorage.setItem("star_license_key", key);
+      if(typeof fsWrite === "function"){
+        fsWrite(".license.key", key).catch(function(){});
+      }
+      await checkLicenseStatus(false);
+      var successMsg = (res.expDate === "9999-12-31")
+        ? (currentLang==="en" ? "App activated permanently! ✓" : "تم تفعيل البرنامج بنجاح مدى الحياة! ✓")
+        : (currentLang==="en" ? ("App activated until " + res.expDate + " ✓") : ("تم تفعيل البرنامج بنجاح لغاية " + res.expDate + " ✓"));
+      alert(successMsg);
       renderAll();
     } else {
-      alert((currentLang==="en") ? "Invalid activation key for this device." : "مفتاح التفعيل غير صالح لهذا الجهاز!");
+      alert("❌ " + res.msg);
     }
+  };
+}
+
+if($("btnCopyHw")){
+  $("btnCopyHw").onclick = function(){
+    copyToClipboard($("myHwId").value, function(){
+      alert((currentLang==="en") ? "Client code copied!" : "تم نسخ كود العميل بنجاح! أرسله للموزع لتوليد المفتاح.");
+    }, function(){});
   };
 }
 
@@ -2262,9 +2258,7 @@ if($("btnOpenActivateModal")){
   };
 }
 
-tryRestoreTrialFromFS().then(function(){
-  checkLicenseStatus(false);
-});
+checkLicenseStatus(false);
 setInterval(function(){ checkLicenseStatus(false); }, 1800000);
 
 </script>
