@@ -24,24 +24,21 @@ jobs:
         with:
           node-version: 20
 
-      - name: Prepare Web Assets & Install Capacitor with All Plugins
+      - name: Prepare Web Assets & Install Capacitor
         run: |
           mkdir -p dist
-          # نسخ كافة ملفات الواجهة والأيقونات والمانيفست
+          # نسخ كافة ملفات مشروعك الحقيقية
           cp index.html dist/index.html
-          [ -f icon-192.png ] && cp icon-192.png dist/icon-192.png || true
+          [ -f icon-only.png ] && cp icon-only.png dist/icon-only.png || true
           [ -f manifest.webmanifest ] && cp manifest.webmanifest dist/manifest.webmanifest || true
+          [ -f sw.js ] && cp sw.js dist/sw.js || true
           cp -r *.png dist/ 2>/dev/null || true
-          cp -r *.svg dist/ 2>/dev/null || true
           cp -r *.json dist/ 2>/dev/null || true
           
-          # تثبيت كاباسيتور مع إضافات النظام والملفات الضرورية
           npm init -y
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/filesystem@6 @capacitor/app@6
           
-          # إنشاء تكوين كاباسيتور فقط إذا لم يكن موجوداً
-          if [ ! -f capacitor.config.json ]; then
-            cat << 'EOF' > capacitor.config.json
+          cat << 'EOF' > capacitor.config.json
           {
             "appId": "com.starphone.pos",
             "appName": "Star Phone POS",
@@ -49,42 +46,38 @@ jobs:
             "bundledWebRuntime": false
           }
           EOF
-          fi
           
-          # الحفاظ على مجلد android الأصلي إن وجد أو إنشاؤه لأول مرة
           if [ ! -d "android" ]; then
             npx cap add android
           fi
           npx cap sync android
 
-      - name: Restore Custom Icons to Android Project
+      - name: Set App Icon From icon-only.png
         run: |
-          # حقن الأيقونة في كافة مقاسات أندرويد لضمان عدم اختفائها أبداً
-          if [ -f icon-192.png ]; then
+          # حقن أيقونتك الحقيقية icon-only.png في كافة مقاسات أندرويد
+          if [ -f icon-only.png ]; then
             for dir in android/app/src/main/res/mipmap-*; do
               if [ -d "$dir" ]; then
-                cp icon-192.png "$dir/ic_launcher.png" || true
-                cp icon-192.png "$dir/ic_launcher_round.png" || true
-                cp icon-192.png "$dir/ic_launcher_foreground.png" || true
+                cp icon-only.png "$dir/ic_launcher.png" || true
+                cp icon-only.png "$dir/ic_launcher_round.png" || true
+                cp icon-only.png "$dir/ic_launcher_foreground.png" || true
               fi
             done
-            echo "Custom icons restored to all mipmap densities."
+            echo "Custom icon icon-only.png injected successfully."
           fi
 
-      - name: Configure Manifest, Permissions & Build Release APK
+      - name: Configure Manifest & Build Release APK
         run: |
-          # زيادة رقم الإصدار تلقائياً حتى يقبل أندرويد التحديث
+          # زيادة رقم الإصدار تلقائياً ليقبل الهاتف التثبيت فوق القديم
           RUN_NUM=${{ github.run_number }}
           sed -i "s/versionCode [0-9]*/versionCode $RUN_NUM/g" android/app/build.gradle || true
-          
-          # التأكد من إزالة وضع تصحيح الأخطاء
           sed -i 's/android:debuggable="true"/android:debuggable="false"/g' android/app/src/main/AndroidManifest.xml || true
           
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon
 
-      - name: Align & Sign APK with Fixed Keystore (v1, v2, v3)
+      - name: Sign APK with Original Project Keystore
         run: |
           BUILD_TOOLS_DIR=$(find $ANDROID_SDK_ROOT/build-tools -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
           if [ -z "$BUILD_TOOLS_DIR" ]; then
@@ -92,32 +85,33 @@ jobs:
           fi
           echo "Using Android Build Tools: $BUILD_TOOLS_DIR"
           
-          # مفتاح توقيع موحد وثابت للبرنامج
-          keytool -genkeypair -v \
-            -keystore starphone-release.jks \
-            -alias starphone_key \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 18250 \
-            -storepass "StarPhone@Secure2026" \
-            -keypass "StarPhone@Secure2026" \
-            -dname "CN=Star Phone Systems, OU=Mobile Solutions, O=StarPhone POS, L=Tripoli, ST=North, C=LB"
-          
           UNSIGNED_APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
-          
           $BUILD_TOOLS_DIR/zipalign -v -p 4 "$UNSIGNED_APK" StarPhone-Aligned.apk
           
-          $BUILD_TOOLS_DIR/apksigner sign \
-            --ks starphone-release.jks \
-            --ks-key-alias starphone_key \
-            --ks-pass pass:"StarPhone@Secure2026" \
-            --key-pass pass:"StarPhone@Secure2026" \
-            --v1-signing-enabled true \
-            --v2-signing-enabled true \
-            --v3-signing-enabled true \
-            --out StarPhone-POS-Release.apk \
-            StarPhone-Aligned.apk
-            
+          # استخدام مفتاحك الأصلي الموجود في المستودع starphone.keystore
+          if [ -f "starphone.keystore" ]; then
+            echo "Using starphone.keystore from repository..."
+            $BUILD_TOOLS_DIR/apksigner sign \
+              --ks starphone.keystore \
+              --ks-pass pass:"StarPhone@Secure2026" \
+              --key-pass pass:"StarPhone@Secure2026" \
+              --v1-signing-enabled true \
+              --v2-signing-enabled true \
+              --v3-signing-enabled true \
+              --out StarPhone-POS-Release.apk \
+              StarPhone-Aligned.apk || {
+                $BUILD_TOOLS_DIR/apksigner sign \
+                  --ks starphone.keystore \
+                  --ks-pass pass:"android" \
+                  --key-pass pass:"android" \
+                  --v1-signing-enabled true \
+                  --v2-signing-enabled true \
+                  --v3-signing-enabled true \
+                  --out StarPhone-POS-Release.apk \
+                  StarPhone-Aligned.apk
+              }
+          fi
+          
           $BUILD_TOOLS_DIR/apksigner verify -v StarPhone-POS-Release.apk
 
       - name: Upload Verified Release APK
