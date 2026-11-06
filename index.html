@@ -137,6 +137,29 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
 </style>
 </head>
 <body>
+<!-- شاشة القفل وتفعيل الترخيص (License Activation Modal) -->
+<div id="licLockModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.96);z-index:999999;flex-direction:column;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;backdrop-filter:blur(8px);">
+  <div class="card" style="max-width:440px;width:100%;text-align:center;box-sizing:border-box;border-color:var(--pri);box-shadow:0 20px 40px rgba(0,0,0,0.5);position:relative">
+    <button id="btnCloseLicModal" class="del" style="position:absolute;top:10px;left:10px;display:none;font-size:22px;padding:4px 8px;cursor:pointer" title="إغلاق">✕</button>
+    <div style="font-size:36px;margin-bottom:8px">🔒</div>
+    <h2 style="color:var(--pri);margin:0 0 6px;font-size:18px" id="licModalTitle">تفعيل ترخيص البرنامج</h2>
+    <p id="licStatusDesc" style="font-size:13px;color:var(--bad);margin:0 0 14px">البرنامج غير مفعل أو انتهت صلاحية الترخيص.</p>
+    
+    <label style="text-align:start;margin:6px 0 3px" id="lblMyHw">كود هذا الجهاز (انسخه وأرسله للبائع):</label>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <input id="myHwId" readonly style="font-family:monospace;text-align:center;font-weight:bold;color:var(--pri);direction:ltr;background:var(--bg)">
+      <button class="qb" id="btnCopyHw" style="width:auto;padding:0 12px;font-size:13px" title="نسخ">📋</button>
+    </div>
+
+    <label style="text-align:start;margin:6px 0 3px" id="lblInLic">مفتاح التفعيل:</label>
+    <input id="inLicKey" placeholder="الصق مفتاح التفعيل هنا..." autocomplete="off" style="direction:ltr;font-family:monospace;font-size:13px">
+    <button class="add" id="btnActivateApp" style="margin-top:12px">تفعيل الآن ⚡</button>
+    <button class="add sec" id="btnContinueTrial" style="margin-top:8px;display:none">متابعة التجربة المجانية ⏳</button>
+  </div>
+</div>
+
+
+
 <h1 id="appTitle" data-i18n="app_title">📱 محاسبة محل الاتصالات</h1>
 <div class="card" id="licBar" style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px">
   <b style="font-size:13px;color:var(--ok)" data-i18n="lic_active">✓ مفعل مدى الحياة</b>
@@ -429,10 +452,11 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
     <span data-i18n="lbl_app_ver">رقم الإصدار (Version):</span>
     <b id="appVersionTxt" style="direction:ltr;color:var(--ok)">v1.6</b>
   </div>
-  <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)">
     <span data-i18n="lbl_lic_status">حالة الترخيص:</span>
-    <b style="color:var(--ok)" data-i18n="val_lic_status">مفعّل دائم (Lifetime) ✓</b>
+    <b id="val_lic_status_txt" style="color:var(--ok)" data-i18n="val_lic_status">مفعّل دائم (Lifetime) ✓</b>
   </div>
+  <button class="add sec" id="btnOpenActivateModal" style="margin-top:10px">🔑 إدخال أو تجديد مفتاح التفعيل</button>
 </div>
 
 <!-- 3. الحفظ التلقائي الفوري بالهاتف عند كل تعديل -->
@@ -1955,6 +1979,294 @@ if($("btnLangEn")) $("btnLangEn").onclick = function(){ applyLang("en"); };
 
 // تطبيق اللغة المحفوظة عند فتح التطبيق
 applyLang(currentLang);
+
+
+
+/* ===== نظام التراخيص والحماية: كود عتاد ثابت + كود تثبيت متغير + فترة تجريبية 30 يوماً ===== */
+var MASTER_SECRET = "STARPHONE-KEY-95323-LEB-2026";
+var cachedFixedHwId = null;
+var cachedInstanceId = null;
+var isCurrentlyInTrial = false;
+
+// 1. القسم الثابت (Fixed Hardware ID): مستخرج من مواصفات العتاد الفيزيائي ولا يتغير أبداً
+function getDeterministicHwId(){
+  if(cachedFixedHwId) return cachedFixedHwId;
+  
+  var glRenderer = "no-gl";
+  try {
+    var c = document.createElement("canvas");
+    var gl = c.getContext("webgl") || c.getContext("experimental-webgl");
+    if(gl){
+      var ext = gl.getExtension("WEBGL_debug_renderer_info");
+      if(ext){ glRenderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || ""; }
+    }
+  } catch(e){}
+
+  var canvasSig = "no-cv";
+  try {
+    var cv = document.createElement("canvas");
+    cv.width = 200; cv.height = 40;
+    var ctx = cv.getContext("2d");
+    if(ctx){
+      ctx.textBaseline = "top";
+      ctx.font = "14px 'Arial'";
+      ctx.fillStyle = "#f60";
+      ctx.fillRect(100, 1, 50, 15);
+      ctx.fillStyle = "#069";
+      ctx.fillText("StarPhonePOS-FixedHW", 2, 10);
+      canvasSig = cv.toDataURL().slice(-50);
+    }
+  } catch(e){}
+
+  var rawComponents = [
+    screen.width + "x" + screen.height,
+    screen.colorDepth || 24,
+    window.devicePixelRatio || 1,
+    navigator.hardwareConcurrency || 4,
+    (navigator.platform || ""),
+    (new Date().getTimezoneOffset()),
+    glRenderer,
+    canvasSig
+  ].join("###");
+
+  var h = 0x811c9dc5;
+  for(var i = 0; i < rawComponents.length; i++){
+    h ^= rawComponents.charCodeAt(i);
+    h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+  }
+  var hex = (h >>> 0).toString(16).toUpperCase().padStart(8, "0");
+  cachedFixedHwId = "STAR-" + hex;
+  return cachedFixedHwId;
+}
+
+// 2. القسم المتغير (Variable Instance ID): يتغير عند مسح بيانات التطبيق أو إعادة تثبيته
+function getInstallInstanceId(){
+  if(cachedInstanceId) return cachedInstanceId;
+  var stored = null;
+  try { stored = localStorage.getItem("star_install_id"); } catch(e){}
+  if(!stored){
+    var rnd = Math.floor(1000 + Math.random() * 9000).toString(16).toUpperCase();
+    stored = "INST-" + rnd;
+    try { localStorage.setItem("star_install_id", stored); } catch(e){}
+  }
+  cachedInstanceId = stored;
+  return cachedInstanceId;
+}
+
+// 3. كود العميل الكامل (القسم الثابت + القسم المتغير)
+function getFullClientCode(){
+  return getDeterministicHwId() + "-" + getInstallInstanceId();
+}
+
+// 4. التحقق من التوقيع المشفر HMAC-SHA256 المربوط بالقسم الثابت حصراً
+async function hmacSha256(text){
+  var enc = new TextEncoder();
+  var key = await crypto.subtle.importKey(
+    "raw", enc.encode(MASTER_SECRET),
+    { name: "HMAC", hash: "SHA-256" },
+    false, ["sign"]
+  );
+  var sigBuf = await crypto.subtle.sign("HMAC", key, enc.encode(text));
+  return Array.from(new Uint8Array(sigBuf)).map(function(b){ return b.toString(16).padStart(2, '0'); }).join('').slice(0, 16);
+}
+
+// 5. إدارة وحفظ الفترة التجريبية (30 يوماً)
+function getTrialInfo(){
+  var trialStart = null;
+  try { trialStart = parseInt(localStorage.getItem("star_trial_start")); } catch(e){}
+  
+  var now = Date.now();
+  var lastSeen = null;
+  try { lastSeen = parseInt(localStorage.getItem("star_last_seen")); } catch(e){}
+  
+  if(lastSeen && (now < lastSeen - 86400000)){
+    return { active: false, daysLeft: 0, reason: "clock_tampered" };
+  }
+  try { localStorage.setItem("star_last_seen", String(now)); } catch(e){}
+
+  if(!trialStart || isNaN(trialStart)){
+    trialStart = now;
+    try { localStorage.setItem("star_trial_start", String(trialStart)); } catch(e){}
+    if(typeof fsWrite === "function"){
+      fsWrite(".trial_start.json", JSON.stringify({ start: trialStart, hw: getDeterministicHwId() })).catch(function(){});
+    }
+  }
+
+  var elapsedDays = Math.floor((now - trialStart) / 86400000);
+  var daysLeft = 30 - elapsedDays;
+  if(daysLeft < 0) daysLeft = 0;
+
+  return { active: (daysLeft > 0), daysLeft: daysLeft, elapsedDays: elapsedDays };
+}
+
+function tryRestoreTrialFromFS(){
+  if(typeof fsRead !== "function") return Promise.resolve(null);
+  return fsRead(".trial_start.json").then(function(res){
+    try {
+      var d = JSON.parse(res.data);
+      if(d && d.start){
+        var stored = parseInt(localStorage.getItem("star_trial_start"));
+        if(!stored || stored > d.start){
+          localStorage.setItem("star_trial_start", String(d.start));
+        }
+      }
+    } catch(e){}
+  }).catch(function(){});
+}
+
+function showLockScreen(msg, allowClose){
+  var modal = $("licLockModal");
+  if(modal){
+    modal.style.display = "flex";
+    if($("licStatusDesc")) $("licStatusDesc").textContent = msg;
+    if($("myHwId")) $("myHwId").value = getFullClientCode();
+    if($("btnCloseLicModal")) $("btnCloseLicModal").style.display = allowClose ? "block" : "none";
+    if($("btnContinueTrial")) $("btnContinueTrial").style.display = allowClose ? "block" : "none";
+  }
+}
+
+function hideLockScreen(){
+  var modal = $("licLockModal");
+  if(modal) modal.style.display = "none";
+}
+
+// 6. فحص الترخيص: يتم التحقق من تطابق المفتاح مع القسم الثابت فقط
+async function checkLicenseStatus(manualOpen){
+  var fixedHw = getDeterministicHwId();
+  var fullCode = getFullClientCode();
+  if($("myHwId")) $("myHwId").value = fullCode;
+
+  var savedKey = localStorage.getItem("star_license_key");
+  var isKeyValid = false;
+  var expDate = "";
+
+  if(savedKey){
+    try {
+      var decoded = decodeURIComponent(escape(atob(savedKey)));
+      var parts = decoded.split("|");
+      if(parts.length === 3){
+        var keyHw = parts[0], kExp = parts[1], sig = parts[2];
+        // المفتاح صالح إذا طابق القسم الثابت من الجهاز
+        if(keyHw === fixedHw){
+          var expectedSig = await hmacSha256(keyHw + "|" + kExp);
+          if(sig === expectedSig){
+            var todayStr = today();
+            if(kExp === "9999-12-31" || todayStr <= kExp){
+              isKeyValid = true;
+              expDate = kExp;
+            }
+          }
+        }
+      }
+    } catch(e){}
+  }
+
+  // الحالة الأولى: التطبيق مفعّل بمفتاح مرخص صالح
+  if(isKeyValid){
+    isCurrentlyInTrial = false;
+    hideLockScreen();
+    
+    var licText = (expDate === "9999-12-31")
+      ? ((currentLang==="en") ? "✓ Lifetime License Active" : "✓ ترخيص مفعل مدى الحياة")
+      : ((currentLang==="en") ? ("✓ Active until: " + expDate) : ("✓ مفعل لغاية: " + expDate));
+
+    var licEl = document.querySelector("#licBar b");
+    if(licEl){ licEl.textContent = licText; licEl.style.color = "var(--ok)"; }
+
+    var setLicEl = $("val_lic_status_txt");
+    if(!setLicEl) setLicEl = document.querySelector('[data-i18n="val_lic_status"]');
+    if(setLicEl){ setLicEl.textContent = licText; setLicEl.style.color = "var(--ok)"; }
+
+    if(manualOpen) showLockScreen(licText, true);
+    return true;
+  }
+
+  // الحالة الثانية: غير مفعّل، فحص الفترة التجريبية (30 يوماً)
+  var trial = getTrialInfo();
+  if(trial.active && trial.daysLeft > 0){
+    isCurrentlyInTrial = true;
+    if(!manualOpen) hideLockScreen();
+    
+    var trialText = (currentLang==="en")
+      ? ("⏳ Free Trial: " + trial.daysLeft + " days left")
+      : ("⏳ فترة تجريبية: متبقي " + trial.daysLeft + " يوم");
+
+    var licEl = document.querySelector("#licBar b");
+    if(licEl){ licEl.textContent = trialText; licEl.style.color = "var(--pri)"; }
+
+    var setLicEl = $("val_lic_status_txt");
+    if(!setLicEl) setLicEl = document.querySelector('[data-i18n="val_lic_status"]');
+    if(setLicEl){ setLicEl.textContent = trialText; setLicEl.style.color = "var(--pri)"; }
+
+    if(manualOpen){
+      showLockScreen((currentLang==="en") ? ("You have " + trial.daysLeft + " days left in your trial.") : ("أنت في الفترة التجريبية (متبقي " + trial.daysLeft + " يوم)."), true);
+    }
+    return true;
+  }
+
+  // الحالة الثالثة: انتهاء التجربة ولا يوجد مفتاح
+  isCurrentlyInTrial = false;
+  var lockMsg = (trial.reason === "clock_tampered")
+    ? ((currentLang==="en") ? "System clock change detected. Please activate the app." : "تم رصد تغيير في ساعة الجهاز. يرجى تفعيل البرنامج.")
+    : ((currentLang==="en") ? "30-day trial period has expired. Please enter license key." : "انتهت الفترة التجريبية المجانية (30 يوماً). يرجى إدخال مفتاح التفعيل للمتابعة.");
+
+  showLockScreen(lockMsg, false);
+  return false;
+}
+
+// أحداث الأزرار
+if($("btnCopyHw")){
+  $("btnCopyHw").onclick = function(){
+    copyToClipboard($("myHwId").value, function(){
+      alert((currentLang==="en") ? "Client code copied! Send it to the seller." : "تم نسخ كود العميل كاملاً! أرسله للموزع لتوليد المفتاح.");
+    }, function(){});
+  };
+}
+
+if($("btnActivateApp")){
+  $("btnActivateApp").onclick = async function(){
+    var key = $("inLicKey").value.trim();
+    if(!key){
+      alert((currentLang==="en") ? "Please paste the activation key first!" : "يرجى لصق مفتاح التفعيل أولاً!");
+      return;
+    }
+    localStorage.setItem("star_license_key", key);
+    if(typeof fsWrite === "function"){
+      fsWrite(".license.key", key).catch(function(){});
+    }
+    var ok = await checkLicenseStatus(false);
+    if(ok){
+      alert((currentLang==="en") ? "App activated successfully! ✓" : "تم تفعيل البرنامج بنجاح! ✓");
+      renderAll();
+    } else {
+      alert((currentLang==="en") ? "Invalid activation key for this device." : "مفتاح التفعيل غير صالح لهذا الجهاز!");
+    }
+  };
+}
+
+if($("btnCloseLicModal")){
+  $("btnCloseLicModal").onclick = function(){
+    if(isCurrentlyInTrial) hideLockScreen();
+  };
+}
+
+if($("btnContinueTrial")){
+  $("btnContinueTrial").onclick = function(){
+    if(isCurrentlyInTrial) hideLockScreen();
+  };
+}
+
+if($("btnOpenActivateModal")){
+  $("btnOpenActivateModal").onclick = function(){
+    checkLicenseStatus(true);
+  };
+}
+
+tryRestoreTrialFromFS().then(function(){
+  checkLicenseStatus(false);
+});
+setInterval(function(){ checkLicenseStatus(false); }, 1800000);
+
 </script>
 </body>
 </html>
