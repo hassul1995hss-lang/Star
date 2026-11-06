@@ -24,9 +24,6 @@ jobs:
         with:
           node-version: 20
 
-      - name: Setup Android Build Tools
-        uses: android-actions/setup-android@v3
-
       - name: Prepare Web Assets & Capacitor Project
         run: |
           mkdir -p dist
@@ -34,7 +31,6 @@ jobs:
           npm init -y
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
           
-          # إعداد ملف التكوين capacitor.config.json بمعرف رسمي ومحدد
           cat << 'EOF' > capacitor.config.json
           {
             "appId": "com.starphone.pos",
@@ -50,23 +46,22 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      - name: Configure Production Android Manifest & Gradle
+      - name: Configure Production Android Manifest & Build APK
         run: |
-          # التأكد من إزالة وضع تصحيح الأخطاء debuggable وإعداد إعدادات الأمان
           sed -i 's/android:debuggable="true"/android:debuggable="false"/g' android/app/src/main/AndroidManifest.xml || true
-          
-          # بناء نسخة الإصدار الرسمية Release APK
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon
 
       - name: Align & Sign APK with Production Keystore (v1, v2, v3 Schemes)
         run: |
-          # العثور على حزمة أدوات البناء الرسمية
-          BUILD_TOOLS_DIR=$(find $ANDROID_HOME/build-tools -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
+          BUILD_TOOLS_DIR=$(find $ANDROID_SDK_ROOT/build-tools -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
+          if [ -z "$BUILD_TOOLS_DIR" ]; then
+            BUILD_TOOLS_DIR=$(find $ANDROID_HOME/build-tools -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
+          fi
           echo "Using Android Build Tools: $BUILD_TOOLS_DIR"
           
-          # إنشاء مفتاح توقيع إنتاجي ثابت ورسمي (بدون صفة Debug) صالح لمدة 50 سنة
+          # إنشاء شهادة توقيع إنتاجية دائمة صالحة لمدة 50 سنة
           keytool -genkeypair -v \
             -keystore starphone-release.jks \
             -alias starphone_key \
@@ -79,10 +74,10 @@ jobs:
           
           UNSIGNED_APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
           
-          # 1. تطبيق المحاذاة الدقيقة 4-Byte ZipAlign
+          # 1. محاذاة الملف الرسمية ZipAlign
           $BUILD_TOOLS_DIR/zipalign -v -p 4 "$UNSIGNED_APK" StarPhone-Aligned.apk
           
-          # 2. التوقيع الرقمي المتزامن بجميع بروتوكولات أندرويد (v1 + v2 + v3)
+          # 2. التوقيع الرقمي المتزامن بجميع بروتوكولات الأمان (v1 + v2 + v3)
           $BUILD_TOOLS_DIR/apksigner sign \
             --ks starphone-release.jks \
             --ks-key-alias starphone_key \
@@ -94,7 +89,6 @@ jobs:
             --out StarPhone-POS-Release.apk \
             StarPhone-Aligned.apk
             
-          # التحقق من سلامة التوقيع
           $BUILD_TOOLS_DIR/apksigner verify -v StarPhone-POS-Release.apk
 
       - name: Upload Verified Release APK
