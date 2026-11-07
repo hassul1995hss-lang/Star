@@ -61,7 +61,7 @@ jobs:
           const fs = require("fs");
           const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
           pkg.main = "main.js";
-          pkg.version = '1.0.' + (process.env.GITHUB_RUN_NUMBER || '1');
+          pkg.version = "1.0." + (process.env.GITHUB_RUN_NUMBER || "1");
           pkg.scripts = {
             "dist": "electron-builder --win portable"
           };
@@ -94,3 +94,4 @@ jobs:
         with:
           name: StarPhone-Windows-Portable
           path: release/*.exe
+          
