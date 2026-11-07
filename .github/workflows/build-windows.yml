@@ -61,7 +61,7 @@ jobs:
           const fs = require("fs");
           const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
           pkg.main = "main.js";
-          pkg.version = "1.0." + (process.env.GITHUB_RUN_NUMBER || "1");
+          pkg.version = '1.0.' + (process.env.GITHUB_RUN_NUMBER || '1');
           pkg.scripts = {
             "dist": "electron-builder --win portable"
           };
@@ -72,11 +72,13 @@ jobs:
               "output": "release"
             },
             "win": {
-              "target": ["portable"]
+              "target": ["portable"],
+              "icon": "icon.ico"
             },
             "files": [
               "main.js",
-              "dist/**/*"
+              "dist/**/*",
+              "icon.ico"
             ]
           };
           fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2));
