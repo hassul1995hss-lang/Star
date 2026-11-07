@@ -8,7 +8,7 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="mobile-web-app-capable" content="yes">
-<title>Star Phone POS</title>
+<title>Star POS</title>
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--text:#1b2433;--mut:#6b7686;--line:#e2e7ef;--pri:#1d6fe0;--ok:#14915a;--bad:#d63c3c;--warn:#d97706;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -125,7 +125,7 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
 
 <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
   <img id="topShopLogo" class="header-logo" alt="Logo">
-  <h1 id="appTitle" style="margin:0"><span id="shopDisplayTitle">Star Phone POS</span></h1>
+  <h1 id="appTitle" style="margin:0"><span id="shopDisplayTitle">Star POS</span></h1>
 </div>
 
 <div class="card" id="licBar" style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px">
@@ -494,7 +494,7 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
   <h2 data-i18n="h2_app_info">ℹ️ معلومات التطبيق والإصدار</h2>
   <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)">
     <span data-i18n="lbl_app_name">اسم البرنامج:</span>
-    <b style="color:var(--pri)">Star Phone POS</b>
+    <b style="color:var(--pri)">Star POS</b>
   </div>
   <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)">
     <span data-i18n="lbl_app_ver">رقم الإصدار (Version):</span>
@@ -784,7 +784,7 @@ var I18N = {
     btn_wa_invoice: "فاتورة واتساب 📄"
   },
   en: {
-    app_title: "📱 Star Phone POS",
+    app_title: "📱 Star POS",
     lic_active: "✓ Active",
     wk_open: "🔒 Worker Mode",
     wk_active: "🔒 Worker Mode Active",
@@ -2072,7 +2072,7 @@ function wkApply(){
   $("wkBar").style.display=on?"flex":"none";
   try{ $("rstBtn").parentNode.style.display=on?"none":""; }catch(e){}
   if(on){ setMode("sale"); setView("s"); }
-  render();
+  renderAll();
 }
 function wkPaint(){
   var has=!!WK.hash, P=WK.perms||{};
