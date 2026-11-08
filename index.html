@@ -2974,25 +2974,27 @@ async function verifyKeyString(key){
   }
 
   var parts = raw.split("|");
-  if(parts.length !== 3){
+  if(parts.length !== 3 && parts.length !== 4){
     return { valid: false, msg: "Corrupted key structure" };
   }
 
   var keyHw = parts[0].trim().toUpperCase();
   var totalSeconds = parseInt(parts[1]) || 0;
-  var sig = parts[2].trim();
+  var nonce = parts.length === 4 ? parts[2].trim() : "";
+  var sig = (parts.length === 4 ? parts[3] : parts[2]).trim();
   var myFixedHw = getDeterministicHwId();
 
   if(keyHw !== myFixedHw){
     return { valid: false, msg: (currentLang==="en" ? "This key belongs to another device!" : "هذا المفتاح مخصص لجهاز آخر ولا يعمل على هذا الجهاز!") };
   }
 
-  var expectedSig = await hmacSha256(keyHw + "|" + totalSeconds);
+  var signPayload = nonce ? (keyHw + "|" + totalSeconds + "|" + nonce) : (keyHw + "|" + totalSeconds);
+  var expectedSig = await hmacSha256(signPayload);
   if(sig !== expectedSig){
     return { valid: false, msg: (currentLang==="en" ? "Invalid signature" : "توقيع المفتاح غير صالح أو تم التلاعب به") };
   }
 
-  return { valid: true, seconds: totalSeconds };
+  return { valid: true, seconds: totalSeconds, nonce: nonce };
 }
 
 function getLicenseRemainingSeconds(){
