@@ -37,7 +37,7 @@ jobs:
               minWidth: 900,
               minHeight: 600,
               autoHideMenuBar: true,
-              title: "Star Phone POS",
+              title: "Star POS",
               webPreferences: {
                 nodeIntegration: false,
                 contextIsolation: true
@@ -67,7 +67,7 @@ jobs:
           };
           pkg.build = {
             "appId": "com.starphone.pos",
-            "productName": "Star Phone POS",
+            "productName": "Star POS",
             "directories": {
               "output": "release"
             },
