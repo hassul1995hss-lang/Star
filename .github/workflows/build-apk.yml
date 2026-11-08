@@ -35,12 +35,12 @@ jobs:
           cp -r *.json dist/ 2>/dev/null || true
           
           npm init -y
-          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/filesystem@6 @capacitor/app@6
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/filesystem@6 @capacitor/app@6 @capacitor/share@6
           
           cat << 'EOF' > capacitor.config.json
           {
             "appId": "com.starphone.pos",
-            "appName": "Star POS",
+            "appName": "Star Phone POS",
             "webDir": "dist",
             "bundledWebRuntime": false
           }
@@ -50,6 +50,71 @@ jobs:
             npx cap add android
           fi
           npx cap sync android
+
+      - name: Add Native Print Plugin
+        run: |
+          JAVA_DIR=android/app/src/main/java/com/starphone/pos
+          mkdir -p "$JAVA_DIR"
+
+          cat << 'EOF' > "$JAVA_DIR/PrinterPlugin.java"
+          package com.starphone.pos;
+
+          import android.content.Context;
+          import android.print.PrintAttributes;
+          import android.print.PrintManager;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+
+          @CapacitorPlugin(name = "Printer")
+          public class PrinterPlugin extends Plugin {
+              private WebView printView;
+
+              @PluginMethod
+              public void print(final PluginCall call) {
+                  final String html = call.getString("content", "");
+                  getActivity().runOnUiThread(new Runnable() {
+                      @Override
+                      public void run() {
+                          try {
+                              printView = new WebView(getActivity());
+                              printView.setWebViewClient(new WebViewClient() {
+                                  @Override
+                                  public void onPageFinished(WebView view, String url) {
+                                      PrintManager pm = (PrintManager) getActivity().getSystemService(Context.PRINT_SERVICE);
+                                      String job = "Star POS Invoice";
+                                      pm.print(job, view.createPrintDocumentAdapter(job), new PrintAttributes.Builder().build());
+                                      call.resolve();
+                                  }
+                              });
+                              printView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
+                          } catch (Exception e) {
+                              call.reject("Print failed: " + e.getMessage());
+                          }
+                      }
+                  });
+              }
+          }
+          EOF
+
+          cat << 'EOF' > "$JAVA_DIR/MainActivity.java"
+          package com.starphone.pos;
+
+          import android.os.Bundle;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  registerPlugin(PrinterPlugin.class);
+                  super.onCreate(savedInstanceState);
+              }
+          }
+          EOF
 
       - name: Set App Icon From icon-only.png
         run: |
