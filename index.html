@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <title>Star POS</title>
 <style>
-:root{--bg:#f4f6fa;--card:#fff;--text:#1b2433;--mut:#6b7686;--line:#e2e7ef;--pri:#1d6fe0;--ok:#14915a;--bad:#d63c3c;--warn:#d97706;
+:root{--bg:#f2f4f8;--card:#fff;--text:#0f1b2d;--mut:#5b6678;--line:#e1e6ee;--pri:#2457c5;--ok:#0f8a5f;--bad:#c93232;--warn:#b86e00;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10141c;--card:#1a212d;--text:#eaeff7;--mut:#93a0b4;--line:#2a3445;--pri:#5b9bff;--ok:#3ecf8e;--bad:#ff6b6b;--warn:#f59e0b}}
 :root[data-theme="dark"]{--bg:#10141c;--card:#1a212d;--text:#eaeff7;--mut:#93a0b4;--line:#2a3445;--pri:#5b9bff;--ok:#3ecf8e;--bad:#ff6b6b;--warn:#f59e0b}
@@ -130,27 +130,105 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
 .fld2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .kv{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
 .kv:last-of-type{border:0}
+/* ===== الأيقونات ===== */
+.i{width:1.2em;height:1.2em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none;vertical-align:-.24em;margin-inline-end:5px}
+.i.f{fill:currentColor;stroke:none}
+button .i,.tabs .i,h2 .i,.mrow .i,.sp-back .i,.kv .i{margin-inline-end:0}
+.del{display:inline-flex;align-items:center;justify-content:center;padding:6px;border-radius:8px}
+.del:hover{background:rgba(201,50,50,.1)}
+.del .i{width:18px;height:18px;margin:0}
+
+/* ===== المظهر العام ===== */
+body{font-family:"Segoe UI",Tahoma,"Noto Sans Arabic",Arial,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5}
+h1{font-size:20px;font-weight:800;letter-spacing:-.2px}
+h2{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;margin:0 0 10px}
+h2 .i{color:var(--pri)}
+.card{box-shadow:0 1px 2px rgba(15,27,45,.04),0 6px 18px rgba(15,27,45,.04);border-radius:14px;padding:14px}
+label{font-weight:600;font-size:12.5px;color:var(--mut)}
+input,select,textarea{border-radius:10px;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.16)}
+.add{display:flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;font-weight:700;padding:12px 14px;transition:filter .15s,transform .05s}
+.add:hover{filter:brightness(1.06)}.add:active{transform:translateY(1px)}
+.stat{border-radius:12px;box-shadow:0 1px 2px rgba(15,27,45,.04);border-inline-start:3px solid var(--line)}
+.stat b{font-weight:800;letter-spacing:-.2px}
+.stat.net{border-inline-start-color:var(--pri)}
+.empty{font-size:13px}
+.item{padding:11px 0}
+
+/* ===== التبويبات ===== */
+.tabs{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+.tabs button{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;background:transparent;color:var(--mut);border-radius:9px;font-weight:600;transition:background .15s,color .15s}
+.tabs button.on{background:var(--pri);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.3)}
+#navTabs{position:sticky;top:0;z-index:30;margin-bottom:12px;box-shadow:0 4px 12px rgba(15,27,45,.06)}
+#navTabs button{flex-direction:column;gap:3px;padding:8px 2px;font-size:11.5px}
+#navTabs .i{width:21px;height:21px}
+.tabs .i{width:1.15em;height:1.15em}
+@media (min-width:768px){#navTabs button{flex-direction:row;gap:8px;font-size:14px;padding:11px 14px}}
+
+/* ===== الترويسة وشريط الترخيص ===== */
+.header-logo{border-radius:10px}
+#licBar{border-radius:10px;box-shadow:none;background:transparent;border-style:dashed}
+
+/* ===== الشريط السفلي ===== */
+#bottomActionsBar{backdrop-filter:blur(8px);box-shadow:0 -6px 20px rgba(15,27,45,.08)}
+#bottomActionsBar button{border-radius:10px}
+
+/* ===== فواتير ===== */
+.inv-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.invc-h b .i{color:var(--pri);margin-inline-end:6px}
+
+/* ===== الإعدادات: قائمة رئيسية وصفحات ===== */
+.mrow{display:flex;align-items:center;gap:13px;width:100%;padding:13px 14px;margin-bottom:9px;background:var(--card);border:1px solid var(--line);border-radius:13px;color:var(--text);font:inherit;text-align:start;cursor:pointer;box-shadow:0 1px 2px rgba(15,27,45,.04);transition:border-color .15s,background .15s}
+.mrow:hover{border-color:var(--pri)}
+.mrow .ic,.sg>summary .ic{flex:none;width:40px;height:40px;border-radius:11px;background:rgba(37,99,235,.1);color:var(--pri);display:flex;align-items:center;justify-content:center}
+.mrow .ic .i{width:21px;height:21px}
+.mrow .mt{flex:1;min-width:0;font-weight:700;font-size:15px}
+.mrow .mt small{display:block;color:var(--mut);font-weight:400;font-size:12px;margin-top:1px}
+.mrow .chev{color:var(--mut);width:20px;height:20px}
+html[dir="ltr"] .mrow .chev{transform:scaleX(-1)}
+.mrow.danger{border-color:rgba(201,50,50,.4)}
+.mrow.danger .ic{background:rgba(201,50,50,.1);color:var(--bad)}
+.sp-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.sp-head h2{margin:0;font-size:18px}
+.sp-back{flex:none;width:42px;height:42px;border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.sp-back:hover{border-color:var(--pri);color:var(--pri)}
+html[dir="rtl"] .sp-back .i{transform:none}
+html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
+.sp .sg-sub{margin-top:18px}
+.sp .card{margin-bottom:12px}
+
+/* ===== حقوق الملكية والتواصل ===== */
+.about-head{text-align:center;padding:8px 0 14px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.about-mark{width:64px;height:64px;margin:0 auto 10px;border-radius:18px;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:center}
+.about-mark .i{width:32px;height:32px}
+.about-head b{display:block;font-size:20px}
+.about-head small{color:var(--mut)}
+.wa-cta{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:14px;padding:14px;border:0;border-radius:12px;background:#1fa855;color:#fff;font:inherit;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 4px 14px rgba(31,168,85,.3)}
+.wa-cta:hover{filter:brightness(1.06)}
+.wa-cta .i{width:22px;height:22px;margin:0}
+.about-rights{font-size:12.5px;color:var(--mut);line-height:1.8;margin:12px 0 0;padding:10px 12px;background:var(--bg);border-radius:10px;border:1px solid var(--line)}
 </style>
 </head>
 <body>
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol><symbol id="i-unlock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></symbol><symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol><symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l3-2 2.5 2L12 20l2.5 2L17 20l3 2V2l-3 2-2.5-2L12 4 9.5 2 7 4z"/><path d="M8 9h8M8 13h8"/></symbol><symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol><symbol id="i-cash" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></symbol><symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.7 2.7-2.3-.7-.7-2.3z"/></symbol><symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/></symbol><symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></symbol><symbol id="i-chip" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></symbol><symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol><symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></symbol><symbol id="i-package" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.5L12 12l8.7-4.5M12 22V12"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16v-5M12 16V7M17 16v-8"/></symbol><symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol><symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8M11 8v8M15 8v8M18 8v8"/></symbol><symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></symbol><symbol id="i-archive" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/></symbol><symbol id="i-store" viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v9h14v-9M10 21v-5h4v5"/></symbol><symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></symbol><symbol id="i-dollar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.5-1.5-3-1.5-1.8 0-3 .9-3 2.2s1.2 1.9 3 2.3 3 1 3 2.3-1.2 2.2-3 2.2c-1.5 0-2.6-.6-3-1.7M12 6v2M12 16v2"/></symbol><symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></symbol><symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></symbol><symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></symbol><symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></symbol><symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></symbol><symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2M16 7l3 3M14 9l2 2"/></symbol><symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol><symbol id="i-message" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol><symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol><symbol id="i-chev" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.7-4 3-9 3s-9-1.3-9-3M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol><symbol id="i-wa" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></symbol></svg>
 <!-- شاشة القفل وتفعيل الترخيص (License Activation Modal) -->
 <div id="licLockModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.96);z-index:999999;flex-direction:column;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;backdrop-filter:blur(8px);">
   <div class="card" style="max-width:440px;width:100%;text-align:center;box-sizing:border-box;border-color:var(--pri);box-shadow:0 20px 40px rgba(0,0,0,0.5);position:relative">
-    <button id="btnCloseLicModal" class="del" style="position:absolute;top:10px;left:10px;display:none;font-size:22px;padding:4px 8px;cursor:pointer" title="إغلاق">✕</button>
-    <div style="font-size:36px;margin-bottom:8px">🔒</div>
+    <button id="btnCloseLicModal" class="del" style="position:absolute;top:10px;left:10px;display:none;font-size:22px;padding:4px 8px;cursor:pointer" title="إغلاق"><svg class="i"><use href="#i-x"/></svg></button>
+    <div style="margin-bottom:8px;color:var(--pri)"><svg class="i" style="width:44px;height:44px;margin:0"><use href="#i-lock"/></svg></div>
     <h2 style="color:var(--pri);margin:0 0 6px;font-size:18px" id="licModalTitle">تفعيل ترخيص البرنامج</h2>
     <p id="licStatusDesc" style="font-size:13px;color:var(--bad);margin:0 0 14px">البرنامج غير مفعل أو انتهت صلاحية الترخيص.</p>
     
     <label style="text-align:start;margin:6px 0 3px" id="lblMyHw">كود هذا الجهاز (انسخه وأرسله للبائع):</label>
     <div style="display:flex;gap:6px;margin-bottom:12px">
       <input id="myHwId" readonly style="font-family:monospace;text-align:center;font-weight:bold;color:var(--pri);direction:ltr;background:var(--bg)">
-      <button class="qb" id="btnCopyHw" style="width:auto;padding:0 12px;font-size:13px" title="نسخ">📋</button>
+      <button class="qb" id="btnCopyHw" style="width:auto;padding:0 12px;font-size:13px" title="نسخ"><svg class="i"><use href="#i-clipboard"/></svg></button>
     </div>
 
     <label style="text-align:start;margin:6px 0 3px" id="lblInLic">مفتاح التفعيل:</label>
     <input id="inLicKey" placeholder="الصق مفتاح التفعيل هنا..." autocomplete="off" style="direction:ltr;font-family:monospace;font-size:13px">
-    <button class="add" id="btnActivateApp" style="margin-top:12px">تفعيل الآن ⚡</button>
-    <button class="add sec" id="btnContinueTrial" style="margin-top:8px;display:none">متابعة التجربة المجانية ⏳</button>
+    <button class="add" id="btnActivateApp" style="margin-top:12px">تفعيل الآن <svg class="i"><use href="#i-bolt"/></svg></button>
+    <button class="add sec" id="btnContinueTrial" style="margin-top:8px;display:none">متابعة التجربة المجانية </button>
   </div>
 </div>
 
@@ -160,15 +238,15 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
 </div>
 
 <div class="card" id="licBar" style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px">
-  <b id="licBarText" style="font-size:13px;color:var(--ok)">✓ مفعل</b>
+  <b id="licBarText" style="font-size:13px;color:var(--ok)"> مفعل</b>
   <small id="shiftStatusInfo" style="color:var(--mut);font-size:12px"></small>
 </div>
 
 <!-- نافذة إغلاق وجرد الصندوق اليومي -->
 <div id="registerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
   <div class="card" style="max-width:440px;width:100%;margin:0;position:relative">
-    <button id="btnCloseRegisterModal" class="del" style="position:absolute;top:10px;left:10px;font-size:20px">✕</button>
-    <h2 style="color:var(--pri);margin-bottom:10px" data-i18n="h2_reg_close">📥 إغلاق وجرد الصندوق وتصفير الوردية</h2>
+    <button id="btnCloseRegisterModal" class="del" style="position:absolute;top:10px;left:10px;font-size:20px"><svg class="i"><use href="#i-x"/></svg></button>
+    <h2 style="color:var(--pri);margin-bottom:10px"><svg class="i"><use href="#i-cash"/></svg><span data-i18n="h2_reg_close">إغلاق وجرد الصندوق وتصفير الوردية</span></h2>
     <p class="hint" style="margin-top:0" data-i18n="desc_reg_close">عند الإغلاق، يتم أرشفة جرد الوردية وتصفير المبيعات والأرباح الظاهرة بالواجهة لبدء يوم/وردية جديدة من الصفر.</p>
     
     <div style="background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;margin:10px 0;font-size:14px">
@@ -184,13 +262,13 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
     <input id="actualCashInput" type="number" inputmode="decimal" placeholder="أدخل المبلغ الموجود بالدرج...">
     <div id="cashDiffBox" style="font-size:13px;margin-top:6px;font-weight:600"></div>
 
-    <button class="add warn" id="btnSaveRegisterClose" style="margin-top:14px" data-i18n="btn_save_register">🔒 تأكيد الإغلاق وتصفير العمليات لليوم الجديد</button>
+    <button class="add warn" id="btnSaveRegisterClose" style="margin-top:14px"><svg class="i"><use href="#i-lock"/></svg><span data-i18n="btn_save_register">تأكيد الإغلاق وتصفير العمليات لليوم الجديد</span></button>
   </div>
 </div>
 
 <div class="card" id="wkBar" style="display:none;padding:8px 12px;border-color:var(--bad);justify-content:space-between;align-items:center;gap:8px">
-  <b id="wkTxt" style="font-size:13px" data-i18n="wk_active">🔒 وضع العامل مفعّل</b>
-  <button class="qb" id="wkExit" style="width:auto;padding:0 12px;font-size:13px" data-i18n="wk_unlock">🔓 فك التقييد</button>
+  <b id="wkTxt" style="font-size:13px" data-i18n="wk_active"><svg class="i"><use href="#i-lock"/></svg> وضع العامل مفعّل</b>
+  <button class="qb" id="wkExit" style="width:auto;padding:0 12px;font-size:13px"><svg class="i"><use href="#i-unlock"/></svg><span data-i18n="wk_unlock">فك التقييد</span></button>
 </div>
 <div class="card" id="rsBar" style="display:none;border-color:var(--ok)">
   <p id="rsTxt" style="margin:0 0 8px"></p>
@@ -198,11 +276,11 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
 </div>
 
 <div class="tabs" id="navTabs">
-  <button id="nS" class="on" data-i18n="tab_sales">🧾 المبيعات</button>
-  <button id="nI" data-i18n="tab_inv">📦 المخزون</button>
-  <button id="nM" data-i18n="tab_mnt">🔧 الصيانة</button>
-  <button id="nR" data-i18n="tab_rep">📊 الجرد</button>
-  <button id="nB" data-i18n="tab_set">⚙️ الإعدادات</button>
+  <button id="nS" class="on"><svg class="i"><use href="#i-receipt"/></svg><span data-i18n="tab_sales">المبيعات</span></button>
+  <button id="nI"><svg class="i"><use href="#i-package"/></svg><span data-i18n="tab_inv">المخزون</span></button>
+  <button id="nM"><svg class="i"><use href="#i-wrench"/></svg><span data-i18n="tab_mnt">الصيانة</span></button>
+  <button id="nR"><svg class="i"><use href="#i-chart"/></svg><span data-i18n="tab_rep">الجرد</span></button>
+  <button id="nB"><svg class="i"><use href="#i-gear"/></svg><span data-i18n="tab_set">الإعدادات</span></button>
 </div>
 
 <!-- 1. شاشة المبيعات -->
@@ -225,12 +303,12 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
   <div class="tabs">
     <button id="tSale" class="on" data-i18n="btn_sale_tab">+ عملية بيع</button>
     <button id="tExp" data-i18n="btn_exp_tab">+ مصروف</button>
-    <button id="tRet" data-i18n="btn_ret_tab">↩ مرتجع</button>
+    <button id="tRet"><svg class="i"><use href="#i-undo"/></svg><span data-i18n="btn_ret_tab">مرتجع</span></button>
   </div>
 
   <div class="desk-only" style="background:rgba(29,111,224,0.06);border:1px dashed var(--pri);border-radius:10px;padding:10px;margin-bottom:12px">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <label style="margin:0;font-weight:bold;color:var(--pri)" data-i18n="lbl_scan_barcode">🔍 مسح باركود المنتج (Barcode Scanner)</label>
+      <label style="margin:0;font-weight:bold;color:var(--pri)"><svg class="i"><use href="#i-scan"/></svg><span data-i18n="lbl_scan_barcode">مسح باركود المنتج (Barcode Scanner)</span></label>
       <small id="barStatus" style="font-weight:600;font-size:12px;color:var(--ok)"></small>
     </div>
     <input id="saleBarcode" data-i18n-ph="ph_scan_barcode" placeholder="اضغط هنا أو مرر الماسح الضوئي (قارئ الباركود)..." autocomplete="off" style="margin-top:6px;background:var(--card)">
@@ -288,12 +366,12 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
 </div>
 
 <div class="card" id="cartCard" style="display:none;border-color:var(--pri)">
-  <h2><span data-i18n="h2_cart">🧺 الفاتورة الحالية</span> <span id="cartCount" style="color:var(--mut);font-weight:400"></span></h2>
+  <h2><span><svg class="i"><use href="#i-cart"/></svg><span data-i18n="h2_cart">الفاتورة الحالية</span></span> <span id="cartCount" style="color:var(--mut);font-weight:400"></span></h2>
   <div id="cartList"></div>
   <div class="cart-total"><span data-i18n="lbl_cart_total">الإجمالي</span><b id="cartTotal">0</b></div>
   <input id="cartCust" data-i18n-ph="ph_cust" placeholder="اسم العميل (اختياري)" style="margin-top:6px">
   <div class="btn2">
-    <button class="add" id="cartDone" data-i18n="btn_cart_done">إتمام البيع ✓</button>
+    <button class="add" id="cartDone" data-i18n="btn_cart_done">إتمام البيع </button>
     <button class="add sec" id="cartClear" data-i18n="btn_cart_clear">إفراغ</button>
   </div>
 </div>
@@ -328,15 +406,15 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
   <p class="hint" data-i18n="hint_stock_add">إذا كانت القطعة موجودة بنفس الاسم والفئة، تُضاف الكمية وتتحدّث الأسعار.</p>
 </div>
 <div class="card"><h2 data-i18n="h2_curr_stock">المخزون الحالي</h2><div id="iList"></div></div>
-<div class="card prf"><h2><span data-i18n="h2_dmg">🗑 التالف (خارج المخزون ورأس المال)</span> <span id="dTot" class="bad"></span></h2><div id="dList"></div></div>
+<div class="card prf"><h2><span><svg class="i"><use href="#i-trash"/></svg><span data-i18n="h2_dmg">التالف (خارج المخزون ورأس المال)</span></span> <span id="dTot" class="bad"></span></h2><div id="dList"></div></div>
 </div>
 
 <!-- 3. شاشة الجرد والتقارير -->
 <div id="vRep" style="display:none">
 <div class="tabs" id="sTabs">
-  <button data-s="g" class="on" data-i18n="sec_g">📋 جرد عام للمحل</button>
-  <button data-s="s" data-i18n="sec_s">🧾 جرد المبيعات</button>
-  <button data-s="m" data-i18n="sec_m">🔧 جرد الصيانة</button>
+  <button data-s="g" class="on"><svg class="i"><use href="#i-clipboard"/></svg><span data-i18n="sec_g">جرد عام للمحل</span></button>
+  <button data-s="s"><svg class="i"><use href="#i-receipt"/></svg><span data-i18n="sec_s">جرد المبيعات</span></button>
+  <button data-s="m"><svg class="i"><use href="#i-wrench"/></svg><span data-i18n="sec_m">جرد الصيانة</span></button>
 </div>
 <div class="tabs" id="pTabs">
   <button data-p="d" class="on" data-i18n="btn_p_d">يومي</button>
@@ -364,7 +442,7 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
   </div>
   <div id="rLow" style="margin-top:8px"></div>
 </div>
-<div class="card"><h2 data-i18n="h2_reg_archive">🗂 أرشيف إغلاقات الصندوق</h2><div id="regArchiveList"></div></div>
+<div class="card"><h2><svg class="i"><use href="#i-archive"/></svg><span data-i18n="h2_reg_archive">أرشيف إغلاقات الصندوق</span></h2><div id="regArchiveList"></div></div>
 </div>
 
 <!-- 4. شاشة الصيانة -->
@@ -429,7 +507,7 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
 
 <!-- 5. شاشة وضع العامل -->
 <div id="vWk" style="display:none">
-<div class="card"><h2 data-i18n="wk_title">🔒 وضع العامل</h2>
+<div class="card"><h2><svg class="i"><use href="#i-lock"/></svg><span data-i18n="wk_title">وضع العامل</span></h2>
   <p class="hint" style="margin-top:0" data-i18n="wk_desc">عند التفعيل يبقى للعامل: تسجيل البيع، واستلام أجهزة الصيانة وتغيير حالتها وتسليمها. وتُخفى النسخ الاحتياطي والتفعيل وضبط المصنع دائماً، ولا يفك التقييد إلا كود المالك.</p>
   <div id="wkNoPin">
     <label data-i18n="lbl_wk_p1">أنشئ كود المالك (4 خانات على الأقل)</label><input id="wkP1" type="password" inputmode="numeric" autocomplete="off">
@@ -445,7 +523,7 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
     <label class="chk"><input type="checkbox" id="pPrf"> <span data-i18n="perm_prf">رؤية الأرباح والتكلفة وسعر الجملة ورأس المال</span></label>
     <label class="chk"><input type="checkbox" id="pRep"> <span data-i18n="perm_rep">فتح تبويب الجرد والتقارير</span></label>
     <label class="chk"><input type="checkbox" id="pReg"> <span data-i18n="perm_reg">إغلاق وجرد الصندوق اليومي</span></label>
-    <button class="add dng" id="wkOn" data-i18n="btn_wk_on">🔒 تفعيل وضع العامل الآن</button>
+    <button class="add dng" id="wkOn"><svg class="i"><use href="#i-lock"/></svg><span data-i18n="btn_wk_on">تفعيل وضع العامل الآن</span></button>
     <details style="margin-top:12px"><summary style="cursor:pointer;font-size:14px" data-i18n="sum_wk_chg">تغيير كود المالك</summary>
       <label data-i18n="lbl_wk_old">الكود الحالي</label><input id="wkOldP" type="password" inputmode="numeric" autocomplete="off">
       <label data-i18n="lbl_wk_new">الكود الجديد</label><input id="wkNewP" type="password" inputmode="numeric" autocomplete="off">
@@ -468,7 +546,7 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
 </div>
 <div id="wkDlg" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.55);z-index:60;align-items:center;justify-content:center;padding:16px">
   <div class="card" style="width:100%;max-width:380px;margin:0">
-    <h2 data-i18n="wk_dlg_title">🔓 فك وضع العامل</h2>
+    <h2><svg class="i"><use href="#i-unlock"/></svg><span data-i18n="wk_dlg_title">فك وضع العامل</span></h2>
     <label style="margin-top:0" data-i18n="lbl_wk_pin">كود المالك</label><input id="wkIn" type="password" inputmode="numeric" autocomplete="off">
     <p class="hint" id="wkDM" style="font-size:14px"></p>
     <div class="row" style="grid-template-columns:1fr 1fr">
@@ -485,21 +563,26 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
 <!-- 6. شاشة الإعدادات (مجموعات قابلة للطي) -->
 <div id="vBak" style="display:none">
 <p id="bkMsg" class="hint" style="font-size:14px;margin:0 0 10px"></p>
-
-<!-- 1. المحل والفاتورة -->
-<details class="sg" open>
-  <summary><span class="ic">🏪</span><span><span data-i18n="sg_shop">المحل والفاتورة</span><small data-i18n="sg_shop_d">الاسم واللوغو وبيانات الفاتورة</small></span></summary>
-  <div class="sg-body">
+<div id="setMenu">
+<button class="mrow" data-sp="shop"><span class="ic"><svg class="i"><use href="#i-store"/></svg></span><span class="mt"><span data-i18n="sg_shop">المحل والفاتورة</span><small data-i18n="sg_shop_d">الاسم واللوغو وبيانات الفاتورة</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+<button class="mrow" data-sp="pref"><span class="ic"><svg class="i"><use href="#i-sliders"/></svg></span><span class="mt"><span data-i18n="sg_pref">التفضيلات</span><small data-i18n="sg_pref_d">اللغة والعملة</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+<button class="mrow" data-sp="bk"><span class="ic"><svg class="i"><use href="#i-save"/></svg></span><span class="mt"><span data-i18n="sg_bk">النسخ الاحتياطي</span><small data-i18n="sg_bk_d">حفظ تلقائي واستعادة</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+<button class="mrow" data-sp="sync"><span class="ic"><svg class="i"><use href="#i-refresh"/></svg></span><span class="mt"><span data-i18n="sg_sync">نقل ومزامنة البيانات</span><small data-i18n="sg_sync_d">بين الجوال والكمبيوتر</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+<button class="mrow" data-sp="app"><span class="ic"><svg class="i"><use href="#i-info"/></svg></span><span class="mt"><span data-i18n="sg_app">التطبيق والترخيص</span><small data-i18n="sg_app_d">الإصدار وتفعيل الاشتراك</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+<button class="mrow" data-sp="about"><span class="ic"><svg class="i"><use href="#i-user"/></svg></span><span class="mt"><span data-i18n="sg_about">حقوق الملكية والتواصل</span><small data-i18n="sg_about_d">المطوّر والدعم الفني</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+<button class="mrow danger" data-sp="danger"><span class="ic"><svg class="i"><use href="#i-trash"/></svg></span><span class="mt"><span style="color:var(--bad)" data-i18n="sg_danger">منطقة الخطر</span><small data-i18n="sg_danger_d">ضبط المصنع ومسح البيانات</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+</div>
+<div class="sp" id="sp-shop" style="display:none"><div class="sp-head"><button class="sp-back" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2><span data-i18n="sg_shop">المحل والفاتورة</span></h2></div><div class="card">
     <label data-i18n="lbl_shop_name">اسم المحل / المتجر:</label>
-    <input id="inShopName" placeholder="مثال: ستار فون STAR PHONE">
+    <input id="inShopName" placeholder="اسم المحل">
     <div class="fld2">
-      <div><label data-i18n="lbl_shop_phone">رقم هاتف المحل (يظهر على الفاتورة):</label>
-      <input id="inShopPhone" type="tel" placeholder="مثال: 0980955323"></div>
+      <div><label data-i18n="lbl_shop_phone">رقم هاتف المحل:</label>
+      <input id="inShopPhone" type="tel" placeholder="رقم الهاتف"></div>
       <div><label data-i18n="lbl_shop_addr">العنوان (اختياري):</label>
-      <input id="inShopAddr" placeholder="مثال: بيروت - شارع الحمرا"></div>
+      <input id="inShopAddr" placeholder="عنوان المحل"></div>
     </div>
     <label data-i18n="lbl_inv_footer">رسالة أسفل الفاتورة:</label>
-    <input id="inInvFooter" placeholder="شكراً لتعاملكم معنا">
+    <input id="inInvFooter" placeholder="عبارة تظهر أسفل الفاتورة">
     <label data-i18n="lbl_paper">حجم ورق الطباعة (للطابعة الخارجية):</label>
     <select id="selPaper">
       <option value="80" data-i18n="opt_paper_80">إيصال حراري 80 ملم</option>
@@ -510,16 +593,10 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
     <input type="file" id="inShopLogoFile" accept="image/*">
     <div id="logoPreviewWrap" style="margin-top:8px;display:none;align-items:center;gap:10px">
       <img id="logoPreviewImg" style="width:50px;height:50px;border-radius:10px;object-fit:cover;border:1px solid var(--line)" alt="Logo">
-      <button class="qb" id="btnRemoveLogo" style="width:auto;padding:0 8px;font-size:12px;color:var(--bad)">حذف اللوغو ✕</button>
+      <button class="qb" id="btnRemoveLogo" style="width:auto;padding:0 8px;font-size:12px;color:var(--bad)">حذف اللوغو <svg class="i"><use href="#i-x"/></svg></button>
     </div>
-    <button class="add" id="btnSaveShopProfile" style="margin-top:14px" data-i18n="btn_save_shop_profile">حفظ بيانات المحل ✓</button>
-  </div>
-</details>
-
-<!-- 2. التفضيلات -->
-<details class="sg">
-  <summary><span class="ic">🎛️</span><span><span data-i18n="sg_pref">التفضيلات</span><small data-i18n="sg_pref_d">اللغة والعملة</small></span></summary>
-  <div class="sg-body">
+    <button class="add" id="btnSaveShopProfile" style="margin-top:14px" data-i18n="btn_save_shop_profile">حفظ بيانات المحل </button></div></div>
+<div class="sp" id="sp-pref" style="display:none"><div class="sp-head"><button class="sp-back" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2><span data-i18n="sg_pref">التفضيلات</span></h2></div><div class="card">
     <label data-i18n="lbl_lang">لغة واجهة البرنامج:</label>
     <div class="row" style="grid-template-columns:1fr 1fr;margin-top:4px">
       <button class="lang-btn on" id="btnLangAr" style="padding:10px;font-size:14px;font-weight:bold;cursor:pointer">العربية</button>
@@ -534,14 +611,8 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
       <option value="د.ع">دينار عراقي (د.ع)</option>
       <option value="€">يورو (€)</option>
     </select>
-    <p class="hint" data-i18n="desc_currency">تبقى المبيعات القديمة محفوظة بعملتها الأصلية لتفادي أي أخطاء في الصندوق.</p>
-  </div>
-</details>
-
-<!-- 3. النسخ الاحتياطي -->
-<details class="sg" id="autoCard">
-  <summary><span class="ic">💾</span><span><span data-i18n="sg_bk">النسخ الاحتياطي</span><small data-i18n="sg_bk_d">حفظ تلقائي واستعادة</small></span></summary>
-  <div class="sg-body">
+    <p class="hint" data-i18n="desc_currency">تبقى المبيعات القديمة محفوظة بعملتها الأصلية لتفادي أي أخطاء في الصندوق.</p></div></div>
+<div class="sp" id="sp-bk" style="display:none"><div class="sp-head"><button class="sp-back" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2><span data-i18n="sg_bk">النسخ الاحتياطي</span></h2></div><div class="card">
     <div style="background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;margin:10px 0">
       <div style="display:flex;align-items:center;gap:6px">
         <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--ok)"></span>
@@ -549,56 +620,47 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
       </div>
       <small id="autoStatusTxt" style="display:block;color:var(--mut);margin-top:4px;font-size:12px">المسار: Download/StarPhoneBackup</small>
     </div>
-    <button class="add sec" id="btnBackupNow" style="margin-top:0" data-i18n="btn_bk_now">💾 حفظ نسخة إضافية الآن يدوياً</button>
+    <button class="add sec" id="btnBackupNow" style="margin-top:0"><svg class="i"><use href="#i-save"/></svg><span data-i18n="btn_bk_now">حفظ نسخة إضافية الآن يدوياً</span></button>
     <label style="margin-top:14px" data-i18n="lbl_last_bk">آخر النسخ المحفوظة بالهاتف (اضغط استعادة للرجوع لأي نقطة):</label>
-    <div id="schList"></div>
-  </div>
-</details>
-
-<!-- 4. نقل ومزامنة البيانات -->
-<details class="sg">
-  <summary><span class="ic">🔄</span><span><span data-i18n="sg_sync">نقل ومزامنة البيانات</span><small data-i18n="sg_sync_d">بين الجوال والكمبيوتر</small></span></summary>
-  <div class="sg-body">
+    <div id="schList"></div></div></div>
+<div class="sp" id="sp-sync" style="display:none"><div class="sp-head"><button class="sp-back" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2><span data-i18n="sg_sync">نقل ومزامنة البيانات</span></h2></div><div class="card">
     <p class="hint" data-i18n="desc_sync">احفظ ملف النسخة أو انسخ النص وأرسله للجهاز الآخر ثم اضغط «دمج».</p>
     <div class="sg-sub" data-i18n="sg_export">① تصدير من هذا الجهاز</div>
     <div class="row" style="grid-template-columns:1fr 1fr">
-      <button class="add" id="bkSave" style="margin-top:4px" data-i18n="btn_save_file">💾 حفظ ملف نسخة</button>
-      <button class="add sec" id="bkTxt" style="margin-top:4px" data-i18n="btn_copy_txt">📋 نسخ كنص</button>
+      <button class="add" id="bkSave" style="margin-top:4px"><svg class="i"><use href="#i-save"/></svg><span data-i18n="btn_save_file">حفظ ملف نسخة</span></button>
+      <button class="add sec" id="bkTxt" style="margin-top:4px"><svg class="i"><use href="#i-clipboard"/></svg><span data-i18n="btn_copy_txt">نسخ كنص</span></button>
     </div>
     <textarea id="bkOut" rows="3" readonly style="display:none;margin-top:8px;direction:ltr;font-size:12px"></textarea>
     <p id="bkLast" style="margin:6px 0 0;font-size:12px"></p>
 
     <div class="sg-sub" data-i18n="sg_import">② استيراد إلى هذا الجهاز</div>
-    <button class="add" id="btnPasteClip" style="margin-top:4px;background:var(--ok)" data-i18n="btn_paste_clip">📋 لصق النسخة من الحافظة مباشرة</button>
+    <button class="add" id="btnPasteClip" style="margin-top:4px;background:var(--ok)"><svg class="i"><use href="#i-clipboard"/></svg><span data-i18n="btn_paste_clip">لصق النسخة من الحافظة مباشرة</span></button>
     <label style="margin-top:10px" data-i18n="lbl_choose_file">أو اختر ملف نسخة احتياطية (.json):</label>
     <input type="file" id="impFile" accept=".json,application/json,text/plain">
     <label style="margin-top:8px" data-i18n="lbl_paste_manual">أو الصق النص يدوياً هنا:</label>
     <textarea id="bkIn" rows="3" style="direction:ltr;font-size:12px" placeholder="الصق نص النسخة الاحتياطية هنا"></textarea>
     <div class="row" style="grid-template-columns:1fr 1fr;margin-top:8px">
-      <button class="add" id="impMerge" style="margin-top:0" data-i18n="btn_merge">🔄 دمج البيانات (مزامنة)</button>
-      <button class="add dng" id="impRep" style="margin-top:0" data-i18n="btn_replace">⚠ استبدال شامل</button>
+      <button class="add" id="impMerge" style="margin-top:0"><svg class="i"><use href="#i-refresh"/></svg><span data-i18n="btn_merge">دمج البيانات (مزامنة)</span></button>
+      <button class="add dng" id="impRep" style="margin-top:0"><svg class="i"><use href="#i-alert"/></svg><span data-i18n="btn_replace">استبدال شامل</span></button>
     </div>
-    <p class="hint" data-i18n="hint_merge">«دمج» يجمع العمليات الناقصة دون حذف ما لديك، ويحدث المخزون حسب آخر تعديل.</p>
-  </div>
-</details>
-
-<!-- 5. التطبيق والترخيص -->
-<details class="sg">
-  <summary><span class="ic">ℹ️</span><span><span data-i18n="sg_app">التطبيق والترخيص</span><small data-i18n="sg_app_d">الإصدار وتفعيل الاشتراك</small></span></summary>
-  <div class="sg-body">
+    <p class="hint" data-i18n="hint_merge">«دمج» يجمع العمليات الناقصة دون حذف ما لديك، ويحدث المخزون حسب آخر تعديل.</p></div></div>
+<div class="sp" id="sp-app" style="display:none"><div class="sp-head"><button class="sp-back" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2><span data-i18n="sg_app">التطبيق والترخيص</span></h2></div><div class="card">
     <div class="kv"><span data-i18n="lbl_app_name">اسم البرنامج:</span><b style="color:var(--pri)">Star POS</b></div>
     <div class="kv"><span data-i18n="lbl_app_ver">رقم الإصدار:</span><b id="appVersionTxt" style="direction:ltr;color:var(--ok)">v2.3</b></div>
-    <div class="kv"><span data-i18n="lbl_lic_status">حالة الترخيص:</span><b id="val_lic_status_txt" style="color:var(--ok)" data-i18n="val_lic_status">نشط ✓</b></div>
-    <button class="add sec" id="btnOpenActivateModal" style="margin-top:10px">🔑 إدخال أو تجديد مفتاح التفعيل</button>
-  </div>
-</details>
-
-<!-- 6. منطقة الخطر -->
-<details class="sg danger">
-  <summary><span class="ic">🗑</span><span><span style="color:var(--bad)" data-i18n="sg_danger">منطقة الخطر</span><small data-i18n="sg_danger_d">ضبط المصنع ومسح البيانات</small></span></summary>
-  <div class="sg-body">
+    <div class="kv"><span data-i18n="lbl_lic_status">حالة الترخيص:</span><b id="val_lic_status_txt" style="color:var(--ok)" data-i18n="val_lic_status">نشط </b></div>
+    <button class="add sec" id="btnOpenActivateModal" style="margin-top:10px"><svg class="i"><use href="#i-key"/></svg> إدخال أو تجديد مفتاح التفعيل</button></div></div>
+<div class="sp" id="sp-about" style="display:none"><div class="sp-head"><button class="sp-back" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2 data-i18n="sg_about">حقوق الملكية والتواصل</h2></div>
+<div class="card">
+  <div class="about-head"><div class="about-mark"><svg class="i"><use href="#i-store"/></svg></div><b>Star POS</b><small id="aboutVer" style="direction:ltr;display:block">v2.3</small></div>
+  <div class="kv"><span data-i18n="lbl_developer">المطوّر</span><b style="direction:ltr">Hasan E Sulaiman</b></div>
+  <div class="kv"><span data-i18n="lbl_contact_phone">رقم التواصل</span><b style="direction:ltr">+963 931 498 598</b></div>
+  <p class="about-rights" data-i18n="about_rights">© 2026 جميع الحقوق محفوظة للمطوّر. هذا البرنامج ملكية خاصة للمطوّر، ويُمنع نسخه أو توزيعه أو إعادة بيعه أو تعديله دون إذن خطي مسبق.</p>
+  <p class="hint" data-i18n="about_hint">للدعم الفني أو تجديد الاشتراك أو طلب تطوير أو تخصيص البرنامج، تواصل مباشرة مع المطوّر.</p>
+  <button class="wa-cta" id="btnContactWa"><svg class="i f"><use href="#i-wa"/></svg><span data-i18n="btn_contact_wa">تواصل مع المطوّر عبر واتساب</span></button>
+</div></div>
+<div class="sp" id="sp-danger" style="display:none"><div class="sp-head"><button class="sp-back" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2><span style="color:var(--bad)" data-i18n="sg_danger">منطقة الخطر</span></h2></div><div class="card">
     <p class="hint" data-i18n="msg_factory_hint">سيتم مسح كافة المبيعات والمخزون والصيانة نهائياً. يُنصح بحفظ نسخة احتياطية قبل المتابعة.</p>
-    <button class="add dng" id="rstBtn" style="margin-top:8px" data-i18n="btn_factory">🗑 مسح كافة البيانات (ضبط المصنع)</button>
+    <button class="add dng" id="rstBtn" style="margin-top:8px"><svg class="i"><use href="#i-trash"/></svg><span data-i18n="btn_factory">مسح كافة البيانات (ضبط المصنع)</span></button>
     <div id="rstBox" style="display:none;margin-top:10px">
       <p style="margin:0 0 8px;font-weight:600" data-i18n="msg_factory_confirm">سيتم مسح كافة المبيعات والمخزون والصيانة نهائياً. هل أنت متأكد؟</p>
       <div class="row" style="grid-template-columns:1fr 1fr">
@@ -606,32 +668,29 @@ body.is-desktop div.desk-only.flex { display: flex !important; }
         <button class="add sec" id="rstNo" style="margin-top:0" data-i18n="btn_cancel">إلغاء</button>
       </div>
     </div>
-    <p class="hint" id="rstMsg" style="margin-top:6px"></p>
-  </div>
-</details>
-
+    <p class="hint" id="rstMsg" style="margin-top:6px"></p></div></div>
 </div>
 
 <!-- الشريط السفلي الدائم لزر إغلاق الصندوق ووضع العامل -->
 <div id="bottomActionsBar">
-  <button id="btnOpenCloseRegister" class="add warn" style="margin-top:0" data-i18n="btn_register_close">📥 إغلاق وجرد الصندوق</button>
-  <button id="wkOpen" class="add sec" style="margin-top:0" data-i18n="wk_open">🔒 وضع العامل</button>
+  <button id="btnOpenCloseRegister" class="add warn" style="margin-top:0"><svg class="i"><use href="#i-cash"/></svg><span data-i18n="btn_register_close">إغلاق وجرد الصندوق</span></button>
+  <button id="wkOpen" class="add sec" style="margin-top:0"><svg class="i"><use href="#i-lock"/></svg><span data-i18n="wk_open">وضع العامل</span></button>
 </div>
 
 <script>
 /* ===== قاموس اللغات الشامل ===== */
 var I18N = {
   ar: {
-    app_title: "📱 محاسبة محل الاتصالات",
-    lic_active: "✓ مفعل",
-    wk_open: "🔒 وضع العامل",
-    wk_active: "🔒 وضع العامل مفعّل",
-    wk_unlock: "🔓 فك التقييد",
-    tab_sales: "🧾 المبيعات",
-    tab_inv: "📦 المخزون",
-    tab_mnt: "🔧 الصيانة",
-    tab_rep: "📊 الجرد",
-    tab_set: "⚙️ الإعدادات",
+    app_title: "محاسبة محل الاتصالات",
+    lic_active: "مفعل",
+    wk_open: "وضع العامل",
+    wk_active: "وضع العامل مفعّل",
+    wk_unlock: "فك التقييد",
+    tab_sales: "المبيعات",
+    tab_inv: "المخزون",
+    tab_mnt: "الصيانة",
+    tab_rep: "الجرد",
+    tab_set: "الإعدادات",
     lbl_date: "التاريخ",
     st_sales: "المبيعات",
     st_cost: "تكلفة البضاعة",
@@ -641,8 +700,8 @@ var I18N = {
     st_dmg: "التالف (تكلفة)",
     btn_sale_tab: "+ عملية بيع",
     btn_exp_tab: "+ مصروف",
-    btn_ret_tab: "↩ مرتجع",
-    lbl_scan_barcode: "🔍 مسح باركود المنتج (Barcode Scanner)",
+    btn_ret_tab: "مرتجع",
+    lbl_scan_barcode: "مسح باركود المنتج (Barcode Scanner)",
     ph_scan_barcode: "اضغط هنا أو مرر الماسح الضوئي (قارئ الباركود)...",
     lbl_step1_cat: "1. اختر الفئة أولاً (لتصفية الأصناف):",
     lbl_step2_item: "2. اختر الصنف التابع للفئة:",
@@ -687,7 +746,7 @@ var I18N = {
     hint_stock_add: "إذا كانت القطعة موجودة بنفس الاسم والفئة، تُضاف الكمية وتتحدّث الأسعار.",
     h2_curr_stock: "المخزون الحالي",
     empty_stock: "المخزون فارغ",
-    h2_dmg: "🗑 التالف (خارج المخزون ورأس المال)",
+    h2_dmg: "التالف (خارج المخزون ورأس المال)",
     empty_dmg: "لا يوجد تالف",
     btn_p_d: "يومي",
     btn_p_w: "أسبوعي",
@@ -731,7 +790,7 @@ var I18N = {
     empty_mnt: "لا توجد طلبات",
     lbl_m_fp: "السعر النهائي (شامل العربون)",
     btn_m_confirm_del: "تأكيد التسليم",
-    wk_title: "🔒 وضع العامل",
+    wk_title: "وضع العامل",
     wk_desc: "عند التفعيل يبقى للعامل: تسجيل البيع، واستلام أجهزة الصيانة وتغيير حالتها وتسليمها. وتُخفى النسخ الاحتياطي والتفعيل وضبط المصنع دائماً، ولا يفك التقييد إلا كود المالك.",
     lbl_wk_p1: "أنشئ كود المالك (4 خانات على الأقل)",
     lbl_wk_p2: "أعد كتابة الكود",
@@ -744,94 +803,100 @@ var I18N = {
     perm_prf: "رؤية الأرباح والتكلفة وسعر الجملة ورأس المال",
     perm_rep: "فتح تبويب الجرد والتقارير",
     perm_reg: "إغلاق وجرد الصندوق اليومي",
-    btn_wk_on: "🔒 تفعيل وضع العامل الآن",
+    btn_wk_on: "تفعيل وضع العامل الآن",
     sum_wk_chg: "تغيير كود المالك",
     lbl_wk_old: "الكود الحالي",
     lbl_wk_new: "الكود الجديد",
     btn_wk_chg: "تغيير الكود",
     btn_back: "رجوع",
-    wk_dlg_title: "🔓 فك وضع العامل",
+    wk_dlg_title: "فك وضع العامل",
     lbl_wk_pin: "كود المالك",
     btn_wk_unlock_do: "فك التقييد",
     sum_wk_forgot: "نسيت الكود؟",
     lbl_wk_rec: "رمز الاسترجاع",
     btn_wk_rec_do: "استرجاع",
-    h2_shop_profile: "🏪 بيانات المحل والفاتورة",
+    h2_shop_profile: "بيانات المحل والفاتورة",
     lbl_shop_name: "اسم المحل / المتجر:",
-    lbl_shop_phone: "رقم هاتف المحل (يظهر على الفاتورة):",
+    lbl_shop_phone: "رقم هاتف المحل:",
     lbl_shop_logo: "لوغو المحل (اختر صورة اللوغو):",
-    btn_save_shop_profile: "حفظ بيانات المحل ✓",
-    h2_currency: "💱 عملة البرنامج",
+    btn_save_shop_profile: "حفظ بيانات المحل ",
+    h2_currency: "عملة البرنامج",
     desc_currency: "اختر العملة المستخدمة في المحل. تبقى المبيعات القديمة محفوظة بعملتها الأصلية لتفادي أي أخطاء في الصندوق.",
     lbl_curr_symbol: "رمز العملة:",
-    btn_save_currency: "حفظ العملة ✓",
-    h2_lang: "🌐 لغة التطبيق (Language)",
+    btn_save_currency: "حفظ العملة ",
+    h2_lang: "لغة التطبيق (Language)",
     lbl_lang: "اختر لغة واجهة البرنامج / Select Interface Language:",
-    h2_app_info: "ℹ️ معلومات التطبيق والإصدار",
+    h2_app_info: "معلومات التطبيق والإصدار",
     lbl_app_name: "اسم البرنامج:",
     lbl_app_ver: "رقم الإصدار (Version):",
     lbl_lic_status: "حالة الترخيص:",
-    val_lic_status: "نشط ✓",
-    h2_instant_bk: "⚡ النسخ الاحتياطي التلقائي الفوري",
+    val_lic_status: "نشط ",
+    h2_instant_bk: "النسخ الاحتياطي التلقائي الفوري",
     desc_instant_bk: "يحفظ نسخة في ذاكرة الهاتف بمجلد <b>Download/StarPhoneBackup</b> تلقائياً وفوراً بعد أي عملية بيع، شراء، تعديل مخزون أو صيانة دون الحاجة لجدولة أو تدخل منك.",
     lbl_auto_active: "الحفظ التلقائي بعد كل تعديل: نشط ومفعّل",
-    btn_bk_now: "💾 حفظ نسخة إضافية الآن يدوياً",
+    btn_bk_now: "حفظ نسخة إضافية الآن يدوياً",
     lbl_last_bk: "آخر النسخ المحفوظة بالهاتف (اضغط استعادة للرجوع لأي نقطة):",
-    h2_sync: "🔄 مزامنة ونقل بيانات (جوال ⇄ كمبيوتر)",
+    h2_sync: "مزامنة ونقل بيانات (جوال / كمبيوتر)",
     desc_sync: "لحفظ ملف يدوي للمشاركة، أو نقل المبيعات والمخزون بين أجهزتك. احفظ الملف أو انسخ النص وأرسله للجهاز الآخر ثم اضغط «دمج».",
-    btn_save_file: "💾 حفظ ملف نسخة",
-    btn_copy_txt: "📋 نسخ كنص",
+    btn_save_file: "حفظ ملف نسخة",
+    btn_copy_txt: "نسخ كنص",
     lbl_import: "استيراد أو مزامنة بيانات من جهاز آخر:",
-    btn_paste_clip: "📋 لصق النسخة من الحافظة مباشرة",
+    btn_paste_clip: "لصق النسخة من الحافظة مباشرة",
     lbl_choose_file: "أو اختر ملف نسخة احتياطية (.json):",
     lbl_paste_manual: "أو الصق النص يدوياً هنا:",
-    btn_merge: "🔄 دمج البيانات (مزامنة)",
-    btn_replace: "⚠ استبدال شامل",
+    btn_merge: "دمج البيانات (مزامنة)",
+    btn_replace: "استبدال شامل",
     hint_merge: "«دمج» يجمع العمليات الناقصة دون حذف ما لديك، ويحدث المخزون حسب آخر تعديل.",
-    h2_factory: "🗑 ضبط المصنع وإعادة التهيئة",
-    btn_factory: "🗑 مسح كافة البيانات (ضبط المصنع)",
+    h2_factory: "ضبط المصنع وإعادة التهيئة",
+    btn_factory: "مسح كافة البيانات (ضبط المصنع)",
     msg_factory_confirm: "سيتم مسح كافة المبيعات والمخزون والصيانة نهائياً. هل أنت متأكد؟",
     btn_yes_reset: "نعم، امسح كل شيء",
     btn_edit: "تعديل",
     btn_receipt: "إيصال",
-    btn_del: "✕",
+    btn_del: "×",
     txt_profit: "ربح",
     txt_expense: "مصروف",
     txt_ret_back: "مرتجع — عاد للمخزون",
     txt_ret_dmg: "تالف — لم يعد للمخزون",
     txt_pieces: "قطعة",
     txt_available: "المتوفر:",
-    btn_register_close: "📥 إغلاق وجرد الصندوق",
-    h2_reg_close: "📥 إغلاق وجرد الصندوق وتصفير الوردية",
+    btn_register_close: "إغلاق وجرد الصندوق",
+    h2_reg_close: "إغلاق وجرد الصندوق وتصفير الوردية",
     desc_reg_close: "عند الإغلاق، يتم أرشفة جرد الوردية وتصفير المبيعات والأرباح الظاهرة بالواجهة لبدء يوم/وردية جديدة من الصفر.",
     reg_sales_total: "إجمالي المبيعات النقدية:",
     reg_returns_total: "إجمالي المرتجعات:",
     reg_expenses_total: "إجمالي المصاريف:",
     reg_net_cash: "الصافي المفترض بالصندوق:",
     lbl_actual_cash: "المبلغ الفعلي الموجود بالصندوق (العد اليدوي):",
-    btn_save_register: "🔒 تأكيد الإغلاق وتصفير العمليات لليوم الجديد",
-    h2_reg_archive: "🗂 أرشيف إغلاقات الصندوق",
+    btn_save_register: "تأكيد الإغلاق وتصفير العمليات لليوم الجديد",
+    h2_reg_archive: "أرشيف إغلاقات الصندوق",
     st_net: "صافي ربح المبيعات اليوم",
     st_mnt_today: "ربح الصيانة اليوم",
     st_tot_today: "الصافي الكلي (مبيعات + صيانة)",
     m_rev: "إيراد الصيانة (اليوم)", m_pcost: "تكلفة القطع (اليوم)", m_prof: "ربح الصيانة (اليوم)",
-    sec_g: "📋 جرد عام للمحل", sec_s: "🧾 جرد المبيعات", sec_m: "🔧 جرد الصيانة",
+    sec_g: "جرد عام للمحل", sec_s: "جرد المبيعات", sec_m: "جرد الصيانة",
     stock_audit_g: "الجرد العام للمحل (كل المخزون)", stock_audit_s: "جرد مخزون المبيعات", stock_audit_m: "جرد مخزون الصيانة (قطع الغيار)",
     h2_mnt_detail: "تفصيل أوامر الصيانة المسلّمة", h2_parts_used: "القطع المستخدمة من المخزون",
     lbl_m_pc: "تكلفة إضافية (قطع من خارج المخزون)",
-    btn_parts: "🔩 قطع من المخزون", lbl_part_item: "اختر قطعة الغيار", parts_add: "إضافة القطعة للجهاز", parts_close: "إغلاق",
+    btn_parts: "قطع من المخزون", lbl_part_item: "اختر قطعة الغيار", parts_add: "إضافة القطعة للجهاز", parts_close: "إغلاق",
     reg_mnt_total: "إيراد الصيانة المقبوض:",
     th_mnt: "صيانة", th_rev: "الإيراد", th_cost: "التكلفة", th_dev: "الجهاز", th_qty: "الكمية",
     st_rev_all: "إجمالي الإيرادات", st_cost_all: "إجمالي التكاليف", st_s_prof: "صافي ربح المبيعات", st_m_prof: "ربح الصيانة", st_tot_net: "صافي ربح المحل الكلي",
     st_m_recv: "أجهزة مستلمة بالفترة", st_m_deliv: "أجهزة مسلّمة بالفترة", st_m_unrep: "غير قابلة للإصلاح",
     txt_invoice: "فاتورة",
-    h2_cart: "🧺 الفاتورة الحالية",
+    sg_about: "حقوق الملكية والتواصل", sg_about_d: "المطوّر والدعم الفني",
+    lbl_developer: "المطوّر", lbl_contact_phone: "رقم التواصل",
+    about_rights: "© 2026 جميع الحقوق محفوظة للمطوّر. هذا البرنامج ملكية خاصة للمطوّر، ويُمنع نسخه أو توزيعه أو إعادة بيعه أو تعديله دون إذن خطي مسبق.",
+    about_hint: "للدعم الفني أو تجديد الاشتراك أو طلب تطوير أو تخصيص البرنامج، تواصل مباشرة مع المطوّر.",
+    btn_contact_wa: "تواصل مع المطوّر عبر واتساب",
+
+    h2_cart: "الفاتورة الحالية",
     lbl_cart_total: "الإجمالي",
     ph_cust: "اسم العميل (اختياري)",
-    btn_cart_done: "إتمام البيع ✓",
+    btn_cart_done: "إتمام البيع ",
     btn_cart_clear: "إفراغ",
-    btn_inv_pdf: "📄 PDF",
-    btn_inv_print: "🖨 طباعة",
+    btn_inv_pdf: "تصدير فاتورة",
+    btn_inv_print: "طباعة",
     ph_part_find: "ابحث عن قطعة غيار...",
     hint_parts_only: "تظهر هنا قطع الغيار فقط (فئة «قطع غيار» في المخزون).",
     sg_shop: "المحل والفاتورة", sg_shop_d: "الاسم واللوغو وبيانات الفاتورة",
@@ -848,16 +913,16 @@ var I18N = {
     msg_factory_hint: "سيتم مسح كافة المبيعات والمخزون والصيانة نهائياً. يُنصح بحفظ نسخة احتياطية قبل المتابعة."
   },
   en: {
-    app_title: "📱 Star POS",
-    lic_active: "✓ Active",
-    wk_open: "🔒 Worker Mode",
-    wk_active: "🔒 Worker Mode Active",
-    wk_unlock: "🔓 Unlock Restrictions",
-    tab_sales: "🧾 Sales",
-    tab_inv: "📦 Inventory",
-    tab_mnt: "🔧 Repairs",
-    tab_rep: "📊 Reports",
-    tab_set: "⚙️ Settings",
+    app_title: "Star POS",
+    lic_active: "Active",
+    wk_open: "Worker Mode",
+    wk_active: "Worker Mode Active",
+    wk_unlock: "Unlock Restrictions",
+    tab_sales: "Sales",
+    tab_inv: "Inventory",
+    tab_mnt: "Repairs",
+    tab_rep: "Reports",
+    tab_set: "Settings",
     lbl_date: "Date",
     st_sales: "Sales",
     st_cost: "Cost of Goods",
@@ -867,8 +932,8 @@ var I18N = {
     st_dmg: "Damaged (at Cost)",
     btn_sale_tab: "+ Sale",
     btn_exp_tab: "+ Expense",
-    btn_ret_tab: "↩ Return",
-    lbl_scan_barcode: "🔍 Barcode Scanner",
+    btn_ret_tab: "Return",
+    lbl_scan_barcode: "Barcode Scanner",
     ph_scan_barcode: "Scan barcode here or press Enter...",
     lbl_step1_cat: "1. Select Category First (to filter items):",
     lbl_step2_item: "2. Select Item from Category:",
@@ -913,7 +978,7 @@ var I18N = {
     hint_stock_add: "If the item already exists with the same name & category, quantity is added and prices updated.",
     h2_curr_stock: "Current Inventory",
     empty_stock: "Inventory is empty",
-    h2_dmg: "🗑 Damaged / Scrap (Excluded from Capital)",
+    h2_dmg: "Damaged / Scrap (Excluded from Capital)",
     empty_dmg: "No damaged items",
     btn_p_d: "Daily",
     btn_p_w: "Weekly",
@@ -957,7 +1022,7 @@ var I18N = {
     empty_mnt: "No repair orders found",
     lbl_m_fp: "Final Price (incl. deposit)",
     btn_m_confirm_del: "Confirm Delivery",
-    wk_title: "🔒 Worker Mode",
+    wk_title: "Worker Mode",
     wk_desc: "When enabled, worker can: record sales, receive and update repairs. Backup, settings, and factory reset are hidden.",
     lbl_wk_p1: "Create Owner PIN (min 4 digits)",
     lbl_wk_p2: "Confirm Owner PIN",
@@ -970,94 +1035,100 @@ var I18N = {
     perm_prf: "View Profit, Cost & Capital",
     perm_rep: "View Reports & Inventory Count",
     perm_reg: "Close Daily Register & Shift",
-    btn_wk_on: "🔒 Enable Worker Mode Now",
+    btn_wk_on: "Enable Worker Mode Now",
     sum_wk_chg: "Change Owner PIN",
     lbl_wk_old: "Current PIN",
     lbl_wk_new: "New PIN",
     btn_wk_chg: "Change PIN",
     btn_back: "Back",
-    wk_dlg_title: "🔓 Unlock Worker Mode",
+    wk_dlg_title: "Unlock Worker Mode",
     lbl_wk_pin: "Owner PIN",
     btn_wk_unlock_do: "Unlock",
     sum_wk_forgot: "Forgot PIN?",
     lbl_wk_rec: "Recovery Code",
     btn_wk_rec_do: "Recover",
-    h2_shop_profile: "🏪 Shop & Invoice Details",
+    h2_shop_profile: "Shop & Invoice Details",
     lbl_shop_name: "Shop / Store Name:",
-    lbl_shop_phone: "Shop phone (shown on invoice):",
+    lbl_shop_phone: "Shop phone:",
     lbl_shop_logo: "Shop Logo (Choose image):",
-    btn_save_shop_profile: "Save Shop Details ✓",
-    h2_currency: "💱 App Currency",
+    btn_save_shop_profile: "Save Shop Details ",
+    h2_currency: "App Currency",
     desc_currency: "Select primary currency symbol. Historical sales records remain securely in their original currency.",
     lbl_curr_symbol: "Currency Symbol:",
-    btn_save_currency: "Save Currency ✓",
-    h2_lang: "🌐 Interface Language",
+    btn_save_currency: "Save Currency ",
+    h2_lang: "Interface Language",
     lbl_lang: "Select Interface Language:",
-    h2_app_info: "ℹ️ Application & Version Info",
+    h2_app_info: "Application & Version Info",
     lbl_app_name: "App Name:",
     lbl_app_ver: "Version:",
     lbl_lic_status: "License Status:",
-    val_lic_status: "Active ✓",
-    h2_instant_bk: "⚡ Instant Automatic Backup",
+    val_lic_status: "Active ",
+    h2_instant_bk: "Instant Automatic Backup",
     desc_instant_bk: "Saves a copy in phone storage at <b>Download/StarPhoneBackup</b> instantly after every sale, purchase, stock update, or repair without scheduling.",
     lbl_auto_active: "Instant auto-save: Active & Running",
-    btn_bk_now: "💾 Save Manual Backup Snapshot Now",
+    btn_bk_now: "Save Manual Backup Snapshot Now",
     lbl_last_bk: "Recent Snapshots on Device (Click Restore to revert):",
-    h2_sync: "🔄 Sync & Data Transfer (Mobile ⇄ PC)",
+    h2_sync: "Sync & Data Transfer (Mobile / PC)",
     desc_sync: "Save backup file or copy text to transfer data between your devices, then click Merge.",
-    btn_save_file: "💾 Export Backup File",
-    btn_copy_txt: "📋 Copy as Text",
+    btn_save_file: "Export Backup File",
+    btn_copy_txt: "Copy as Text",
     lbl_import: "Import / Sync from Another Device:",
-    btn_paste_clip: "📋 Paste Directly from Clipboard",
+    btn_paste_clip: "Paste Directly from Clipboard",
     lbl_choose_file: "Or Choose Backup File (.json):",
     lbl_paste_manual: "Or Paste Backup Text Here:",
-    btn_merge: "🔄 Merge Data (Sync)",
-    btn_replace: "⚠ Total Replace (Overwrite)",
+    btn_merge: "Merge Data (Sync)",
+    btn_replace: "Total Replace (Overwrite)",
     hint_merge: "«Merge» adds missing operations without deleting existing data and updates stock to latest.",
-    h2_factory: "🗑 Factory Reset & Data Wipe",
-    btn_factory: "🗑 Factory Reset (Wipe All Data)",
+    h2_factory: "Factory Reset & Data Wipe",
+    btn_factory: "Factory Reset (Wipe All Data)",
     msg_factory_confirm: "All sales, inventory, and repair data will be permanently wiped. Are you sure?",
     btn_yes_reset: "Yes, Wipe Everything",
     btn_edit: "Edit",
     btn_receipt: "Receipt",
-    btn_del: "✕",
+    btn_del: "×",
     txt_profit: "Profit",
     txt_expense: "Expense",
     txt_ret_back: "Return — Restocked",
     txt_ret_dmg: "Damaged — Scrapped",
     txt_pieces: "pcs",
     txt_available: "Available:",
-    btn_register_close: "📥 Close Register",
-    h2_reg_close: "📥 Close Register & Reset Shift",
+    btn_register_close: "Close Register",
+    h2_reg_close: "Close Register & Reset Shift",
     desc_reg_close: "Closing register archives current shift and resets active operations and profits to 0 for a new shift.",
     reg_sales_total: "Total Cash Sales:",
     reg_returns_total: "Total Returns:",
     reg_expenses_total: "Total Expenses:",
     reg_net_cash: "Expected Net Cash:",
     lbl_actual_cash: "Actual Cash Count in Drawer:",
-    btn_save_register: "🔒 Confirm Close & Start New Shift",
-    h2_reg_archive: "🗂 Register Closures Archive",
+    btn_save_register: "Confirm Close & Start New Shift",
+    h2_reg_archive: "Register Closures Archive",
     st_net: "Net Sales Profit Today",
     st_mnt_today: "Repair Profit Today",
     st_tot_today: "Total Net (Sales + Repairs)",
     m_rev: "Repair Revenue (Today)", m_pcost: "Parts Cost (Today)", m_prof: "Repair Profit (Today)",
-    sec_g: "📋 Shop-wide Audit", sec_s: "🧾 Sales Audit", sec_m: "🔧 Repairs Audit",
+    sec_g: "Shop-wide Audit", sec_s: "Sales Audit", sec_m: "Repairs Audit",
     stock_audit_g: "Shop-wide Stock Audit (All Inventory)", stock_audit_s: "Sales Stock Audit", stock_audit_m: "Repairs Stock Audit (Spare Parts)",
     h2_mnt_detail: "Delivered Repair Orders", h2_parts_used: "Parts Used From Stock",
     lbl_m_pc: "Extra cost (parts not from stock)",
-    btn_parts: "🔩 Stock Parts", lbl_part_item: "Choose spare part", parts_add: "Add Part to Device", parts_close: "Close",
+    btn_parts: "Stock Parts", lbl_part_item: "Choose spare part", parts_add: "Add Part to Device", parts_close: "Close",
     reg_mnt_total: "Repair Cash Collected:",
     th_mnt: "Repairs", th_rev: "Revenue", th_cost: "Cost", th_dev: "Device", th_qty: "Qty",
     st_rev_all: "Total Revenue", st_cost_all: "Total Costs", st_s_prof: "Net Sales Profit", st_m_prof: "Repair Profit", st_tot_net: "Total Shop Net Profit",
     st_m_recv: "Devices Received", st_m_deliv: "Devices Delivered", st_m_unrep: "Unrepairable",
     txt_invoice: "Invoice",
-    h2_cart: "🧺 Current Invoice",
+    sg_about: "Copyright & Contact", sg_about_d: "Developer and support",
+    lbl_developer: "Developer", lbl_contact_phone: "Contact number",
+    about_rights: "© 2026 All rights reserved by the developer. This software is the private property of the developer. Copying, distributing, reselling or modifying it without prior written permission is prohibited.",
+    about_hint: "For support, subscription renewal, or customization requests, contact the developer directly.",
+    btn_contact_wa: "Contact Developer on WhatsApp",
+
+    h2_cart: "Current Invoice",
     lbl_cart_total: "Total",
     ph_cust: "Customer name (optional)",
-    btn_cart_done: "Complete Sale ✓",
+    btn_cart_done: "Complete Sale ",
     btn_cart_clear: "Clear",
-    btn_inv_pdf: "📄 PDF",
-    btn_inv_print: "🖨 Print",
+    btn_inv_pdf: "Export Invoice",
+    btn_inv_print: "Print",
     ph_part_find: "Search spare parts...",
     hint_parts_only: "Only spare parts are listed here (inventory category “Spare Parts”).",
     sg_shop: "Shop & Invoice", sg_shop_d: "Name, logo and invoice details",
@@ -1090,8 +1161,8 @@ function t(k){ return (I18N[currentLang] && I18N[currentLang][k]) || (I18N.ar[k]
 
 // إعدادات المتجر وهوية الفاتورة
 var shopProfile = {
-  name: localStorage.getItem("star_shop_name") || "STAR PHONE",
-  phone: localStorage.getItem("star_shop_phone") || "0980955323",
+  name: localStorage.getItem("star_shop_name") || "",
+  phone: localStorage.getItem("star_shop_phone") || "",
   logo: localStorage.getItem("star_shop_logo") || "",
   addr: localStorage.getItem("star_shop_addr") || "",
   footer: localStorage.getItem("star_inv_footer") || "",
@@ -1349,7 +1420,7 @@ function renderCart(){
     var d=document.createElement("div"); d.className="item";
     d.innerHTML='<div><b>'+esc(l.name)+'</b><small>'+fmt(l.price)+' × '+l.qty+'</small></div>'+
       '<div class="ctl"><button class="qb" data-a="m">−</button><b>'+l.qty+'</b><button class="qb" data-a="p">+</button>'+
-      '<b class="ok" style="min-width:70px;text-align:end">'+fmt(l.price*l.qty)+'</b><button class="del" aria-label="Remove">✕</button></div>';
+      '<b class="ok" style="min-width:70px;text-align:end">'+fmt(l.price*l.qty)+'</b><button class="del" aria-label="Remove">'+ic("x")+'</button></div>';
     d.querySelector('[data-a="m"]').onclick=function(){ if(l.qty>1){ l.qty--; renderCart(); } };
     d.querySelector('[data-a="p"]').onclick=function(){ l.qty++; renderCart(); };
     d.querySelector(".del").onclick=function(){ cart.splice(ix,1); renderCart(); };
@@ -1373,7 +1444,7 @@ function cartCheckout(){
   });
   cart=[]; $("cartCust").value="";
   save(); renderAll(); renderCart();
-  saleNote(isEn()?("✓ Invoice #"+no+" recorded — Total "+fmt(total)):("✓ تم تسجيل الفاتورة #"+no+" — الإجمالي "+fmt(total)));
+  saleNote(isEn()?("Invoice #"+no+" recorded — Total "+fmt(total)):("تم تسجيل الفاتورة #"+no+" — الإجمالي "+fmt(total)));
 }
 $("cartDone").onclick=cartCheckout;
 $("cartClear").onclick=function(){
@@ -1466,11 +1537,11 @@ function paintInvoice(d,logo){
     var sc=Math.max(ls/logo.width,ls/logo.height), iw=logo.width*sc, ih=logo.height*sc;
     x.drawImage(logo,lx+(ls-iw)/2,80+(ls-ih)/2,iw,ih); x.restore(); lg=ls+30;
   }
-  var tx=rtl?xs-lg:xs+lg, wMax=cw-lg-360, nm=shopProfile.name||"Star POS", fs=54;
+  var tx=rtl?xs-lg:xs+lg, wMax=cw-lg-360, nm=shopProfile.name||"", fs=54;
   x.font="700 "+fs+"px "+INV_FONT;
   while(fs>32 && x.measureText(nm).width>wMax){ fs-=2; x.font="700 "+fs+"px "+INV_FONT; }
-  invText(x,fitText(x,nm,wMax),tx,112,S,fs,"700","#0f172a");
-  var yy=168;
+  if(nm) invText(x,fitText(x,nm,wMax),tx,112,S,fs,"700","#0f172a");
+  var yy=nm?168:120;
   if(shopProfile.phone){ invText(x,shopProfile.phone,tx,yy,S,28,"400","#64748b"); yy+=40; }
   if(shopProfile.addr){ x.font="400 26px "+INV_FONT; invText(x,fitText(x,shopProfile.addr,wMax),tx,yy,S,26,"400","#64748b"); }
   invText(x,IV("title"),xe,112,E,46,"700",PRI);
@@ -1548,7 +1619,13 @@ function bytesToB64(u){
   return btoa(s);
 }
 
-/* ---------- حفظ الملف: أندرويد (مجلد التنزيلات) / ويندوز (تنزيل) ---------- */
+/* ---------- المنصة والإضافات الأصلية ---------- */
+function isElectron(){ return /electron/i.test(navigator.userAgent||""); }
+function isAndroidApp(){ return !!FS && !isElectron(); }
+function plug(n){ try{ return (CAP&&CAP.Plugins&&CAP.Plugins[n])||null; }catch(e){ return null; } }
+function isCancel(e){ return !!e && (e.name==="AbortError" || /cancel|dismiss/i.test(String(e.message||e))); }
+
+/* ---------- حفظ الملف في مجلد التنزيلات (احتياطي) ---------- */
 function writeBinTry(name,b64){
   var tries=[["Download/StarPhoneInvoices","EXTERNAL_STORAGE","Download/StarPhoneInvoices"],["StarPhoneInvoices","DOCUMENTS","Documents/StarPhoneInvoices"],["StarPhoneInvoices","EXTERNAL","StarPhoneInvoices"]], i=0;
   function go(){
@@ -1559,33 +1636,46 @@ function writeBinTry(name,b64){
   }
   return go();
 }
-function shareSaved(r,name){
-  try{
-    var SH=CAP&&CAP.Plugins&&CAP.Plugins.Share; if(!SH||!FS.getUri) return;
-    FS.getUri({path:r.path,directory:r.dir}).then(function(u){ return SH.share({title:name,url:u.uri,dialogTitle:name}); }).catch(function(){});
-  }catch(e){}
-}
-function saveFileBytes(bytes,name,mime){
-  if(FS){
-    askPerm().then(function(){ return writeBinTry(name,bytesToB64(bytes)); }).then(function(r){
-      saleNote(isEn()?("PDF saved to "+r.where+" ✓"):("تم حفظ الفاتورة PDF في مجلد "+r.where+" ✓"));
-      shareSaved(r,name);
-    }).catch(function(){ saleNote(isEn()?"Could not save the file.":"تعذّر حفظ الملف."); });
-    return;
+function downloadOrSave(bytes,name){
+  var en=isEn();
+  if(isAndroidApp()){
+    return askPerm().then(function(){ return writeBinTry(name,bytesToB64(bytes)); }).then(function(r){
+      saleNote(en?("Share is unavailable. File saved to "+r.where):("تعذّرت المشاركة المباشرة. حُفظ الملف في "+r.where));
+    }).catch(function(){ saleNote(en?"Could not save the file.":"تعذّر حفظ الملف."); });
   }
   try{
-    var u=URL.createObjectURL(new Blob([bytes],{type:mime})), a=document.createElement("a");
+    var u=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"})), a=document.createElement("a");
     a.href=u; a.download=name; document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(u); },4000);
-    saleNote(isEn()?("PDF downloaded: "+name+" ✓"):("تم تنزيل الفاتورة PDF: "+name+" ✓"));
-  }catch(e){ saleNote(isEn()?"Could not save the file.":"تعذّر حفظ الملف."); }
+    saleNote(en?("Invoice saved: "+name):("تم حفظ الفاتورة: "+name));
+  }catch(e){ saleNote(en?"Could not save the file.":"تعذّر حفظ الملف."); }
+  return Promise.resolve();
+}
+
+/* ---------- تصدير الفاتورة = نافذة المشاركة مباشرة ---------- */
+function webShareOrSave(bytes,name){
+  var f=null; try{ f=new File([bytes],name,{type:"application/pdf"}); }catch(e){}
+  if(f && !isElectron() && navigator.share && navigator.canShare && navigator.canShare({files:[f]})){
+    return navigator.share({files:[f],title:name}).catch(function(e){ if(!isCancel(e)) return downloadOrSave(bytes,name); });
+  }
+  return downloadOrSave(bytes,name);
+}
+function sharePdf(bytes,name){
+  var en=isEn(), SH=isAndroidApp()?plug("Share"):null;
+  if(SH){
+    var p="invoices/"+name;
+    return FS.writeFile({path:p,data:bytesToB64(bytes),directory:"CACHE",recursive:true})
+      .then(function(){ return FS.getUri({path:p,directory:"CACHE"}); })
+      .then(function(u){ return SH.share({title:name,dialogTitle:en?"Share invoice":"مشاركة الفاتورة",url:u.uri}); })
+      .catch(function(e){ if(isCancel(e)) return; return webShareOrSave(bytes,name); });
+  }
+  return webShareOrSave(bytes,name);
 }
 function exportInvoicePdf(d){
-  saleNote(isEn()?"Preparing PDF…":"جاري تجهيز ملف PDF…");
   loadImg(shopProfile.logo).then(function(logo){
     var pages=paintInvoice(d,logo);
     var jp=pages.map(function(c){ return {b:canvasToJpeg(c),w:c.width,h:c.height}; });
-    saveFileBytes(buildPdf(jp),"Invoice-"+d.no+"-"+d.date+".pdf","application/pdf");
+    return sharePdf(buildPdf(jp),"Invoice-"+d.no+"-"+d.date+".pdf");
   }).catch(function(){ saleNote(isEn()?"PDF creation failed.":"فشل إنشاء ملف PDF."); });
 }
 
@@ -1607,7 +1697,7 @@ function receiptHtml(d){
     '.t{display:flex;justify-content:space-between;font-size:'+(a4?"18px":"14px")+';font-weight:700;margin-top:2mm}.f{margin-top:4mm;font-size:'+(a4?"13px":"11px")+'}'+
     '</style></head><body><div class="c0">'+
     (shopProfile.logo?'<img class="lg" src="'+shopProfile.logo+'">':'')+
-    '<h1>'+esc(shopProfile.name||"Star POS")+'</h1>'+
+    (shopProfile.name?'<h1>'+esc(shopProfile.name)+'</h1>':'')+
     (shopProfile.phone?'<div class="m">'+esc(shopProfile.phone)+'</div>':'')+
     (shopProfile.addr?'<div class="m">'+esc(shopProfile.addr)+'</div>':'')+
     '</div><hr><div class="m"><b>'+IV("no")+':</b> #'+esc(d.no)+'</div><div class="m"><b>'+IV("date")+':</b> '+esc(d.date)+' '+esc(d.time)+'</div>'+
@@ -1617,20 +1707,27 @@ function receiptHtml(d){
     '<div class="c0 f">'+esc(shopProfile.footer||IV("thanks"))+'</div></body></html>';
 }
 function printInvoice(d){
-  if(FS){
-    /* الهاتف: لا توجد طباعة مباشرة من داخل التطبيق، نحفظ PDF ليُطبع من تطبيق الطابعة/العارض */
-    saleNote(isEn()?"On phone: saving PDF — open it and print from your printer app.":"على الهاتف: سيتم حفظ الفاتورة PDF لتفتحها وتطبعها من تطبيق الطابعة.");
+  var html=receiptHtml(d);
+  if(isAndroidApp()){
+    /* أندرويد: الطباعة المباشرة تتطلب إضافة طباعة أصلية، وإلا تُفتح مشاركة PDF */
+    var P=plug("Printer")||plug("CapacitorPrinter");
+    if(P && P.print){
+      P.print({content:html}).catch(function(e){ if(!isCancel(e)) exportInvoicePdf(d); });
+      return;
+    }
+    saleNote(isEn()?"Print plugin not installed — opening share instead.":"إضافة الطباعة غير مثبتة — تم فتح المشاركة بدلاً منها.");
     exportInvoicePdf(d); return;
   }
   var f=document.createElement("iframe");
   f.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
   document.body.appendChild(f);
-  var w=f.contentWindow; w.document.open(); w.document.write(receiptHtml(d)); w.document.close();
+  var w=f.contentWindow; w.document.open(); w.document.write(html); w.document.close();
   setTimeout(function(){
-    try{ w.focus(); w.print(); }catch(e){ saleNote(isEn()?"Printing failed. Use the PDF button.":"تعذّرت الطباعة. استخدم زر PDF."); }
+    try{ w.focus(); w.print(); }catch(e){ saleNote(isEn()?"Printing failed. Use Export Invoice.":"تعذّرت الطباعة. استخدم تصدير فاتورة."); }
     setTimeout(function(){ try{ document.body.removeChild(f); }catch(e){} },60000);
   },500);
 }
+
 
 function openWhatsAppMessage(phone, text){
   var p = String(phone||"").replace(/\D/g, "");
@@ -1673,10 +1770,10 @@ function render(){
         h+='<div class="invc-l"><span>'+esc(l.name)+' <small>'+esc(catName(l.cat))+'</small></span><span>'+l.qty+' × '+fmt(l.price)+'</span><b>'+fmt(l.price*l.qty)+'</b></div>';
       });
       d.className="invc";
-      d.innerHTML='<div class="invc-h"><div><b>🧾 '+t("txt_invoice")+(e.ino?' #'+e.ino:'')+'</b>'+(e.cust?'<small style="display:block;color:var(--mut)">'+esc(e.cust)+'</small>':'')+'</div>'+
-        '<div style="display:flex;align-items:center;gap:8px"><b class="ok">'+fmt(tot)+'</b><button class="del" aria-label="Delete">✕</button></div></div>'+h+
+      d.innerHTML='<div class="invc-h"><div><b>'+ic("receipt")+' '+t("txt_invoice")+(e.ino?' #'+e.ino:'')+'</b>'+(e.cust?'<small style="display:block;color:var(--mut)">'+esc(e.cust)+'</small>':'')+'</div>'+
+        '<div style="display:flex;align-items:center;gap:8px"><b class="ok">'+fmt(tot)+'</b><button class="del" aria-label="Delete">'+ic("x")+'</button></div></div>'+h+
         (wkHidePrf()?'':'<small style="color:var(--mut)">'+t("txt_profit")+' '+fmt(prof)+'</small>')+
-        '<div class="invc-a"><button class="inv-btn" data-act="pdf">'+t("btn_inv_pdf")+'</button><button class="inv-btn" data-act="print">'+t("btn_inv_print")+'</button></div>';
+        '<div class="invc-a"><button class="inv-btn" data-act="pdf">'+ic("share")+'<span>'+t("btn_inv_pdf")+'</span></button><button class="inv-btn" data-act="print">'+ic("printer")+'<span>'+t("btn_inv_print")+'</span></button></div>';
       d.querySelector(".del").onclick=function(){ if(e.bid) delInv(e.bid); else del(e.id); };
       d.querySelector('[data-act="pdf"]').onclick=function(){ exportInvoicePdf(invData(lines)); };
       d.querySelector('[data-act="print"]').onclick=function(){ printInvoice(invData(lines)); };
@@ -1684,9 +1781,9 @@ function render(){
     }
     d.className="item";
     var left=e.type==="ret"
-      ? '<div><b>↩ '+esc(e.name)+'</b><small>'+(e.kind==="back"?t("txt_ret_back"):t("txt_ret_dmg"))+' · '+e.qty+' × '+fmt(e.price)+(e.note?' · '+esc(e.note):'')+'</small></div><b class="bad">-'+fmt(e.price*e.qty)+'</b>'
+      ? '<div><b>'+ic("undo")+' '+esc(e.name)+'</b><small>'+(e.kind==="back"?t("txt_ret_back"):t("txt_ret_dmg"))+' · '+e.qty+' × '+fmt(e.price)+(e.note?' · '+esc(e.note):'')+'</small></div><b class="bad">-'+fmt(e.price*e.qty)+'</b>'
       : '<div><b>'+esc(e.name)+'</b><small>'+t("txt_expense")+'</small></div><b class="bad">-'+Number(e.amt||0).toLocaleString("en-US",{maximumFractionDigits:2})+' '+cur+'</b>';
-    d.innerHTML=left+'<button class="del" aria-label="Delete">✕</button>';
+    d.innerHTML=left+'<button class="del" aria-label="Delete">'+ic("x")+'</button>';
     d.querySelector(".del").onclick=function(){del(e.id)};
     $("list").appendChild(d);
   });
@@ -1714,6 +1811,7 @@ function renderAll(){
 function esc(s){ return String(s||"").replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]}); }
 
 function setView(v){
+  if(v==="b") settingsMenu();
   [["s","vSales","nS"],["i","vInv","nI"],["m","vMnt","nM"],["r","vRep","nR"],["b","vBak","nB"]].forEach(function(a){
     $(a[1]).style.display=v===a[0]?"":"none";
     $(a[2]).className=v===a[0]?"on":"";
@@ -1762,7 +1860,7 @@ function renderInv(){
   $("iCap").textContent=fmt(cap);
   $("iVal").textContent=fmt(val);
   $("iProf").textContent=fmt(val-cap);
-  $("iCnt").textContent=fmt(cnt);
+  $("iCnt").textContent=num(cnt);
   $("iKinds").textContent=inv.length;
   
   var L=$("iList");
@@ -1775,7 +1873,7 @@ function renderInv(){
     var retailTxt = (currentLang==="en") ? "Retail " : "مفرق ";
     var dmgTxt = (currentLang==="en") ? "Scrap " : "تالف ";
     d.innerHTML='<div><b>'+esc(i.name)+bcTag+'</b><small>'+esc(catName(i.cat))+(wkHidePrf()?'':' · '+wholeTxt+fmt(i.whole))+' · '+retailTxt+fmt(i.retail)+(i.dmg?' · '+dmgTxt+i.dmg:'')+'</small></div>'
-      +'<div class="ctl"><button class="qb" data-d="-1">−</button><b class="'+(i.qty<=2?"low":"")+'">'+i.qty+'</b><button class="qb" data-d="1">+</button><button class="del" aria-label="Delete">✕</button></div>';
+      +'<div class="ctl"><button class="qb" data-d="-1">−</button><b class="'+(i.qty<=2?"low":"")+'">'+i.qty+'</b><button class="qb" data-d="1">+</button><button class="del" aria-label="Delete">'+ic("x")+'</button></div>';
     d.querySelectorAll(".qb").forEach(function(b){ b.onclick=function(){ stk(i.id,parseInt(b.getAttribute("data-d"))); }; });
     d.querySelector(".del").onclick=function(){ delItem(i.id); };
     L.appendChild(d);
@@ -1865,7 +1963,7 @@ function renderRep(){
   var cap=0,val=0,cnt=0,low=items.filter(function(i){return i.qty<=2});
   items.forEach(function(i){ cap+=i.qty*i.whole; val+=i.qty*i.retail; cnt+=i.qty; });
   $("rStockTitle").textContent=t("stock_audit_"+sec);
-  $("rCap").textContent=fmt(cap); $("rVal").textContent=fmt(val); $("rCnt").textContent=fmt(cnt); $("rLowN").textContent=low.length;
+  $("rCap").textContent=fmt(cap); $("rVal").textContent=fmt(val); $("rCnt").textContent=num(cnt); $("rLowN").textContent=low.length;
   $("rLow").innerHTML=low.map(function(i){ return '<div class="item"><b>'+esc(i.name)+'</b><b class="low">'+i.qty+'</b></div>'; }).join("");
   renderRegisterArchive();
 }
@@ -1895,7 +1993,7 @@ function renderRegisterArchive(){
   var h = "";
   regArchive.slice().reverse().forEach(function(reg){
     h += '<div class="item" style="display:block;padding:8px 0">' +
-      '<div style="display:flex;justify-content:space-between"><b>📅 ' + reg.date + ' ' + (reg.time||"") + '</b><b class="ok">' + fmt(reg.net) + '</b></div>' +
+      '<div style="display:flex;justify-content:space-between"><b>' + ic("calendar") + ' ' + reg.date + ' ' + (reg.time||"") + '</b><b class="ok">' + fmt(reg.net) + '</b></div>' +
       '<small>' + (currentLang==="en"?"Sales: ":"المبيعات: ") + fmt(reg.sales) + (reg.mnt?' · ' + (currentLang==="en"?"Repairs: ":"الصيانة: ") + fmt(reg.mnt):'') + ' · ' + (currentLang==="en"?"Expenses: ":"المصاريف: ") + fmt(reg.exp) + ' · ' + (currentLang==="en"?"Actual Cash: ":"العد الفعلي: ") + fmt(reg.actual) + '</small>' +
     '</div>';
   });
@@ -2004,7 +2102,7 @@ function runAutoBackup(manual){
     pruneOldSnaps();
     var timeTxt = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     var st = $("autoStatusTxt");
-    if(st) st.textContent = (currentLang==="en"?"Last auto-save: ":"آخر حفظ تلقائي: ") + timeTxt + " ✓ (" + locName() + ")";
+    if(st) st.textContent = (currentLang==="en"?"Last auto-save: ":"آخر حفظ تلقائي: ") + timeTxt + " (" + locName() + ")";
     listSnaps();
     return true;
   }).catch(function(e){
@@ -2054,7 +2152,7 @@ function restoreSnap(name){
     data = o.data; inv = o.inv; rep = Array.isArray(o.rep) ? o.rep : []; tomb = o.tomb || {};
     regArchive = Array.isArray(o.regArchive) ? o.regArchive : [];
     fresh(); save(); renderAll(); listSnaps();
-    bmsg((currentLang==="en")?"Restored successfully ✓":"تمت الاستعادة بنجاح ✓");
+    bmsg((currentLang==="en")?"Restored successfully ":"تمت الاستعادة بنجاح ");
   }).catch(function(){
     bmsg((currentLang==="en")?"Could not read this snapshot.":"تعذّرت قراءة هذه النسخة.");
   });
@@ -2064,7 +2162,7 @@ var btnBNow = $("btnBackupNow");
 if(btnBNow){
   btnBNow.onclick = function(){
     runAutoBackup(true).then(function(ok){
-      bmsg(ok ? ((currentLang==="en")?"Snapshot saved to device storage ✓":"تم حفظ نسخة إضافية بنجاح في ذاكرة الهاتف ✓") : ((currentLang==="en")?"Save failed.":"تعذّر الحفظ."));
+      bmsg(ok ? ((currentLang==="en")?"Snapshot saved to device storage ":"تم حفظ نسخة إضافية بنجاح في ذاكرة الهاتف ") : ((currentLang==="en")?"Save failed.":"تعذّر الحفظ."));
     });
   };
 }
@@ -2083,10 +2181,10 @@ function saveBackupUniversal(){
     askPerm().then(function(){
       return fsWrite(fileName, dataStr);
     }).then(function(){
-      bmsg((currentLang==="en")?("Saved backup to " + locName() + " (" + fileName + ") ✓"):("تم حفظ النسخة بنجاح في مجلد " + locName() + " (" + fileName + ") ✓"));
+      bmsg((currentLang==="en")?("Saved backup to " + locName() + " (" + fileName + ") "):("تم حفظ النسخة بنجاح في مجلد " + locName() + " (" + fileName + ") "));
       listSnaps();
     }).catch(function(){
-      bmsg((currentLang==="en")?"Data copied to clipboard ✓":"تم نسخ كامل بياناتك للحافظة ✓");
+      bmsg((currentLang==="en")?"Data copied to clipboard ":"تم نسخ كامل بياناتك للحافظة ");
     });
     return;
   }
@@ -2105,9 +2203,9 @@ function fallbackDownloadBlob(dataStr, fileName){
     a.click();
     document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(u); }, 2000);
-    bmsg((currentLang==="en")?("Copied to clipboard ✓ & Download started (" + fileName + ")."):("تم نسخ البيانات للحافظة ✓ وبدء تحميل الملف (" + fileName + ")."));
+    bmsg((currentLang==="en")?("Copied to clipboard & Download started (" + fileName + ")."):("تم نسخ البيانات للحافظة وبدء تحميل الملف (" + fileName + ")."));
   } catch(e) {
-    bmsg((currentLang==="en")?"Data copied to clipboard ✓":"تم نسخ كامل بياناتك للحافظة وعرضها في المربع أدناه ✓");
+    bmsg((currentLang==="en")?"Data copied to clipboard ":"تم نسخ كامل بياناتك للحافظة وعرضها في المربع أدناه ");
   }
 }
 
@@ -2118,7 +2216,7 @@ async function pasteFromClipboardToBackup(){
       var txt = await navigator.clipboard.readText();
       if(txt && txt.indexOf("telecom-acc") > -1){
         $("bkIn").value = txt;
-        bmsg((currentLang==="en")?"Pasted backup data ✓ Click Merge or Replace.":"تم لصق بيانات النسخة من الحافظة بنجاح ✓ اضغط «دمج» أو «استبدال».");
+        bmsg((currentLang==="en")?"Pasted backup data Click Merge or Replace.":"تم لصق بيانات النسخة من الحافظة بنجاح اضغط «دمج» أو «استبدال».");
         pasted = true;
       }
     }
@@ -2138,7 +2236,7 @@ $("bkTxt").onclick = function(){
     if(navigator.clipboard&&navigator.clipboard.writeText){
       ok=true;
       navigator.clipboard.writeText(tVal).then(function(){
-        bmsg((currentLang==="en")?"Text copied ✓":"تم نسخ النص ✓ الصقه في رسالة لنفسك.");
+        bmsg((currentLang==="en")?"Text copied ":"تم نسخ النص الصقه في رسالة لنفسك.");
       },function(){
         bmsg((currentLang==="en")?"Select and copy text manually.":"حدّد النص في المربع وانسخه يدوياً.");
       });
@@ -2193,7 +2291,7 @@ $("impMerge").onclick=function(){
   var ra={}; regArchive.forEach(function(x){ ra[x.id]=1; });
   o.regArchive.forEach(function(x){ if(!ra[x.id]) regArchive.push(x); }); regArchive.sort(function(a,b){ return a.id-b.id; });
   fresh(); save(); renderAll();
-  bmsg((currentLang==="en")?("Synced ✓ Added "+add+" transactions, "+addi+" items, updated "+upd+" items."):("تمت المزامنة ✓ أُضيفت "+add+" عملية و"+addi+" صنف جديد، وحُدّث "+upd+" صنف."));
+  bmsg((currentLang==="en")?("Synced Added "+add+" transactions, "+addi+" items, updated "+upd+" items."):("تمت المزامنة أُضيفت "+add+" عملية و"+addi+" صنف جديد، وحُدّث "+upd+" صنف."));
 };
 $("impRep").onclick=function(){
   var o=readIn(); if(!o) return;
@@ -2202,7 +2300,7 @@ $("impRep").onclick=function(){
     : ("سيتم حذف كل بياناتك الحالية على هذا الجهاز واستبدالها بالنسخة ("+o.data.length+" عملية، "+o.inv.length+" صنف). متأكد؟");
   if(!confirm(confirmMsg)) return;
   data=o.data; inv=o.inv; rep=o.rep; tomb=o.tomb; regArchive=o.regArchive||[]; fresh(); save(); renderAll();
-  bmsg((currentLang==="en")?"Data replaced ✓":"تم استبدال البيانات ✓");
+  bmsg((currentLang==="en")?"Data replaced ":"تم استبدال البيانات ");
 };
 
 if(FS){ setTimeout(listSnaps, 1500); }
@@ -2296,13 +2394,13 @@ function fillPartsSel(){
 if($("mPFind")) $("mPFind").oninput=fillPartsSel;
 function renderParts(){
   var r=mFind(mPartsId); if(!r){ $("mPartsDlg").style.display="none"; return; }
-  $("mPT").textContent="🔩 "+r.dev;
+  $("mPT").textContent=""+r.dev;
   fillPartsSel(); $("mPQty").value=1;
   var L=$("mPList"), tot=0; L.innerHTML="";
   (r.parts||[]).forEach(function(p,ix){
     tot+=p.cost*p.qty;
     var d=document.createElement("div"); d.className="item";
-    d.innerHTML='<div><b>'+esc(p.name)+'</b><small>'+p.qty+(wkHidePrf()?'':' × '+fmt(p.cost)+' = '+fmt(p.cost*p.qty))+'</small></div><button class="del" aria-label="Remove">✕</button>';
+    d.innerHTML='<div><b>'+esc(p.name)+'</b><small>'+p.qty+(wkHidePrf()?'':' × '+fmt(p.cost)+' = '+fmt(p.cost*p.qty))+'</small></div><button class="del" aria-label="Remove">'+ic("x")+'</button>';
     d.querySelector(".del").onclick=function(){ partsRemove(ix); };
     L.appendChild(d);
   });
@@ -2327,7 +2425,7 @@ function partsRemove(ix){
   r.parts.splice(ix,1); r.upd=Date.now(); save(); renderAll(); renderParts();
 }
 function receipt(tItem){
-  var sName = shopProfile.name || "Star Phone";
+  var sName = shopProfile.name || "";
   if(currentLang==="en"){
     return sName + " - Repair Receipt #" + tItem.no + "\nDate: " + tItem.date + "\nCustomer: " + tItem.name + (tItem.phone?" ("+tItem.phone+")":"") + "\nDevice: " + tItem.dev + (tItem.imei?"\nIMEI: "+tItem.imei:"") + "\nIssue: " + (tItem.issue||"-") + (tItem.acc?"\nAccessories: "+tItem.acc:"") + "\nAgreed Price: " + fmt(tItem.price) + "\nDeposit: " + fmt(tItem.dep) + "\nRemaining: " + fmt(tItem.price-tItem.dep);
   }
@@ -2349,8 +2447,8 @@ function copyReceipt(tItem){
   var x = receipt(tItem);
   var done = function(){
     $("mMsg").textContent = (currentLang==="en")
-      ? ("Receipt #" + tItem.no + " copied to clipboard ✓")
-      : ("تم نسخ إيصال الطلب #" + tItem.no + " بنجاح ✓ الصقه في رسالة للعميل.");
+      ? ("Receipt #" + tItem.no + " copied to clipboard ")
+      : ("تم نسخ إيصال الطلب #" + tItem.no + " بنجاح الصقه في رسالة للعميل.");
     setTimeout(function(){ if($("mMsg").textContent.indexOf("#" + tItem.no) !== -1) $("mMsg").textContent = ""; }, 4000);
   };
   var fail = function(){ window.prompt((currentLang==="en")?"Copy receipt:":"انسخ الإيصال:", x); };
@@ -2374,7 +2472,7 @@ function renderMnt(){
     var d=document.createElement("div"); d.className="item"; d.style.display="block";
     var opts=Object.keys(MS).map(function(k){ return '<option value="'+k+'"'+(k===tItem.status?" selected":"")+'>'+MS[k]+'</option>'; }).join("");
     var fin=tItem.status==="delivered";
-    var phoneHtml = tItem.phone ? ' · <a href="javascript:void(0)" class="wa-link" data-ph="'+esc(tItem.phone)+'" data-dev="'+esc(tItem.dev)+'" data-name="'+esc(tItem.name)+'">💬 '+esc(tItem.phone)+'</a>' : '';
+    var phoneHtml = tItem.phone ? ' · <a href="javascript:void(0)" class="wa-link" data-ph="'+esc(tItem.phone)+'" data-dev="'+esc(tItem.dev)+'" data-name="'+esc(tItem.name)+'">'+ic("message")+' '+esc(tItem.phone)+'</a>' : '';
     
     var issueTxt = (currentLang==="en") ? "Issue: " : "العطل: ";
     var accTxt = (currentLang==="en") ? "Accessories: " : "ملحقات: ";
@@ -2388,8 +2486,8 @@ function renderMnt(){
       +'<small>'+esc(tItem.name)+phoneHtml+'</small>'
       +(tItem.issue?'<small>'+issueTxt+esc(tItem.issue)+'</small>':'')+(tItem.acc?'<small>'+accTxt+esc(tItem.acc)+'</small>':'')
       +'<small>'+recTxt+tItem.date+(tItem.delivered?delivTxt+tItem.delivered:'')+'</small>'
-      +'<small>'+priceDetails+'</small>'+((tItem.parts&&tItem.parts.length)?'<small>🔩 '+tItem.parts.map(function(p){ return esc(p.name)+'×'+p.qty; }).join('، ')+'</small>':'')
-      +'<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center"><select class="ms" style="flex:1;min-width:130px">'+opts+'</select><button class="qb" data-a="e" style="width:auto;padding:0 10px;font-size:13px">'+t("btn_edit")+'</button><button class="qb" data-a="r" style="width:auto;padding:0 10px;font-size:13px">'+t("btn_receipt")+'</button>'+(fin?'':'<button class="qb" data-a="p" style="width:auto;padding:0 10px;font-size:13px">'+t("btn_parts")+'</button>')+'<button class="del" data-a="d" aria-label="Delete">✕</button></div>';
+      +'<small>'+priceDetails+'</small>'+((tItem.parts&&tItem.parts.length)?'<small>'+ic("chip")+' '+tItem.parts.map(function(p){ return esc(p.name)+'×'+p.qty; }).join('، ')+'</small>':'')
+      +'<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center"><select class="ms" style="flex:1;min-width:130px">'+opts+'</select><button class="qb" data-a="e" style="width:auto;padding:0 10px;font-size:13px">'+t("btn_edit")+'</button><button class="qb" data-a="r" style="width:auto;padding:0 10px;font-size:13px">'+t("btn_receipt")+'</button>'+(fin?'':'<button class="qb" data-a="p" style="width:auto;padding:0 10px;font-size:13px">'+t("btn_parts")+'</button>')+'<button class="del" data-a="d" aria-label="Delete">'+ic("x")+'</button></div>';
 
     var waBtn = d.querySelector(".wa-link");
     if(waBtn){
@@ -2440,7 +2538,7 @@ function wkCheck(pin){ return pbk(pin,WK.salt).then(function(h){ return h===WK.h
 function wkCheckRec(c){ return pbk(String(c).trim().toUpperCase(),WK.rsalt).then(function(h){ return h===WK.rhash; }); }
 function wkTxtReset(){ $("wkTxt").textContent=t("wk_active"); }
 function wkDeny(){
-  $("wkTxt").textContent=(currentLang==="en")?"🔒 This action is restricted to owner":"🔒 هذه العملية لصاحب المحل فقط";
+  $("wkTxt").textContent=(currentLang==="en")?"This action is restricted to owner":"هذه العملية لصاحب المحل فقط";
   setTimeout(wkTxtReset,3000);
 }
 function wkApply(){
@@ -2479,7 +2577,7 @@ $("wkSavePin").onclick=function(){
   if(a!==b){ m.textContent=(currentLang==="en")?"PINs do not match.":"الكودان غير متطابقين."; return; }
   wkSetPin(a).then(function(rc){
     $("wkP1").value=""; $("wkP2").value=""; wkPaint();
-    m.textContent=(currentLang==="en")?("PIN saved ✓ Recovery code: "+rc):("تم حفظ الكود ✓ رمز الاسترجاع (يظهر مرة واحدة): "+rc+" — اكتبه واحتفظ به، تحتاجه إن نسيت الكود.");
+    m.textContent=(currentLang==="en")?("PIN saved Recovery code: "+rc):("تم حفظ الكود رمز الاسترجاع (يظهر مرة واحدة): "+rc+" — اكتبه واحتفظ به، تحتاجه إن نسيت الكود.");
   });
 };
 [["pRet","ret"],["pExp","exp"],["pDel","del"],["pStk","stk"],["pPrf","prf"],["pRep","rep"],["pReg","reg"]].forEach(function(a){ $(a[0]).onchange=function(){ WK.perms=WK.perms||{}; WK.perms[a[1]]=this.checked; wkSave(); }; });
@@ -2491,7 +2589,7 @@ $("wkChg").onclick=function(){
     if(!ok){ m.textContent=(currentLang==="en")?"Current PIN is incorrect.":"الكود الحالي غير صحيح."; return; }
     return wkSetPin(n).then(function(rc){
       $("wkOldP").value=""; $("wkNewP").value="";
-      m.textContent=(currentLang==="en")?("PIN changed ✓ New recovery code: "+rc):("تم تغيير الكود ✓ رمز الاسترجاع الجديد: "+rc+" — احتفظ به.");
+      m.textContent=(currentLang==="en")?("PIN changed New recovery code: "+rc):("تم تغيير الكود رمز الاسترجاع الجديد: "+rc+" — احتفظ به.");
     });
   });
 };
@@ -2517,6 +2615,26 @@ $("wkRecOk").onclick=function(){
 };
 wkApply();
 
+
+/* ===== الإعدادات: قائمة رئيسية وصفحات مستقلة ===== */
+function ic(n,c){ return '<svg class="i'+(c?' '+c:'')+'"><use href="#i-'+n+'"/></svg>'; }
+function settingsMenu(){
+  if($("setMenu")) $("setMenu").style.display="";
+  document.querySelectorAll("#vBak .sp").forEach(function(p){ p.style.display="none"; });
+  window.scrollTo(0,0);
+}
+function settingsOpen(k){
+  $("setMenu").style.display="none";
+  document.querySelectorAll("#vBak .sp").forEach(function(p){ p.style.display=(p.id==="sp-"+k)?"":"none"; });
+  window.scrollTo(0,0);
+}
+document.querySelectorAll("#setMenu .mrow").forEach(function(b){ b.onclick=function(){ settingsOpen(b.getAttribute("data-sp")); }; });
+document.querySelectorAll("#vBak .sp-back").forEach(function(b){ b.onclick=settingsMenu; });
+$("btnContactWa").onclick=function(){
+  var msg=isEn()?"Hello, I'm contacting you about the Star POS app.":"مرحباً، أتواصل معك بخصوص تطبيق Star POS.";
+  window.open("https://wa.me/963931498598?text="+encodeURIComponent(msg),"_blank");
+};
+
 /* ===== ضبط المصنع ===== */
 $("rstBtn").onclick = function(){ $("rstBox").style.display = ""; $("rstBtn").style.display = "none"; $("rstMsg").textContent = ""; };
 $("rstNo").onclick = function(){ $("rstBox").style.display = "none"; $("rstBtn").style.display = ""; };
@@ -2529,14 +2647,14 @@ $("rstYes").onclick = function(){
   setMode("sale"); setView("s"); bkInfo(); bmsg("");
   $("rstBox").style.display = "none"; $("rstBtn").style.display = "";
   renderAll();
-  $("rstMsg").textContent = (currentLang==="en") ? "Factory reset completed ✓" : "تمت استعادة ضبط المصنع بنجاح ✓";
+  $("rstMsg").textContent = (currentLang==="en") ? "Factory reset completed " : "تمت استعادة ضبط المصنع بنجاح ";
   if(typeof runAutoBackup === "function") runAutoBackup(true);
 };
 
 if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App){
   window.Capacitor.Plugins.App.getInfo().then(function(info){
     if(info && info.version){
-      $("appVersionTxt").textContent = "v" + info.version + " (" + (info.build || "Build") + ")";
+      $("appVersionTxt").textContent = "v" + info.version + " (" + (info.build || "Build") + ")"; if($("aboutVer")) $("aboutVer").textContent = $("appVersionTxt").textContent;
     }
   }).catch(function(){});
 }
@@ -2598,7 +2716,7 @@ function renderShopProfile(){
   if($("inShopAddr")) $("inShopAddr").value = shopProfile.addr || "";
   if($("inInvFooter")) $("inInvFooter").value = shopProfile.footer || "";
   if($("selPaper")) $("selPaper").value = shopProfile.paper || "80";
-  if($("shopDisplayTitle")) $("shopDisplayTitle").textContent = shopProfile.name;
+  if($("shopDisplayTitle")) $("shopDisplayTitle").textContent = shopProfile.name || "Star POS";
   
   var topImg = $("topShopLogo");
   var prevImg = $("logoPreviewImg");
@@ -2637,7 +2755,7 @@ if($("btnRemoveLogo")){
 
 if($("btnSaveShopProfile")){
   $("btnSaveShopProfile").onclick = function(){
-    shopProfile.name = ($("inShopName").value.trim()) || "STAR PHONE";
+    shopProfile.name = $("inShopName").value.trim();
     shopProfile.phone = $("inShopPhone").value.trim();
     shopProfile.addr = $("inShopAddr").value.trim();
     shopProfile.footer = $("inInvFooter").value.trim();
@@ -2651,7 +2769,7 @@ if($("btnSaveShopProfile")){
       localStorage.setItem("star_shop_logo", shopProfile.logo || "");
     } catch(e){}
     renderShopProfile();
-    bmsg(currentLang==="en" ? "Shop profile & logo saved ✓" : "تم حفظ بيانات المحل واللوغو بنجاح ✓");
+    bmsg(currentLang==="en" ? "Shop profile & logo saved " : "تم حفظ بيانات المحل واللوغو بنجاح ");
   };
 }
 
@@ -2662,7 +2780,7 @@ $("selCurrency").onchange = function(){
   try {
     localStorage.setItem("star_curr_sym", curSymbol);
   } catch(e){}
-  bmsg(currentLang==="en" ? "Currency saved ✓" : "تم حفظ العملة بنجاح ✓");
+  bmsg(currentLang==="en" ? "Currency saved " : "تم حفظ العملة بنجاح ");
   renderAll();
 };
 
@@ -2693,7 +2811,7 @@ $("actualCashInput").oninput = function(){
   var diffBox = $("cashDiffBox");
   if(isNaN(actual)){ diffBox.textContent=""; return; }
   var diff = Math.round((actual - c.net)*100)/100;
-  if(diff === 0){ diffBox.textContent = currentLang==="en" ? "✓ Cash matches perfectly!" : "✓ الصندوق مطابق تماماً للمبيعات!"; diffBox.className = "ok"; }
+  if(diff === 0){ diffBox.textContent = currentLang==="en" ? "Cash matches perfectly!" : "الصندوق مطابق تماماً للمبيعات!"; diffBox.className = "ok"; }
   else if(diff > 0){ diffBox.textContent = (currentLang==="en" ? "Surplus: +" : "زيادة بالصندوق: +") + fmt(diff); diffBox.className = "ok"; }
   else { diffBox.textContent = (currentLang==="en" ? "Shortage: " : "عجز بالصندوق: ") + fmt(diff); diffBox.className = "bad"; }
 };
@@ -2713,7 +2831,7 @@ $("btnSaveRegisterClose").onclick = function(){
   save();
   $("registerModal").style.display = "none";
   renderAll();
-  alert(currentLang==="en" ? "Register closed! Active shift reset to 0 ✓" : "تم إغلاق الصندوق بنجاح وتصفير حركة اليوم لبدء يوم جديد ✓");
+  alert(currentLang==="en" ? "Register closed! Active shift reset to 0 " : "تم إغلاق الصندوق بنجاح وتصفير حركة اليوم لبدء يوم جديد ");
 };
 
 /* ===== نظام الباركود الحصري لنسخة ويندوز / سطح المكتب ===== */
@@ -2743,14 +2861,14 @@ $("btnSaveRegisterClose").onclick = function(){
       updateStockDisplay();
       
       if(statusEl){
-        statusEl.textContent = "✓ " + (currentLang==="en"?"Found: ":"تم العثور: ") + match.name + " (" + fmt(match.retail) + ")";
+        statusEl.textContent = "" + (currentLang==="en"?"Found: ":"تم العثور: ") + match.name + " (" + fmt(match.retail) + ")";
         statusEl.style.color = "var(--ok)";
       }
       $("qty").focus();
       $("qty").select();
     } else {
       if(statusEl){
-        statusEl.textContent = "✕ " + (currentLang==="en"?"Barcode not found: ":"هذا الباركود غير مسجل بالمخزون: ") + code;
+        statusEl.textContent = "" + (currentLang==="en"?"Barcode not found: ":"هذا الباركود غير مسجل بالمخزون: ") + code;
         statusEl.style.color = "var(--bad)";
       }
     }
@@ -2939,7 +3057,7 @@ async function checkLicenseStatus(manualOpen){
       if(remSec > 0){
         hideLockScreen();
         updateLicBarDisplay(remSec, false);
-        if(manualOpen) showLockScreen(currentLang==="en" ? "License is active ✓" : "الترخيص مفعل وصالح ✓", true);
+        if(manualOpen) showLockScreen(currentLang==="en" ? "License is active " : "الترخيص مفعل وصالح ", true);
         return true;
       }
     }
@@ -2970,18 +3088,18 @@ function updateLicBarDisplay(sec, isTrial){
 
   if(days > 15){
     text = isTrial 
-      ? (currentLang==="en" ? ("⏳ Free Trial: " + days + " days left") : ("⏳ تجربة مجانية: متبقي " + days + " يوم"))
-      : (currentLang==="en" ? ("✓ Active: " + days + " days left") : ("✓ مفعل: متبقي " + days + " يوم"));
+      ? (currentLang==="en" ? ("Free Trial: " + days + " days left") : ("تجربة مجانية: متبقي " + days + " يوم"))
+      : (currentLang==="en" ? ("Active: " + days + " days left") : ("مفعل: متبقي " + days + " يوم"));
     colorStyle = "var(--ok)";
   } else if(days > 0){
     text = (currentLang==="en")
-      ? ("⚠️ RENEW SOON: " + days + " days left!")
-      : ("⚠️ تنبيه: متبقي " + days + " يوم فقط على انتهاء الاشتراك! يرجى التجديد");
+      ? ("RENEW SOON: " + days + " days left!")
+      : ("تنبيه: متبقي " + days + " يوم فقط على انتهاء الاشتراك! يرجى التجديد");
     colorStyle = "var(--warn)";
   } else {
     text = (currentLang==="en")
-      ? ("⚠️ RENEW TODAY: " + hours + " hours left!")
-      : ("⚠️ تنبيه عاجل: متبقي أقل من يوم (" + hours + " ساعة) على انتهاء الاشتراك!");
+      ? ("RENEW TODAY: " + hours + " hours left!")
+      : ("تنبيه عاجل: متبقي أقل من يوم (" + hours + " ساعة) على انتهاء الاشتراك!");
     colorStyle = "var(--bad)";
   }
 
@@ -3020,10 +3138,10 @@ if($("btnActivateApp")){
         fsWrite(".license.key", key).catch(function(){});
       }
       await checkLicenseStatus(false);
-      alert(currentLang==="en" ? "App activated successfully! ✓" : "تم تفعيل البرنامج وتمديد الاشتراك بنجاح ✓");
+      alert(currentLang==="en" ? "App activated successfully! " : "تم تفعيل البرنامج وتمديد الاشتراك بنجاح ");
       renderAll();
     } else {
-      alert("❌ " + res.msg);
+      alert("" + res.msg);
     }
   };
 }
