@@ -360,6 +360,8 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
   <div id="expRow" style="display:none">
     <label data-i18n="lbl_amt">المبلغ</label>
     <input id="amt" type="number" inputmode="decimal" min="0">
+    <label style="margin-top:8px" data-i18n="lbl_exp_reason">سبب المصروف</label>
+    <input id="expReason" data-i18n-ph="ph_exp_reason" placeholder="مثال: فاتورة كهرباء، أجرة نقل، شراء أدوات..." autocomplete="off">
   </div>
 
   <button class="add" id="addBtn" data-i18n="btn_add">إضافة للفاتورة +</button>
@@ -718,6 +720,8 @@ var I18N = {
     lbl_cost_price: "سعر الشراء",
     lbl_qty: "الكمية",
     lbl_amt: "المبلغ",
+    lbl_exp_reason: "سبب المصروف",
+    ph_exp_reason: "مثال: فاتورة كهرباء، أجرة نقل، شراء أدوات...",
     btn_add: "إضافة للفاتورة +",
     btn_add_ret: "تسجيل المرتجع",
     h2_today_ops: "عمليات اليوم (الوردية الحالية)",
@@ -950,6 +954,8 @@ var I18N = {
     lbl_cost_price: "Cost Price",
     lbl_qty: "Quantity",
     lbl_amt: "Amount",
+    lbl_exp_reason: "Expense reason",
+    ph_exp_reason: "e.g. Electricity bill, transport, supplies...",
     btn_add: "Add to Invoice +",
     btn_add_ret: "Record Return",
     h2_today_ops: "Today's Operations (Current Shift)",
@@ -1369,10 +1375,10 @@ $("addBtn").onclick=function(){
   } else {
     var a=parseFloat($("amt").value);
     if(isNaN(a)||a<0){ $("amt").focus(); return; }
-    data.push({id:Date.now(),date:day,type:"exp",name:name||t("txt_expense"),amt:a,curr:curSymbol});
+    data.push({id:Date.now(),date:day,type:"exp",name:name||t("txt_expense"),amt:a,reason:($("expReason").value||"").trim(),curr:curSymbol});
   }
   save();
-  ["name","price","cost","amt"].forEach(function(i){$(i).value=""});
+  ["name","price","cost","amt","expReason"].forEach(function(i){$(i).value=""});
   $("qty").value=1;
   renderAll();
 };
@@ -1782,7 +1788,7 @@ function render(){
     d.className="item";
     var left=e.type==="ret"
       ? '<div><b>'+ic("undo")+' '+esc(e.name)+'</b><small>'+(e.kind==="back"?t("txt_ret_back"):t("txt_ret_dmg"))+' · '+e.qty+' × '+fmt(e.price)+(e.note?' · '+esc(e.note):'')+'</small></div><b class="bad">-'+fmt(e.price*e.qty)+'</b>'
-      : '<div><b>'+esc(e.name)+'</b><small>'+t("txt_expense")+'</small></div><b class="bad">-'+Number(e.amt||0).toLocaleString("en-US",{maximumFractionDigits:2})+' '+cur+'</b>';
+      : '<div><b>'+esc(e.name)+'</b><small>'+t("txt_expense")+(e.reason?' · '+esc(e.reason):'')+'</small></div><b class="bad">-'+Number(e.amt||0).toLocaleString("en-US",{maximumFractionDigits:2})+' '+cur+'</b>';
     d.innerHTML=left+'<button class="del" aria-label="Delete">'+ic("x")+'</button>';
     d.querySelector(".del").onclick=function(){del(e.id)};
     $("list").appendChild(d);
