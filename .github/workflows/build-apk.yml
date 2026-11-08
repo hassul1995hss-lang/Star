@@ -40,7 +40,7 @@ jobs:
           cat << 'EOF' > capacitor.config.json
           {
             "appId": "com.starphone.pos",
-            "appName": "Star Phone POS",
+            "appName": "Star POS",
             "webDir": "dist",
             "bundledWebRuntime": false
           }
