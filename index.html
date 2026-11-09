@@ -207,10 +207,28 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
 .wa-cta:hover{filter:brightness(1.06)}
 .wa-cta .i{width:22px;height:22px;margin:0}
 .about-rights{font-size:12.5px;color:var(--mut);line-height:1.8;margin:12px 0 0;padding:10px 12px;background:var(--bg);border-radius:10px;border:1px solid var(--line)}
+
+/* ===== الديون ===== */
+.dcard{padding:12px}
+.dc-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px}
+.drow{border-top:1px solid var(--line);padding:8px 0}
+.dr-h{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px}
+.drow small{display:block;color:var(--mut);font-size:12px;margin-top:2px}
+.dpays{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
+.dpays span{font-size:11px;background:rgba(15,138,95,.1);color:var(--ok);border-radius:6px;padding:2px 7px}
+.dbadge{font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px;margin-inline-end:4px}
+.dbadge.s{background:rgba(36,87,197,.12);color:var(--pri)}
+.dbadge.m{background:rgba(184,110,0,.14);color:var(--warn)}
+.inv-btn.wa{background:#1fa855;border-color:#1fa855;color:#fff}
+.inv-btn.wa:hover{filter:brightness(1.06);color:#fff}
+.inv-btn .i.f{width:18px;height:18px}
+#dMsg:empty{display:none}
+#dMsg{background:rgba(20,145,90,.12);color:var(--ok);border-radius:8px;padding:8px 10px;margin:0 0 8px;font-weight:600}
+.wk:not(.wk-del) #dList .del{display:none!important}
 </style>
 </head>
 <body>
-<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol><symbol id="i-unlock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></symbol><symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol><symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l3-2 2.5 2L12 20l2.5 2L17 20l3 2V2l-3 2-2.5-2L12 4 9.5 2 7 4z"/><path d="M8 9h8M8 13h8"/></symbol><symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol><symbol id="i-cash" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></symbol><symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.7 2.7-2.3-.7-.7-2.3z"/></symbol><symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/></symbol><symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></symbol><symbol id="i-chip" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></symbol><symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol><symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></symbol><symbol id="i-package" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.5L12 12l8.7-4.5M12 22V12"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16v-5M12 16V7M17 16v-8"/></symbol><symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol><symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8M11 8v8M15 8v8M18 8v8"/></symbol><symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></symbol><symbol id="i-archive" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/></symbol><symbol id="i-store" viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v9h14v-9M10 21v-5h4v5"/></symbol><symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></symbol><symbol id="i-dollar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.5-1.5-3-1.5-1.8 0-3 .9-3 2.2s1.2 1.9 3 2.3 3 1 3 2.3-1.2 2.2-3 2.2c-1.5 0-2.6-.6-3-1.7M12 6v2M12 16v2"/></symbol><symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></symbol><symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></symbol><symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></symbol><symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></symbol><symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></symbol><symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2M16 7l3 3M14 9l2 2"/></symbol><symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol><symbol id="i-message" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol><symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol><symbol id="i-chev" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.7-4 3-9 3s-9-1.3-9-3M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol><symbol id="i-wa" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></symbol></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol><symbol id="i-unlock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></symbol><symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol><symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l3-2 2.5 2L12 20l2.5 2L17 20l3 2V2l-3 2-2.5-2L12 4 9.5 2 7 4z"/><path d="M8 9h8M8 13h8"/></symbol><symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol><symbol id="i-cash" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></symbol><symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.7 2.7-2.3-.7-.7-2.3z"/></symbol><symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/></symbol><symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></symbol><symbol id="i-chip" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></symbol><symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol><symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></symbol><symbol id="i-package" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.5L12 12l8.7-4.5M12 22V12"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16v-5M12 16V7M17 16v-8"/></symbol><symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol><symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8M11 8v8M15 8v8M18 8v8"/></symbol><symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></symbol><symbol id="i-archive" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/></symbol><symbol id="i-store" viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v9h14v-9M10 21v-5h4v5"/></symbol><symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></symbol><symbol id="i-dollar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.5-1.5-3-1.5-1.8 0-3 .9-3 2.2s1.2 1.9 3 2.3 3 1 3 2.3-1.2 2.2-3 2.2c-1.5 0-2.6-.6-3-1.7M12 6v2M12 16v2"/></symbol><symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></symbol><symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></symbol><symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></symbol><symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></symbol><symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></symbol><symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2M16 7l3 3M14 9l2 2"/></symbol><symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol><symbol id="i-message" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol><symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol><symbol id="i-chev" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.7-4 3-9 3s-9-1.3-9-3M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol><symbol id="i-wallet" viewBox="0 0 24 24"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></symbol><symbol id="i-wa" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></symbol></svg>
 <!-- شاشة القفل وتفعيل الترخيص (License Activation Modal) -->
 <div id="licLockModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.96);z-index:999999;flex-direction:column;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;backdrop-filter:blur(8px);">
   <div class="card" style="max-width:440px;width:100%;text-align:center;box-sizing:border-box;border-color:var(--pri);box-shadow:0 20px 40px rgba(0,0,0,0.5);position:relative">
@@ -254,6 +272,8 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
       <div style="display:flex;justify-content:space-between;padding:4px 0"><span data-i18n="reg_mnt_total">إيراد الصيانة المقبوض:</span><b id="regMntVal">0</b></div>
       <div style="display:flex;justify-content:space-between;padding:4px 0"><span data-i18n="reg_returns_total">إجمالي المرتجعات:</span><b id="regReturnsVal" class="bad">0</b></div>
       <div style="display:flex;justify-content:space-between;padding:4px 0"><span data-i18n="reg_expenses_total">إجمالي المصاريف:</span><b id="regExpVal" class="bad">0</b></div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0"><span data-i18n="reg_new_debts">ديون جديدة (غير مقبوضة):</span><b id="regDnVal" class="bad">0</b></div>
+      <div style="display:flex;justify-content:space-between;padding:4px 0"><span data-i18n="reg_collected_debts">ديون محصّلة:</span><b id="regDpVal" class="ok">0</b></div>
       <hr style="border:0;border-top:1px solid var(--line);margin:6px 0">
       <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:16px"><span data-i18n="reg_net_cash">الصافي المفترض بالصندوق:</span><b id="regNetCashVal" class="ok" style="font-size:18px">0</b></div>
     </div>
@@ -277,6 +297,7 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
 
 <div class="tabs" id="navTabs">
   <button id="nS" class="on"><svg class="i"><use href="#i-receipt"/></svg><span data-i18n="tab_sales">المبيعات</span></button>
+  <button id="nD"><svg class="i"><use href="#i-wallet"/></svg><span data-i18n="tab_debt">الديون</span></button>
   <button id="nI"><svg class="i"><use href="#i-package"/></svg><span data-i18n="tab_inv">المخزون</span></button>
   <button id="nM"><svg class="i"><use href="#i-wrench"/></svg><span data-i18n="tab_mnt">الصيانة</span></button>
   <button id="nR"><svg class="i"><use href="#i-chart"/></svg><span data-i18n="tab_rep">الجرد</span></button>
@@ -372,6 +393,15 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
   <div id="cartList"></div>
   <div class="cart-total"><span data-i18n="lbl_cart_total">الإجمالي</span><b id="cartTotal">0</b></div>
   <input id="cartCust" data-i18n-ph="ph_cust" placeholder="اسم العميل (اختياري)" style="margin-top:6px">
+  <label class="chk" style="margin-top:10px;margin-bottom:0"><input type="checkbox" id="cartDebt"><span data-i18n="lbl_on_debt">بيع بالدين / دفع جزئي</span></label>
+  <div id="cartDebtBox" style="display:none;border:1px dashed var(--line);border-radius:10px;padding:0 10px 10px;margin-top:8px">
+    <label data-i18n="lbl_d_phone">رقم الهاتف (للتذكير عبر واتساب)</label>
+    <input id="cartPhone" type="tel" inputmode="tel">
+    <label data-i18n="lbl_paid_now">المبلغ المدفوع الآن (اتركه 0 إن كان كامل المبلغ دين)</label>
+    <input id="cartPaid" type="number" inputmode="decimal" min="0" value="0">
+    <div class="cart-total" style="margin-top:8px"><span data-i18n="lbl_remain_debt">المتبقي دين على الزبون</span><b id="cartRemain" class="bad">0</b></div>
+    <p class="hint" style="margin:0" data-i18n="hint_debt_name">اسم الزبون مطلوب عند تسجيل دين.</p>
+  </div>
   <div class="btn2">
     <button class="add" id="cartDone" data-i18n="btn_cart_done">إتمام البيع </button>
     <button class="add sec" id="cartClear" data-i18n="btn_cart_clear">إفراغ</button>
@@ -383,6 +413,61 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
 </div>
 
 <!-- 2. شاشة المخزون -->
+<!-- شاشة الديون -->
+<div id="vDebt" style="display:none">
+  <div class="grid" style="margin-bottom:12px">
+    <div class="stat net"><small data-i18n="st_d_total">إجمالي الديون المستحقة</small><b id="dTotal" class="bad">0</b></div>
+    <div class="stat"><small data-i18n="st_d_cust">عدد الزبائن المدينين</small><b id="dCount">0</b></div>
+    <div class="stat"><small data-i18n="st_d_sales">ديون المبيعات</small><b id="dSalesT">0</b></div>
+    <div class="stat"><small data-i18n="st_d_mnt">ديون الصيانة</small><b id="dMntT">0</b></div>
+  </div>
+  <div class="card">
+    <div class="row" style="grid-template-columns:1fr 1fr">
+      <select id="dFilter">
+        <option value="all" data-i18n="opt_d_all">كل الديون</option>
+        <option value="sale" data-i18n="opt_d_sale">ديون المبيعات</option>
+        <option value="mnt" data-i18n="opt_d_mnt">ديون الصيانة</option>
+      </select>
+      <input id="dSearch" data-i18n-ph="ph_d_search" placeholder="بحث: اسم أو رقم">
+    </div>
+    <label class="chk" style="margin-bottom:0"><input type="checkbox" id="dShowPaid"><span data-i18n="lbl_d_showpaid">إظهار الديون المسددة</span></label>
+    <button class="add sec" id="dNew" style="margin-top:8px"><svg class="i"><use href="#i-wallet"/></svg><span data-i18n="btn_d_new">تسجيل دين يدوي (دين سابق)</span></button>
+  </div>
+  <p id="dMsg"></p>
+  <div id="dList"></div>
+</div>
+
+<!-- نافذة تسجيل دفعة -->
+<div id="dPayDlg" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.5);z-index:50;align-items:center;justify-content:center;padding:16px">
+  <div class="card" style="width:100%;max-width:420px;margin:0">
+    <h2 id="dPayT"></h2>
+    <p class="hint" id="dPayInfo" style="margin-top:0"></p>
+    <label data-i18n="lbl_d_payamt">المبلغ المدفوع الآن</label>
+    <input id="dPayAmt" type="number" inputmode="decimal" min="0">
+    <div class="row" style="grid-template-columns:1fr 1fr">
+      <button class="add" id="dPayOk" style="margin-top:8px" data-i18n="btn_d_payok">تسجيل الدفعة</button>
+      <button class="add sec" id="dPayNo" style="margin-top:8px" data-i18n="btn_cancel">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة دين يدوي -->
+<div id="dNewDlg" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.5);z-index:50;align-items:center;justify-content:center;padding:16px">
+  <div class="card" style="width:100%;max-width:420px;margin:0;max-height:92vh;overflow:auto">
+    <h2><svg class="i"><use href="#i-wallet"/></svg><span data-i18n="btn_d_new">تسجيل دين يدوي (دين سابق)</span></h2>
+    <label data-i18n="lbl_d_name">اسم الزبون</label><input id="dnName">
+    <label data-i18n="lbl_d_phone">رقم الهاتف (للتذكير عبر واتساب)</label><input id="dnPhone" type="tel" inputmode="tel">
+    <label data-i18n="lbl_d_kind">نوع الدين</label>
+    <select id="dnKind"><option value="sale" data-i18n="opt_d_sale">ديون المبيعات</option><option value="mnt" data-i18n="opt_d_mnt">ديون الصيانة</option></select>
+    <label data-i18n="lbl_d_amt">قيمة الدين</label><input id="dnAmt" type="number" inputmode="decimal" min="0">
+    <label data-i18n="lbl_d_note">ملاحظة (اختياري)</label><input id="dnNote">
+    <div class="row" style="grid-template-columns:1fr 1fr">
+      <button class="add" id="dnOk" style="margin-top:8px" data-i18n="btn_d_save">حفظ</button>
+      <button class="add sec" id="dnNo" style="margin-top:8px" data-i18n="btn_cancel">إلغاء</button>
+    </div>
+  </div>
+</div>
+
 <div id="vInv" style="display:none">
 <div class="grid" style="margin-bottom:12px">
   <div class="stat net prf"><small data-i18n="st_cap">إجمالي رأس المال (سعر الجملة × الكمية)</small><b id="iCap">0</b></div>
@@ -498,6 +583,7 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
     <h2 id="mDT"></h2>
     <label data-i18n="lbl_m_fp">السعر النهائي (شامل العربون)</label><input id="mFP" type="number" inputmode="decimal" min="0">
     <label data-i18n="lbl_m_pc">تكلفة القطع المستخدمة</label><input id="mPC" type="number" inputmode="decimal" min="0">
+    <label data-i18n="lbl_m_pay">المبلغ المقبوض الآن</label><input id="mPay" type="number" inputmode="decimal" min="0">
     <p class="hint" id="mDP" style="margin-bottom:0"></p>
     <p class="hint" id="mDS"></p>
     <div class="row" style="grid-template-columns:1fr 1fr">
@@ -867,7 +953,7 @@ var I18N = {
     btn_register_close: "إغلاق وجرد الصندوق",
     h2_reg_close: "إغلاق وجرد الصندوق وتصفير الوردية",
     desc_reg_close: "عند الإغلاق، يتم أرشفة جرد الوردية وتصفير المبيعات والأرباح الظاهرة بالواجهة لبدء يوم/وردية جديدة من الصفر.",
-    reg_sales_total: "إجمالي المبيعات النقدية:",
+    reg_sales_total: "إجمالي المبيعات:",
     reg_returns_total: "إجمالي المرتجعات:",
     reg_expenses_total: "إجمالي المصاريف:",
     reg_net_cash: "الصافي المفترض بالصندوق:",
@@ -888,6 +974,14 @@ var I18N = {
     st_rev_all: "إجمالي الإيرادات", st_cost_all: "إجمالي التكاليف", st_s_prof: "صافي ربح المبيعات", st_m_prof: "ربح الصيانة", st_tot_net: "صافي ربح المحل الكلي",
     st_m_recv: "أجهزة مستلمة بالفترة", st_m_deliv: "أجهزة مسلّمة بالفترة", st_m_unrep: "غير قابلة للإصلاح",
     txt_invoice: "فاتورة",
+    tab_debt: "الديون", st_d_total: "إجمالي الديون المستحقة", st_d_cust: "عدد الزبائن المدينين", st_d_sales: "ديون المبيعات", st_d_mnt: "ديون الصيانة",
+    opt_d_all: "كل الديون", opt_d_sale: "ديون المبيعات", opt_d_mnt: "ديون الصيانة", ph_d_search: "بحث: اسم أو رقم",
+    lbl_d_showpaid: "إظهار الديون المسددة", btn_d_new: "تسجيل دين يدوي (دين سابق)", lbl_d_payamt: "المبلغ المدفوع الآن", btn_d_payok: "تسجيل الدفعة", btn_d_save: "حفظ",
+    lbl_d_name: "اسم الزبون", lbl_d_phone: "رقم الهاتف (للتذكير عبر واتساب)", lbl_d_kind: "نوع الدين", lbl_d_amt: "قيمة الدين", lbl_d_note: "ملاحظة (اختياري)",
+    lbl_on_debt: "بيع بالدين / دفع جزئي", lbl_paid_now: "المبلغ المدفوع الآن (اتركه 0 إن كان كامل المبلغ دين)", lbl_remain_debt: "المتبقي دين على الزبون",
+    hint_debt_name: "اسم الزبون مطلوب عند تسجيل دين.", lbl_m_pay: "المبلغ المقبوض الآن (الباقي يُسجَّل دين)",
+    reg_new_debts: "ديون جديدة (غير مقبوضة):", reg_collected_debts: "ديون محصّلة:",
+
     sg_about: "حقوق الملكية والتواصل", sg_about_d: "المطوّر والدعم الفني",
     lbl_developer: "المطوّر", lbl_contact_phone: "رقم التواصل",
     about_rights: "© 2026 جميع الحقوق محفوظة للمطوّر. هذا البرنامج ملكية خاصة للمطوّر، ويُمنع نسخه أو توزيعه أو إعادة بيعه أو تعديله دون إذن خطي مسبق.",
@@ -1122,6 +1216,14 @@ var I18N = {
     st_rev_all: "Total Revenue", st_cost_all: "Total Costs", st_s_prof: "Net Sales Profit", st_m_prof: "Repair Profit", st_tot_net: "Total Shop Net Profit",
     st_m_recv: "Devices Received", st_m_deliv: "Devices Delivered", st_m_unrep: "Unrepairable",
     txt_invoice: "Invoice",
+    tab_debt: "Debts", st_d_total: "Total Outstanding Debts", st_d_cust: "Customers in Debt", st_d_sales: "Sales Debts", st_d_mnt: "Repair Debts",
+    opt_d_all: "All debts", opt_d_sale: "Sales debts", opt_d_mnt: "Repair debts", ph_d_search: "Search: name or phone",
+    lbl_d_showpaid: "Show settled debts", btn_d_new: "Add manual debt (previous debt)", lbl_d_payamt: "Amount paid now", btn_d_payok: "Record Payment", btn_d_save: "Save",
+    lbl_d_name: "Customer name", lbl_d_phone: "Phone (for WhatsApp reminders)", lbl_d_kind: "Debt type", lbl_d_amt: "Debt amount", lbl_d_note: "Note (optional)",
+    lbl_on_debt: "Sell on credit / partial payment", lbl_paid_now: "Amount paid now (leave 0 if fully on credit)", lbl_remain_debt: "Remaining debt",
+    hint_debt_name: "Customer name is required to record a debt.", lbl_m_pay: "Amount collected now (rest becomes debt)",
+    reg_new_debts: "New debts (not collected):", reg_collected_debts: "Debts collected:",
+
     sg_about: "Copyright & Contact", sg_about_d: "Developer and support",
     lbl_developer: "Developer", lbl_contact_phone: "Contact number",
     about_rights: "© 2026 All rights reserved by the developer. This software is the private property of the developer. Copying, distributing, reselling or modifying it without prior written permission is prohibited.",
@@ -1187,6 +1289,8 @@ try{ rep=JSON.parse(localStorage.getItem(REPK)||"[]"); }catch(e){ rep=[]; }
 var REG_ARCHIVE_KEY = "telecom_reg_closes_v1", regArchive = [];
 try{ regArchive=JSON.parse(localStorage.getItem(REG_ARCHIVE_KEY)||"[]"); }catch(e){ regArchive=[]; }
 if(!Array.isArray(data)) data=[]; if(!Array.isArray(inv)) inv=[]; if(!Array.isArray(rep)) rep=[]; if(!Array.isArray(regArchive)) regArchive=[];
+var DEBTK="star_debts_v1", debts=[];
+try{ debts=JSON.parse(localStorage.getItem(DEBTK)||"[]"); }catch(e){ debts=[]; } if(!Array.isArray(debts)) debts=[];
 
 /* الفئات تُخزَّن دائماً بقيمتها العربية (مستقلة عن لغة الواجهة) ويُترجم العرض فقط */
 var PARTS = "قطع غيار", REPAIR_CAT = "صيانة";
@@ -1221,6 +1325,7 @@ function save(){
     localStorage.setItem(TOMB,JSON.stringify(tomb));
     localStorage.setItem(REPK,JSON.stringify(rep));
     localStorage.setItem(REG_ARCHIVE_KEY,JSON.stringify(regArchive));
+    localStorage.setItem(DEBTK,JSON.stringify(debts));
   }catch(e){}
 }
 function today(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
@@ -1400,6 +1505,7 @@ function del(id){
     }
   }
   data=data.filter(function(x){return x.id!==id});
+  dRemove("s"+id);
   tomb[id]=Date.now();
   save();
   renderAll();
@@ -1434,6 +1540,7 @@ function renderCart(){
   });
   $("cartTotal").textContent=fmt(cartTotal());
   $("cartCount").textContent=cart.length?("("+cart.length+")"):"";
+  updateDebtBox();
 }
 function nextInvNo(){
   var n=0; try{ n=parseInt(localStorage.getItem("star_inv_no"))||0; }catch(e){}
@@ -1442,21 +1549,25 @@ function nextInvNo(){
 }
 function cartCheckout(){
   if(!cart.length) return;
-  var day=$("day").value||today(), base=Date.now(), no=nextInvNo(), cust=$("cartCust").value.trim(), total=cartTotal();
+  var en=isEn(), day=$("day").value||today(), base=Date.now(), cust=$("cartCust").value.trim(), total=cartTotal();
+  var onDebt=$("cartDebt").checked, phone=$("cartPhone").value.trim(), rem=onDebt?cartDebtVals().rem:0;
+  if(rem>0 && !cust){ $("cartCust").focus(); saleNote(en?"Customer name is required to record a debt.":"اسم الزبون مطلوب لتسجيل الدين."); return; }
+  var no=nextInvNo();
   cart.forEach(function(l,ix){
     var it=l.sid?(inv.filter(function(i){ return i.id===l.sid; })[0]||null):null, tk=0;
     if(it){ tk=Math.min(l.qty,it.qty); it.qty-=tk; }
     data.push({id:base+ix,date:day,type:"sale",name:l.name,cat:l.cat,price:l.price,cost:l.cost,qty:l.qty,sid:it?it.id:null,tk:tk,curr:curSymbol,bid:base,ino:no,cust:cust});
   });
-  cart=[]; $("cartCust").value="";
+  if(rem>0) dAdd({id:base+cart.length+1,cust:cust,phone:phone,kind:"sale",amt:rem,ref:"b"+base,date:day,desc:(en?"Invoice #":"فاتورة #")+no});
+  cart=[]; $("cartCust").value=""; cartResetDebt();
   save(); renderAll(); renderCart();
-  saleNote(isEn()?("Invoice #"+no+" recorded — Total "+fmt(total)):("تم تسجيل الفاتورة #"+no+" — الإجمالي "+fmt(total)));
+  saleNote(en?("Invoice #"+no+" recorded — Total "+fmt(total)+(rem>0?(" — Debt "+fmt(rem)):"")):("تم تسجيل الفاتورة #"+no+" — الإجمالي "+fmt(total)+(rem>0?(" — دين "+fmt(rem)):"")));
 }
 $("cartDone").onclick=cartCheckout;
 $("cartClear").onclick=function(){
   if(!cart.length) return;
   if(!confirm(isEn()?"Clear the current invoice?":"إفراغ الفاتورة الحالية؟")) return;
-  cart=[]; renderCart();
+  cart=[]; cartResetDebt(); renderCart();
 };
 
 function delInv(bid){
@@ -1468,23 +1579,25 @@ function delInv(bid){
     tomb[e.id]=Date.now();
   });
   data=data.filter(function(x){ return x.bid!==bid; });
+  dRemove("b"+bid);
   save(); renderAll();
 }
 
 /* ---------- بيانات الفاتورة ---------- */
 function invData(lines){
-  var f=lines[0], d=new Date(f.bid||f.id), tot=0;
+  var f=lines[0], d=new Date(f.bid||f.id), tot=0, ref=f.bid?("b"+f.bid):("s"+f.id), ds=dFor(ref);
   lines.forEach(function(l){ tot+=l.price*l.qty; });
+  var rem=ds.reduce(function(a,x){ return a+dRem(x); },0);
   return {
     no:f.ino?String(f.ino):String(f.id).slice(-6), date:f.date, time:pad(d.getHours())+":"+pad(d.getMinutes()),
-    cust:f.cust||"", curr:f.curr||curSymbol, total:tot,
+    cust:f.cust||"", curr:f.curr||curSymbol, total:tot, hasDebt:ds.length>0, rem:rem, paid:dRound(tot-rem),
     lines:lines.map(function(l){ return {name:l.name,qty:l.qty,price:l.price}; })
   };
 }
 function IV(k){
   var D={title:["فاتورة مبيعات","Sales Invoice"],no:["رقم الفاتورة","Invoice No."],date:["التاريخ","Date"],cust:["العميل","Customer"],
     item:["الصنف","Item"],qty:["الكمية","Qty"],price:["السعر","Price"],total:["المجموع","Total"],grand:["الإجمالي","Grand Total"],
-    thanks:["شكراً لتعاملكم معنا","Thank you for your business"],page:["صفحة","Page"]};
+    paid:["المدفوع","Paid"],remain:["المتبقي (دين)","Balance Due"],thanks:["شكراً لتعاملكم معنا","Thank you for your business"],page:["صفحة","Page"]};
   return D[k][isEn()?1:0];
 }
 function num(n){ return Number(n||0).toLocaleString("en-US",{maximumFractionDigits:2}); }
@@ -1570,11 +1683,17 @@ function paintInvoice(d,logo){
     x.fillStyle="#e2e7ef"; x.fillRect(INV_M,y+RH-1,cw,1);
     y+=RH;
   });
-  if(y+200>INV_H-200){ newPage(); y=100; }
+  if(y+(d.hasDebt?340:200)>INV_H-200){ newPage(); y=100; }
   y+=30;
   x.fillStyle="#eaf2ff"; rr(x,INV_M,y,cw,100,16); x.fill();
   invText(x,IV("grand"),rtl?xs-30:xs+30,y+50,S,34,"700","#0f172a");
   invText(x,money(d.total,d.curr),rtl?xe+30:xe-30,y+50,E,46,"700",PRI);
+  if(d.hasDebt){
+    var ry=y+100+36;
+    invText(x,IV("paid"),rtl?xs-30:xs+30,ry,S,30,"600","#0f172a"); invText(x,money(d.paid,d.curr),rtl?xe+30:xe-30,ry,E,30,"600","#0f172a");
+    ry+=56;
+    invText(x,IV("remain"),rtl?xs-30:xs+30,ry,S,32,"700","#c93232"); invText(x,money(d.rem,d.curr),rtl?xe+30:xe-30,ry,E,36,"700","#c93232");
+  }
   var last=pages.length-1;
   pages.forEach(function(c,i){
     var g=c.getContext("2d");
@@ -1709,7 +1828,8 @@ function receiptHtml(d){
     '</div><hr><div class="m"><b>'+IV("no")+':</b> #'+esc(d.no)+'</div><div class="m"><b>'+IV("date")+':</b> '+esc(d.date)+' '+esc(d.time)+'</div>'+
     (d.cust?'<div class="m"><b>'+IV("cust")+':</b> '+esc(d.cust)+'</div>':'')+
     '<hr><table><tr><th class="n">'+IV("item")+'</th><th>'+IV("qty")+'</th><th>'+IV("price")+'</th><th>'+IV("total")+'</th></tr>'+rows+'</table>'+
-    '<div class="t"><span>'+IV("grand")+'</span><span>'+esc(money(d.total,d.curr))+'</span></div><hr>'+
+    '<div class="t"><span>'+IV("grand")+'</span><span>'+esc(money(d.total,d.curr))+'</span></div>'+
+    (d.hasDebt?'<div class="m" style="display:flex;justify-content:space-between;margin-top:1.5mm"><span>'+IV("paid")+'</span><b>'+esc(money(d.paid,d.curr))+'</b></div><div class="t" style="font-size:'+(a4?"15px":"12px")+';color:#b00020"><span>'+IV("remain")+'</span><span>'+esc(money(d.rem,d.curr))+'</span></div>':'')+'<hr>'+
     '<div class="c0 f">'+esc(shopProfile.footer||IV("thanks"))+'</div></body></html>';
 }
 function printInvoice(d){
@@ -1779,7 +1899,7 @@ function render(){
       d.innerHTML='<div class="invc-h"><div><b>'+ic("receipt")+' '+t("txt_invoice")+(e.ino?' #'+e.ino:'')+'</b>'+(e.cust?'<small style="display:block;color:var(--mut)">'+esc(e.cust)+'</small>':'')+'</div>'+
         '<div style="display:flex;align-items:center;gap:8px"><b class="ok">'+fmt(tot)+'</b><button class="del" aria-label="Delete">'+ic("x")+'</button></div></div>'+h+
         (wkHidePrf()?'':'<small style="color:var(--mut)">'+t("txt_profit")+' '+fmt(prof)+'</small>')+
-        '<div class="invc-a"><button class="inv-btn" data-act="pdf">'+ic("share")+'<span>'+t("btn_inv_pdf")+'</span></button><button class="inv-btn" data-act="print">'+ic("printer")+'<span>'+t("btn_inv_print")+'</span></button></div>';
+        dTag(e.bid?("b"+e.bid):("s"+e.id))+'<div class="invc-a"><button class="inv-btn" data-act="pdf">'+ic("share")+'<span>'+t("btn_inv_pdf")+'</span></button><button class="inv-btn" data-act="print">'+ic("printer")+'<span>'+t("btn_inv_print")+'</span></button></div>';
       d.querySelector(".del").onclick=function(){ if(e.bid) delInv(e.bid); else del(e.id); };
       d.querySelector('[data-act="pdf"]').onclick=function(){ exportInvoicePdf(invData(lines)); };
       d.querySelector('[data-act="print"]').onclick=function(){ printInvoice(invData(lines)); };
@@ -1812,13 +1932,14 @@ function renderAll(){
   updateItemsForSelectedCategory();
   renderShopProfile();
   renderCart();
+  renderDebts();
 }
 
 function esc(s){ return String(s||"").replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]}); }
 
 function setView(v){
   if(v==="b") settingsMenu();
-  [["s","vSales","nS"],["i","vInv","nI"],["m","vMnt","nM"],["r","vRep","nR"],["b","vBak","nB"]].forEach(function(a){
+  [["s","vSales","nS"],["d","vDebt","nD"],["i","vInv","nI"],["m","vMnt","nM"],["r","vRep","nR"],["b","vBak","nB"]].forEach(function(a){
     $(a[1]).style.display=v===a[0]?"":"none";
     $(a[2]).className=v===a[0]?"on":"";
   });
@@ -2000,7 +2121,7 @@ function renderRegisterArchive(){
   regArchive.slice().reverse().forEach(function(reg){
     h += '<div class="item" style="display:block;padding:8px 0">' +
       '<div style="display:flex;justify-content:space-between"><b>' + ic("calendar") + ' ' + reg.date + ' ' + (reg.time||"") + '</b><b class="ok">' + fmt(reg.net) + '</b></div>' +
-      '<small>' + (currentLang==="en"?"Sales: ":"المبيعات: ") + fmt(reg.sales) + (reg.mnt?' · ' + (currentLang==="en"?"Repairs: ":"الصيانة: ") + fmt(reg.mnt):'') + ' · ' + (currentLang==="en"?"Expenses: ":"المصاريف: ") + fmt(reg.exp) + ' · ' + (currentLang==="en"?"Actual Cash: ":"العد الفعلي: ") + fmt(reg.actual) + '</small>' +
+      '<small>' + (currentLang==="en"?"Sales: ":"المبيعات: ") + fmt(reg.sales) + (reg.mnt?' · ' + (currentLang==="en"?"Repairs: ":"الصيانة: ") + fmt(reg.mnt):'') + ' · ' + (currentLang==="en"?"Expenses: ":"المصاريف: ") + fmt(reg.exp) + (reg.dn?' · '+(isEn()?"New debts: ":"ديون جديدة: ")+fmt(reg.dn):'') + (reg.dp?' · '+(isEn()?"Debts collected: ":"تحصيل ديون: ")+fmt(reg.dp):'') + ' · ' + (currentLang==="en"?"Actual Cash: ":"العد الفعلي: ") + fmt(reg.actual) + '</small>' +
     '</div>';
   });
   box.innerHTML = h;
@@ -2013,7 +2134,7 @@ function fresh(){ inv.forEach(function(i){ snap[i.id]=inv1(i); }); }
 function stamp(){ inv.forEach(function(i){ var j=inv1(i); if(snap[i.id]!==j){ snap[i.id]=j; i.upd=Date.now(); } }); }
 fresh();
 function bmsg(tMsg){ var el=$("bkMsg"); if(el) el.textContent=tMsg; }
-function pack(){ return JSON.stringify({app:"telecom-acc",v:1,exported:new Date().toISOString(),data:data,inv:inv,rep:rep,regArchive:regArchive,tomb:tomb}); }
+function pack(){ return JSON.stringify({app:"telecom-acc",v:1,exported:new Date().toISOString(),data:data,inv:inv,rep:rep,regArchive:regArchive,debts:debts,tomb:tomb}); }
 function bkInfo(){
   var tVal=null; try{ tVal=localStorage.getItem(LB); }catch(e){}
   var el=$("bkLast"); if(!el) return;
@@ -2157,6 +2278,7 @@ function restoreSnap(name){
     if(!confirm(confirmMsg)) return;
     data = o.data; inv = o.inv; rep = Array.isArray(o.rep) ? o.rep : []; tomb = o.tomb || {};
     regArchive = Array.isArray(o.regArchive) ? o.regArchive : [];
+    debts = Array.isArray(o.debts) ? o.debts : [];
     fresh(); save(); renderAll(); listSnaps();
     bmsg((currentLang==="en")?"Restored successfully ":"تمت الاستعادة بنجاح ");
   }).catch(function(){
@@ -2266,6 +2388,7 @@ function readIn(){
     o.tomb=o.tomb||{};
     o.rep=Array.isArray(o.rep)?o.rep:[];
     o.regArchive=Array.isArray(o.regArchive)?o.regArchive:[];
+    o.debts=Array.isArray(o.debts)?o.debts:[];
     migrate(o);
     return o;
   } catch(e){
@@ -2296,6 +2419,9 @@ $("impMerge").onclick=function(){
   rep=rep.filter(function(tVal){ return !tomb[tVal.id]; });
   var ra={}; regArchive.forEach(function(x){ ra[x.id]=1; });
   o.regArchive.forEach(function(x){ if(!ra[x.id]) regArchive.push(x); }); regArchive.sort(function(a,b){ return a.id-b.id; });
+  var dm={}; debts.forEach(function(d){ dm[d.id]=d; });
+  o.debts.forEach(function(d){ if(tomb[d.id]) return; var l=dm[d.id]; if(!l) debts.push(d); else if((d.upd||0)>(l.upd||0)){ Object.keys(l).forEach(function(k){ delete l[k]; }); Object.keys(d).forEach(function(k){ l[k]=d[k]; }); } });
+  debts=debts.filter(function(d){ return !tomb[d.id]; });
   fresh(); save(); renderAll();
   bmsg((currentLang==="en")?("Synced Added "+add+" transactions, "+addi+" items, updated "+upd+" items."):("تمت المزامنة أُضيفت "+add+" عملية و"+addi+" صنف جديد، وحُدّث "+upd+" صنف."));
 };
@@ -2305,11 +2431,133 @@ $("impRep").onclick=function(){
     ? ("All current data will be overwritten with the backup (" + o.data.length + " transactions, " + o.inv.length + " items). Sure?")
     : ("سيتم حذف كل بياناتك الحالية على هذا الجهاز واستبدالها بالنسخة ("+o.data.length+" عملية، "+o.inv.length+" صنف). متأكد؟");
   if(!confirm(confirmMsg)) return;
-  data=o.data; inv=o.inv; rep=o.rep; tomb=o.tomb; regArchive=o.regArchive||[]; fresh(); save(); renderAll();
+  data=o.data; inv=o.inv; rep=o.rep; tomb=o.tomb; regArchive=o.regArchive||[]; debts=o.debts||[]; fresh(); save(); renderAll();
   bmsg((currentLang==="en")?"Data replaced ":"تم استبدال البيانات ");
 };
 
 if(FS){ setTimeout(listSnaps, 1500); }
+
+/* ===================== الديون ===================== */
+function dRound(n){ return Math.round(n*100)/100; }
+function dPaid(d){ return (d.pays||[]).reduce(function(a,p){ return a+p.amt; },0); }
+function dRem(d){ return Math.max(0,dRound(d.amt-dPaid(d))); }
+function dFor(ref){ return ref?debts.filter(function(d){ return d.ref===ref; }):[]; }
+function dRemFor(ref){ return dFor(ref).reduce(function(a,d){ return a+dRem(d); },0); }
+function dAdd(o){
+  var d={id:o.id||Date.now(),cust:o.cust,phone:o.phone||"",kind:o.kind,amt:o.amt,date:o.date||today(),note:o.note||"",ref:o.ref||"",desc:o.desc||"",pays:[],upd:Date.now()};
+  debts.push(d); return d;
+}
+function dRemove(ref){
+  if(!ref) return;
+  debts=debts.filter(function(d){ if(d.ref===ref){ tomb[d.id]=Date.now(); return false; } return true; });
+}
+function dKey(d){ var p=String(d.phone||"").replace(/\D/g,""); return p?("p"+p):("n"+String(d.cust||"").trim().toLowerCase()); }
+function dTag(ref){
+  var r=dRemFor(ref); if(r<=0) return "";
+  return '<small style="color:var(--bad);font-weight:600">'+ic("wallet")+' '+(isEn()?"Debt remaining: ":"دين متبقٍ: ")+fmt(r)+'</small>';
+}
+
+var dSel=null;
+function renderDebts(){
+  if(!$("dList")) return;
+  var en=isEn(), f=$("dFilter").value, q=String($("dSearch").value||"").trim().toLowerCase(), showPaid=$("dShowPaid").checked;
+  var tot=0, ts=0, tm=0, custs={};
+  debts.forEach(function(d){ var r=dRem(d); if(r>0){ tot+=r; if(d.kind==="mnt") tm+=r; else ts+=r; custs[dKey(d)]=1; } });
+  $("dTotal").textContent=fmt(tot); $("dCount").textContent=Object.keys(custs).length; $("dSalesT").textContent=fmt(ts); $("dMntT").textContent=fmt(tm);
+  var groups={}, order=[];
+  debts.slice().sort(function(a,b){ return a.id-b.id; }).forEach(function(d){
+    if(f!=="all" && d.kind!==f) return;
+    if(!showPaid && dRem(d)<=0) return;
+    if(q && (String(d.cust||"")+" "+String(d.phone||"")).toLowerCase().indexOf(q)<0) return;
+    var k=dKey(d); if(!groups[k]){ groups[k]={name:d.cust,phone:d.phone,list:[]}; order.push(k); }
+    var g=groups[k]; g.name=d.cust||g.name; if(d.phone) g.phone=d.phone; g.list.push(d);
+  });
+  order.forEach(function(k){ groups[k].rem=groups[k].list.reduce(function(a,d){ return a+dRem(d); },0); });
+  order.sort(function(a,b){ return groups[b].rem-groups[a].rem; });
+  var C=$("dList"); C.innerHTML="";
+  if(!order.length){ C.innerHTML='<div class="empty">'+(en?"No debts to show":"لا توجد ديون لعرضها")+'</div>'; return; }
+  order.forEach(function(k){
+    var g=groups[k], card=document.createElement("div"); card.className="card dcard";
+    var rows=g.list.map(function(d){
+      var r=dRem(d), pays=(d.pays||[]).map(function(p){ return '<span>'+esc(ymd(new Date(p.id)))+' · +'+num(p.amt)+'</span>'; }).join("");
+      return '<div class="drow"><div class="dr-h"><span><span class="dbadge '+(d.kind==="mnt"?"m":"s")+'">'+(d.kind==="mnt"?(en?"Repair":"صيانة"):(en?"Sales":"مبيعات"))+'</span> '+esc(d.desc||d.note||(en?"Previous debt":"دين سابق"))+'</span>'+
+        '<button class="del" data-del="'+d.id+'" aria-label="Delete">'+ic("x")+'</button></div>'+
+        '<small>'+esc(d.date)+' · '+(en?"Original ":"الأصلي ")+num(d.amt)+' · '+(en?"Paid ":"المدفوع ")+num(dPaid(d))+' · <b class="'+(r>0?"bad":"ok")+'">'+(r>0?((en?"Remaining ":"المتبقي ")+fmt(r)):(en?"Settled":"مسدّد"))+'</b></small>'+
+        (d.note&&d.desc?'<small>'+esc(d.note)+'</small>':'')+(pays?'<div class="dpays">'+pays+'</div>':'')+'</div>';
+    }).join("");
+    card.innerHTML='<div class="dc-h"><div><b>'+esc(g.name||"-")+'</b>'+(g.phone?'<small style="display:block;direction:ltr;text-align:start">'+esc(g.phone)+'</small>':'<small style="display:block;color:var(--bad)">'+(en?"No phone number":"لا يوجد رقم هاتف")+'</small>')+'</div><b class="'+(g.rem>0?"bad":"ok")+'" style="font-size:18px">'+fmt(g.rem)+'</b></div>'+rows+
+      (g.rem>0?'<div class="invc-a"><button class="inv-btn" data-a="pay">'+ic("cash")+'<span>'+(en?"Record payment":"تسجيل دفعة")+'</span></button><button class="inv-btn wa" data-a="wa">'+'<svg class="i f"><use href="#i-wa"/></svg>'+'<span>'+(en?"WhatsApp reminder":"تذكير واتساب")+'</span></button></div>':'');
+    var pb=card.querySelector('[data-a="pay"]'); if(pb) pb.onclick=function(){ dPayOpen(g); };
+    var wb=card.querySelector('[data-a="wa"]'); if(wb) wb.onclick=function(){ dRemind(g); };
+    Array.prototype.forEach.call(card.querySelectorAll("[data-del]"),function(b){ b.onclick=function(){ dDel(parseFloat(b.getAttribute("data-del"))); }; });
+    C.appendChild(card);
+  });
+}
+function dDel(id){
+  var d=debts.filter(function(x){ return x.id===id; })[0]; if(!d) return;
+  if(!confirm(isEn()?"Delete this debt record?":"حذف سجل هذا الدين؟")) return;
+  debts=debts.filter(function(x){ return x.id!==id; }); tomb[id]=Date.now(); save(); renderAll();
+}
+function dRemind(g){
+  var en=isEn();
+  if(!g.phone){ alert(en?"No phone number saved for this customer.":"لا يوجد رقم هاتف محفوظ لهذا الزبون."); return; }
+  var shop=shopProfile.name||(en?"our shop":"المحل");
+  var lines=g.list.filter(function(d){ return dRem(d)>0; }).map(function(d){
+    return "- "+(d.desc||d.note||(en?"Previous debt":"دين سابق"))+" ("+d.date+"): "+num(dRem(d))+" "+curSymbol;
+  }).join("\n");
+  var msg=en
+    ? ("Hello "+g.name+",\nThis is a friendly reminder that you have an outstanding balance of "+fmt(g.rem)+" at "+shop+".\n\nDetails:\n"+lines+"\n\nKindly settle it at your earliest convenience. Thank you.")
+    : ("مرحباً "+g.name+"،\nنذكّركم بوجود مبلغ مستحق لدى "+shop+" قدره "+fmt(g.rem)+".\n\nالتفاصيل:\n"+lines+"\n\nنرجو التكرم بالتسديد في أقرب وقت. شكراً لتعاملكم.");
+  openWhatsAppMessage(g.phone,msg);
+}
+function dPayOpen(g){
+  dSel=g; var en=isEn();
+  $("dPayT").textContent=(en?"Payment from ":"دفعة من ")+g.name;
+  $("dPayInfo").textContent=(en?"Total remaining: ":"إجمالي المتبقي: ")+fmt(g.rem)+(en?" — applied to the oldest debts first.":" — تُسدَّد الديون الأقدم أولاً.");
+  $("dPayAmt").value=g.rem; $("dPayDlg").style.display="flex";
+  setTimeout(function(){ try{ $("dPayAmt").select(); }catch(e){} },50);
+}
+$("dPayNo").onclick=function(){ $("dPayDlg").style.display="none"; dSel=null; };
+$("dPayOk").onclick=function(){
+  if(!dSel) return;
+  var amt=dRound(parseFloat($("dPayAmt").value)), en=isEn();
+  if(isNaN(amt)||amt<=0){ $("dPayAmt").focus(); return; }
+  var left=amt, k=0, now=Date.now();
+  dSel.list.filter(function(d){ return dRem(d)>0; }).sort(function(a,b){ return a.id-b.id; }).forEach(function(d){
+    if(left<=0) return;
+    var take=Math.min(left,dRem(d));
+    d.pays=d.pays||[]; d.pays.push({id:now+(k++),amt:dRound(take)}); d.upd=Date.now(); left=dRound(left-take);
+  });
+  var applied=dRound(amt-left), name=dSel.name;
+  save(); $("dPayDlg").style.display="none"; dSel=null; renderAll();
+  var m=$("dMsg"); m.className="saleok"; m.textContent=en?("Payment of "+fmt(applied)+" recorded for "+name):("تم تسجيل دفعة "+fmt(applied)+" من "+name+(left>0?(" (الزائد "+fmt(left)+" لم يُحتسب)"):""));
+  clearTimeout(dMsgT); dMsgT=setTimeout(function(){ m.textContent=""; m.className=""; },8000);
+};
+var dMsgT=null;
+$("dNew").onclick=function(){ ["dnName","dnPhone","dnAmt","dnNote"].forEach(function(i){ $(i).value=""; }); $("dnKind").value="sale"; $("dNewDlg").style.display="flex"; };
+$("dnNo").onclick=function(){ $("dNewDlg").style.display="none"; };
+$("dnOk").onclick=function(){
+  var name=$("dnName").value.trim(), amt=dRound(parseFloat($("dnAmt").value));
+  if(!name){ $("dnName").focus(); return; }
+  if(isNaN(amt)||amt<=0){ $("dnAmt").focus(); return; }
+  dAdd({cust:name,phone:$("dnPhone").value.trim(),kind:$("dnKind").value,amt:amt,note:$("dnNote").value.trim(),desc:isEn()?"Previous debt":"دين سابق"});
+  save(); $("dNewDlg").style.display="none"; renderAll();
+};
+$("dFilter").onchange=renderDebts; $("dSearch").oninput=renderDebts; $("dShowPaid").onchange=renderDebts;
+$("nD").onclick=function(){ setView("d"); };
+
+/* ---- دين السلة ---- */
+function cartDebtVals(){
+  var total=cartTotal(), paid=Math.max(0,mNum($("cartPaid").value));
+  if(paid>total) paid=total;
+  return {total:total,paid:paid,rem:dRound(total-paid)};
+}
+function updateDebtBox(){
+  var on=$("cartDebt").checked; $("cartDebtBox").style.display=on?"":"none";
+  if(on) $("cartRemain").textContent=fmt(cartDebtVals().rem);
+}
+function cartResetDebt(){ $("cartDebt").checked=false; $("cartPaid").value=0; $("cartPhone").value=""; updateDebtBox(); }
+$("cartDebt").onchange=updateDebtBox; $("cartPaid").oninput=updateDebtBox;
 
 /* ===== الصيانة ===== */
 var mEdit=null, mDelId=null;
@@ -2344,6 +2592,7 @@ function repEdit(id){
 }
 function partsTotal(r){ return (r.parts||[]).reduce(function(a,p){ return a+p.cost*p.qty; },0); }
 function undeliver(tItem){
+  dRemove("r"+tItem.id);
   if(tItem.sale){ data=data.filter(function(e){ return e.id!==tItem.sale; }); tomb[tItem.sale]=Date.now(); tItem.sale=null; }
   tItem.delivered=null; tItem.fprice=null; tItem.pcost=null;
 }
@@ -2353,24 +2602,31 @@ function repStatus(id,st){
     mDelId=id;
     $("mDT").textContent=(currentLang==="en"?"Deliver: ":"تسليم: ")+tItem.dev;
     $("mFP").value=tItem.price||""; $("mPC").value=tItem.xcost||"";
-    dlgHint(); $("mDlg").style.display="flex"; return;
+    mPayTouched=false; dlgHint(); $("mDlg").style.display="flex"; return;
   }
   if(tItem.status==="delivered") undeliver(tItem);
   tItem.status=st; tItem.upd=Date.now(); save(); renderAll();
 }
+var mPayTouched=false;
 function dlgHint(){
   var tItem=mFind(mDelId); if(!tItem) return;
   var en=currentLang==="en", pt=partsTotal(tItem), fp=mNum($("mFP").value), pc=pt+mNum($("mPC").value);
+  var due=Math.max(0,fp-(tItem.dep||0));
+  if(!mPayTouched) $("mPay").value=due;
+  var rem=Math.max(0,dRound(due-Math.min(due,Math.max(0,mNum($("mPay").value)))));
   $("mDP").textContent=(tItem.parts&&tItem.parts.length)?((en?"Stock parts used: ":"قطع مستخدمة من المخزون: ")+tItem.parts.map(function(p){ return p.name+"×"+p.qty; }).join("، ")+(wkHidePrf()?"":" = "+fmt(pt))):"";
-  $("mDS").textContent=(en?"Deposit Paid: ":"العربون المدفوع: ")+fmt(tItem.dep)+(en?" — Collect Now: ":" — يُقبض الآن: ")+fmt(fp-tItem.dep)+(wkHidePrf()?"":(en?" — Profit: ":" — الربح: ")+fmt(fp-pc));
+  $("mDS").textContent=(en?"Deposit Paid: ":"العربون المدفوع: ")+fmt(tItem.dep)+(en?" — Due Now: ":" — المستحق الآن: ")+fmt(due)+(rem>0?((en?" — Goes to debt: ":" — يُسجَّل دين: ")+fmt(rem)):"")+(wkHidePrf()?"":(en?" — Profit: ":" — الربح: ")+fmt(fp-pc));
 }
 function repDeliver(){
   var tItem=mFind(mDelId); if(!tItem) return;
   var fp=parseFloat($("mFP").value); if(isNaN(fp)||fp<0){ $("mFP").focus(); return; }
+  var en=currentLang==="en", due=Math.max(0,fp-(tItem.dep||0));
+  var pay=Math.min(due,Math.max(0,mNum($("mPay").value))), rem=dRound(due-pay);
   var xc=Math.max(0,mNum($("mPC").value)), pc=partsTotal(tItem)+xc;
-  var e={id:Date.now(),date:today(),type:"mnt",name:(currentLang==="en"?"Repair":"صيانة")+": "+tItem.dev,cat:REPAIR_CAT,price:fp,cost:pc,qty:1,sid:null,tk:0,rid:tItem.id,
+  var e={id:Date.now(),date:today(),type:"mnt",name:(en?"Repair":"صيانة")+": "+tItem.dev,cat:REPAIR_CAT,price:fp,cost:pc,qty:1,sid:null,tk:0,rid:tItem.id,
          parts:(tItem.parts||[]).map(function(p){ return {sid:p.sid,name:p.name,qty:p.qty,cost:p.cost}; }),curr:curSymbol};
   data.push(e); tItem.sale=e.id; tItem.fprice=fp; tItem.pcost=pc; tItem.xcost=xc; tItem.delivered=today(); tItem.status="delivered"; tItem.upd=Date.now();
+  if(rem>0) dAdd({id:e.id+1,cust:tItem.name,phone:tItem.phone||"",kind:"mnt",amt:rem,ref:"r"+tItem.id,date:today(),desc:(en?"Repair #":"صيانة #")+tItem.no+" · "+tItem.dev});
   $("mDlg").style.display="none"; mDelId=null; save(); renderAll();
 }
 function repDel(id){
@@ -2492,7 +2748,7 @@ function renderMnt(){
       +'<small>'+esc(tItem.name)+phoneHtml+'</small>'
       +(tItem.issue?'<small>'+issueTxt+esc(tItem.issue)+'</small>':'')+(tItem.acc?'<small>'+accTxt+esc(tItem.acc)+'</small>':'')
       +'<small>'+recTxt+tItem.date+(tItem.delivered?delivTxt+tItem.delivered:'')+'</small>'
-      +'<small>'+priceDetails+'</small>'+((tItem.parts&&tItem.parts.length)?'<small>'+ic("chip")+' '+tItem.parts.map(function(p){ return esc(p.name)+'×'+p.qty; }).join('، ')+'</small>':'')
+      +'<small>'+priceDetails+'</small>'+dTag("r"+tItem.id)+((tItem.parts&&tItem.parts.length)?'<small>'+ic("chip")+' '+tItem.parts.map(function(p){ return esc(p.name)+'×'+p.qty; }).join('، ')+'</small>':'')
       +'<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center"><select class="ms" style="flex:1;min-width:130px">'+opts+'</select><button class="qb" data-a="e" style="width:auto;padding:0 10px;font-size:13px">'+t("btn_edit")+'</button><button class="qb" data-a="r" style="width:auto;padding:0 10px;font-size:13px">'+t("btn_receipt")+'</button>'+(fin?'':'<button class="qb" data-a="p" style="width:auto;padding:0 10px;font-size:13px">'+t("btn_parts")+'</button>')+'<button class="del" data-a="d" aria-label="Delete">'+ic("x")+'</button></div>';
 
     var waBtn = d.querySelector(".wa-link");
@@ -2514,7 +2770,7 @@ $("mNew").onclick=function(){ mClear(); mFormShow(true); $("mName").focus(); };
 $("mCancel").onclick=function(){ mClear(); mFormShow(false); };
 $("mSave").onclick=function(){ repAdd(); };
 $("mFilter").onchange=renderMnt; $("mSearch").oninput=renderMnt;
-$("mFP").oninput=dlgHint; $("mPC").oninput=dlgHint;
+$("mFP").oninput=dlgHint; $("mPC").oninput=dlgHint; $("mPay").oninput=function(){ mPayTouched=true; dlgHint(); };
 $("mPAdd").onclick=function(){ partsAdd(); };
 $("mPClose").onclick=function(){ $("mPartsDlg").style.display="none"; mPartsId=null; renderAll(); };
 $("mDNo").onclick=function(){ $("mDlg").style.display="none"; mDelId=null; renderAll(); };
@@ -2566,7 +2822,7 @@ setView=function(v){
   if(WK.on){ var P=WK.perms||{}; if(v==="b"||v==="w"||(v==="r"&&!P.rep)) v="s"; }
   _sv2(v); $("vWk").style.display=v==="w"?"":"none"; if(v==="w") wkPaint();
 };
-var WKB={del:"del",delInv:"del",repDel:"del",stk:"stk",delItem:"stk",restoreSnap:"x"};
+var WKB={del:"del",delInv:"del",dDel:"del",repDel:"del",stk:"stk",delItem:"stk",restoreSnap:"x"};
 Object.keys(WKB).forEach(function(n){ var f=window[n], need=WKB[n]; if(typeof f!=="function") return;
   window[n]=function(){ if(WK.on&&(need==="x"||!(WK.perms&&WK.perms[need]))){ wkDeny(); return; } return f.apply(this,arguments); }; });
 [["iAdd","stk"],["impMerge","x"],["impRep","x"],["rstYes","x"],["rsBtn","x"]].forEach(function(a){ var f=$(a[0]).onclick, need=a[1];
@@ -2645,8 +2901,8 @@ $("btnContactWa").onclick=function(){
 $("rstBtn").onclick = function(){ $("rstBox").style.display = ""; $("rstBtn").style.display = "none"; $("rstMsg").textContent = ""; };
 $("rstNo").onclick = function(){ $("rstBox").style.display = "none"; $("rstBtn").style.display = ""; };
 $("rstYes").onclick = function(){
-  [KEY, INV, TOMB, LB, REPK, REG_ARCHIVE_KEY, "star_current_shift_start", "star_inv_no"].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
-  data = []; inv = []; rep = []; regArchive = []; tomb = {}; snap = {}; currentShiftStart = 0; cart = [];
+  [KEY, INV, TOMB, LB, REPK, REG_ARCHIVE_KEY, "star_current_shift_start", "star_inv_no", DEBTK].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+  data = []; inv = []; rep = []; regArchive = []; debts = []; tomb = {}; snap = {}; currentShiftStart = 0; cart = [];
   ["name","price","cost","amt","inote","iname","iwhole","iretail","bkIn","bkOut"].forEach(function(i){ var el=$(i); if(el) el.value=""; });
   if($("qty")) $("qty").value = 1; if($("iqty")) $("iqty").value = 1;
   if($("day")) $("day").value = today(); if($("rday")) $("rday").value = today();
@@ -2794,10 +3050,15 @@ $("selCurrency").onchange = function(){
 function shiftBase(){ if(currentShiftStart>0) return currentShiftStart; var d=new Date(); return new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(); }
 /* النقد المتوقع بالصندوق منذ آخر إغلاق: مبيعات + (عربون الصيانة عند الاستلام + المتبقي عند التسليم) - مرتجعات - مصاريف */
 function shiftCash(){
-  var base=shiftBase(), L=data.filter(function(e){ return e.id>=base; }), k=calc(L), cm=0;
+  var base=shiftBase(), L=data.filter(function(e){ return e.id>=base; }), k=calc(L), cm=0, dn=0, dp=0;
   L.forEach(function(e){ if(e.type==="mnt"){ var r=e.rid?mFind(e.rid):null; cm+=e.price*e.qty-(r?(r.dep||0):0); } });
   rep.forEach(function(r){ if(r.id>=base) cm+=(r.dep||0); });
-  return {s:k.s,rt:k.rt,x:k.x,m:cm,net:k.s-k.rt-k.x+cm};
+  /* الديون الجديدة المرتبطة ببيع/تسليم لم تُقبض نقداً، والدفعات المحصّلة تدخل الصندوق */
+  debts.forEach(function(d){
+    if(d.ref && d.id>=base) dn+=d.amt;
+    (d.pays||[]).forEach(function(p){ if(p.id>=base) dp+=p.amt; });
+  });
+  return {s:k.s,rt:k.rt,x:k.x,m:cm,dn:dn,dp:dp,net:k.s-k.rt-k.x+cm-dn+dp};
 }
 $("btnOpenCloseRegister").onclick = function(){
   if(WK.on && !(WK.perms && WK.perms.reg)){ wkDeny(); return; }
@@ -2806,6 +3067,8 @@ $("btnOpenCloseRegister").onclick = function(){
   $("regMntVal").textContent = fmt(c.m);
   $("regReturnsVal").textContent = "-" + fmt(c.rt);
   $("regExpVal").textContent = "-" + fmt(c.x);
+  $("regDnVal").textContent = "-" + fmt(c.dn);
+  $("regDpVal").textContent = fmt(c.dp);
   $("regNetCashVal").textContent = fmt(c.net);
   $("actualCashInput").value = Math.round(c.net*100)/100;
   $("cashDiffBox").textContent = "";
@@ -2831,7 +3094,7 @@ $("btnSaveRegisterClose").onclick = function(){
   if(isNaN(actual)) actual = c.net;
   var now = new Date();
   regArchive.push({ id: Date.now(), date: today(), time: now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
-    sales: c.s, mnt: c.m, ret: c.rt, exp: c.x, net: c.net, actual: actual, curr: curSymbol });
+    sales: c.s, mnt: c.m, ret: c.rt, exp: c.x, dn: c.dn, dp: c.dp, net: c.net, actual: actual, curr: curSymbol });
   currentShiftStart = Date.now();
   try { localStorage.setItem("star_current_shift_start", String(currentShiftStart)); } catch(e){}
   save();
