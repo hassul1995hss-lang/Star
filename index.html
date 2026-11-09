@@ -400,6 +400,7 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
     <label data-i18n="lbl_paid_now">المبلغ المدفوع الآن (اتركه 0 إن كان كامل المبلغ دين)</label>
     <input id="cartPaid" type="number" inputmode="decimal" min="0" value="0">
     <div class="cart-total" style="margin-top:8px"><span data-i18n="lbl_remain_debt">المتبقي دين على الزبون</span><b id="cartRemain" class="bad">0</b></div>
+    <p class="hint" id="cartProfNote" style="margin:0 0 4px"></p>
     <p class="hint" style="margin:0" data-i18n="hint_debt_name">اسم الزبون مطلوب عند تسجيل دين.</p>
   </div>
   <div class="btn2">
@@ -420,6 +421,7 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
     <div class="stat"><small data-i18n="st_d_cust">عدد الزبائن المدينين</small><b id="dCount">0</b></div>
     <div class="stat"><small data-i18n="st_d_sales">ديون المبيعات</small><b id="dSalesT">0</b></div>
     <div class="stat"><small data-i18n="st_d_mnt">ديون الصيانة</small><b id="dMntT">0</b></div>
+    <div class="stat" id="dDeferBox" style="grid-column:span 2"><small data-i18n="st_d_defer">ربح مؤجل (يُحتسب عند تجاوز رأس المال)</small><b id="dDefer">0</b></div>
   </div>
   <div class="card">
     <div class="row" style="grid-template-columns:1fr 1fr">
@@ -974,6 +976,7 @@ var I18N = {
     st_rev_all: "إجمالي الإيرادات", st_cost_all: "إجمالي التكاليف", st_s_prof: "صافي ربح المبيعات", st_m_prof: "ربح الصيانة", st_tot_net: "صافي ربح المحل الكلي",
     st_m_recv: "أجهزة مستلمة بالفترة", st_m_deliv: "أجهزة مسلّمة بالفترة", st_m_unrep: "غير قابلة للإصلاح",
     txt_invoice: "فاتورة",
+    st_d_defer: "ربح مؤجل (يُحتسب عند تجاوز رأس المال)",
     tab_debt: "الديون", st_d_total: "إجمالي الديون المستحقة", st_d_cust: "عدد الزبائن المدينين", st_d_sales: "ديون المبيعات", st_d_mnt: "ديون الصيانة",
     opt_d_all: "كل الديون", opt_d_sale: "ديون المبيعات", opt_d_mnt: "ديون الصيانة", ph_d_search: "بحث: اسم أو رقم",
     lbl_d_showpaid: "إظهار الديون المسددة", btn_d_new: "تسجيل دين يدوي (دين سابق)", lbl_d_payamt: "المبلغ المدفوع الآن", btn_d_payok: "تسجيل الدفعة", btn_d_save: "حفظ",
@@ -1216,6 +1219,7 @@ var I18N = {
     st_rev_all: "Total Revenue", st_cost_all: "Total Costs", st_s_prof: "Net Sales Profit", st_m_prof: "Repair Profit", st_tot_net: "Total Shop Net Profit",
     st_m_recv: "Devices Received", st_m_deliv: "Devices Delivered", st_m_unrep: "Unrepairable",
     txt_invoice: "Invoice",
+    st_d_defer: "Deferred profit (counted after capital is recovered)",
     tab_debt: "Debts", st_d_total: "Total Outstanding Debts", st_d_cust: "Customers in Debt", st_d_sales: "Sales Debts", st_d_mnt: "Repair Debts",
     opt_d_all: "All debts", opt_d_sale: "Sales debts", opt_d_mnt: "Repair debts", ph_d_search: "Search: name or phone",
     lbl_d_showpaid: "Show settled debts", btn_d_new: "Add manual debt (previous debt)", lbl_d_payamt: "Amount paid now", btn_d_payok: "Record Payment", btn_d_save: "Save",
@@ -1342,7 +1346,63 @@ function getActiveShiftData(day){
     return true;
   });
 }
-function calc(list){
+/* ===== الربح حسب التحصيل (استرداد رأس المال أولاً) =====
+   لكل بيع/صيانة بالدين: لا يُحتسب ربح حتى يتجاوز المحصَّل تكلفة البضاعة، ثم يُحتسب الفائض فقط.
+   عند البيع يُخصم الربح المؤجل، وعند كل دفعة يُضاف الجزء الذي صار ربحاً فعلياً في يوم القبض. */
+function dCalc(d){
+  if(!d.ref) return null;
+  var T=0, C=0, eid=0;
+  if(d.kind==="mnt"){
+    var e=data.filter(function(x){ return x.type==="mnt" && ("r"+x.rid)===d.ref; })[0];
+    if(!e) return null; T=e.price*e.qty; C=e.cost*e.qty; eid=e.id;
+  } else {
+    var n=Number(d.ref.slice(1)), isB=d.ref.charAt(0)==="b";
+    var L=data.filter(function(x){ return x.type==="sale" && (isB?x.bid===n:x.id===n); });
+    if(!L.length) return null;
+    L.forEach(function(l){ T+=l.price*l.qty; C+=l.cost*l.qty; }); eid=L[0].id;
+  }
+  return {T:T,C:C,PT:T-C,eid:eid};
+}
+function dRec(f,K){ return f.PT<=0 ? f.PT : Math.min(f.PT,Math.max(0,K-f.C)); }
+function profitNow(ref,def){
+  var d=dFor(ref)[0]; if(!d) return def;
+  var f=dCalc(d); return f?dRec(f,f.T-dRem(d)):def;
+}
+function debtAdj(ids,o){
+  var r={s:0,m:0};
+  debts.forEach(function(d){
+    var f=dCalc(d); if(!f) return;
+    var key=d.kind==="mnt"?"m":"s", P0=f.T-d.amt, R0=dRec(f,P0);
+    if(ids[f.eid]) r[key]-=(f.PT-R0);
+    var K=P0;
+    (d.pays||[]).slice().sort(function(a,b){ return a.id-b.id; }).forEach(function(p){
+      var b=dRec(f,K); K+=p.amt; var dl=dRec(f,K)-b, pd=ymd(new Date(p.id));
+      if(pd<o.lo||pd>o.hi) return;
+      if(o.shift && pd===today() && currentShiftStart>0 && p.id<currentShiftStart) return;
+      r[key]+=dl;
+    });
+  });
+  return r;
+}
+function debtPayDates(lo,hi,sec){
+  var out=[];
+  debts.forEach(function(d){
+    if(!d.ref) return;
+    if(sec==="s"&&d.kind==="mnt") return; if(sec==="m"&&d.kind!=="mnt") return;
+    (d.pays||[]).forEach(function(p){ var pd=ymd(new Date(p.id)); if(pd>=lo&&pd<=hi) out.push(pd); });
+  });
+  return out;
+}
+/* إجمالي الربح المؤجل حالياً (لم يُحصَّل بعد) */
+function debtDeferred(){
+  var r={s:0,m:0};
+  debts.forEach(function(d){
+    var f=dCalc(d); if(!f||f.PT<=0) return;
+    r[d.kind==="mnt"?"m":"s"]+=f.PT-dRec(f,f.T-dRem(d));
+  });
+  return r;
+}
+function calc(list,o){
   var s=0,c=0,x=0,rt=0,dm=0,ms=0,mc=0;
   list.forEach(function(e){
     if(e.type==="sale"){ s+=e.price*e.qty; c+=e.cost*e.qty; }
@@ -1350,12 +1410,17 @@ function calc(list){
     else if(e.type==="ret"){ rt+=e.price*e.qty; if(e.kind==="back") c-=e.cost*e.qty; else dm+=e.cost*e.qty; }
     else if(e.type==="exp") x+=e.amt;
   });
-  var n=s-rt-c-x, mp=ms-mc;
-  return {s:s,rt:rt,c:c,x:x,dm:dm,ms:ms,mc:mc,mp:mp,g:s-rt-c,n:n,tn:n+mp};
+  var aS=0, aM=0;
+  if(o){
+    var ids={}; list.forEach(function(e){ ids[e.id]=1; });
+    var a=debtAdj(ids,o); aS=a.s; aM=a.m;
+    if(o.sec==="s") aM=0; else if(o.sec==="m") aS=0;
+  }
+  var g=s-rt-c+aS, n=g-x, mp=ms-mc+aM;
+  return {s:s,rt:rt,c:c,x:x,dm:dm,ms:ms,mc:mc,mp:mp,g:g,n:n,tn:n+mp,adjS:aS,adjM:aM};
 }
-function sums(day){ return calc(getActiveShiftData(day)); }
+function sums(day){ return calc(getActiveShiftData(day),{lo:day,hi:day,shift:true}); }
 
-/* تحديث الأصناف المعروضة بناءً على الفئة المختارة أولاً */
 function updateItemsForSelectedCategory(){
   var selectedCat = $("cat") ? $("cat").value : "";
   var stockSel = $("stockSel");
@@ -1895,10 +1960,11 @@ function render(){
         tot+=l.price*l.qty; prof+=(l.price-l.cost)*l.qty;
         h+='<div class="invc-l"><span>'+esc(l.name)+' <small>'+esc(catName(l.cat))+'</small></span><span>'+l.qty+' × '+fmt(l.price)+'</span><b>'+fmt(l.price*l.qty)+'</b></div>';
       });
+      prof=profitNow(key,prof);
       d.className="invc";
       d.innerHTML='<div class="invc-h"><div><b>'+ic("receipt")+' '+t("txt_invoice")+(e.ino?' #'+e.ino:'')+'</b>'+(e.cust?'<small style="display:block;color:var(--mut)">'+esc(e.cust)+'</small>':'')+'</div>'+
         '<div style="display:flex;align-items:center;gap:8px"><b class="ok">'+fmt(tot)+'</b><button class="del" aria-label="Delete">'+ic("x")+'</button></div></div>'+h+
-        (wkHidePrf()?'':'<small style="color:var(--mut)">'+t("txt_profit")+' '+fmt(prof)+'</small>')+
+        (wkHidePrf()?'':'<small style="color:var(--mut)">'+t("txt_profit")+(dFor(key).length?(isEn()?" (collected) ":" (محتسب) "):" ")+fmt(prof)+'</small>')+
         dTag(e.bid?("b"+e.bid):("s"+e.id))+'<div class="invc-a"><button class="inv-btn" data-act="pdf">'+ic("share")+'<span>'+t("btn_inv_pdf")+'</span></button><button class="inv-btn" data-act="print">'+ic("printer")+'<span>'+t("btn_inv_print")+'</span></button></div>';
       d.querySelector(".del").onclick=function(){ if(e.bid) delInv(e.bid); else del(e.id); };
       d.querySelector('[data-act="pdf"]').onclick=function(){ exportInvoicePdf(invData(lines)); };
@@ -1918,7 +1984,7 @@ function render(){
   for(var i=0;i<7;i++){
     var d=new Date(d0.getFullYear(),d0.getMonth(),d0.getDate()-i);
     var k=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-    var r=calc(data.filter(function(e){return e.date===k;}));
+    var r=calc(data.filter(function(e){return e.date===k;}),{lo:k,hi:k});
     h+='<tr><td>'+k.slice(5)+'</td><td>'+fmt(r.s-r.rt)+'</td><td>'+fmt(r.x)+'</td><td class="'+(r.n>=0?"ok":"bad")+'">'+fmt(r.n)+'</td><td class="'+(r.mp>=0?"ok":"bad")+'">'+fmt(r.mp)+'</td></tr>';
   }
   $("hist").innerHTML=h;
@@ -2034,7 +2100,7 @@ function renderRep(){
   var rg=range(per,$("rday").value||today()), lo=rg[0], hi=rg[1], en=currentLang==="en";
   var L=data.filter(function(e){return e.date>=lo&&e.date<=hi});
   var LS=sec==="s"?L.filter(function(e){return e.type!=="mnt";}):(sec==="m"?L.filter(function(e){return e.type==="mnt";}):L);
-  var k=calc(LS), g="";
+  var k=calc(LS,{lo:lo,hi:hi,sec:sec}), g="";
   $("rRange").textContent=lo===hi?lo:((en?"From ":"من ")+lo+(en?" to ":" إلى ")+hi);
   var cl=function(v){ return v>=0?"ok":"bad"; };
   if(sec==="s"){
@@ -2045,6 +2111,8 @@ function renderRep(){
   } else {
     g=sCard(t("st_rev_all"),fmt(k.s-k.rt+k.ms))+sCard(t("st_cost_all"),fmt(k.c+k.mc))+sCard(t("st_s_prof"),fmt(k.n),cl(k.n))+sCard(t("st_m_prof"),fmt(k.mp),cl(k.mp))+sCard(t("st_exp"),fmt(k.x))+sCard(t("st_dmg"),fmt(k.dm))+sCard(t("st_tot_net"),fmt(k.tn),cl(k.tn),1);
   }
+  var df=debtDeferred(), dfv=sec==="s"?df.s:(sec==="m"?df.m:df.s+df.m);
+  if(dfv>0 && !wkHidePrf()) g+=sCard(isEn()?"Deferred profit (uncollected debts)":"أرباح مؤجلة (ديون غير محصّلة)",fmt(dfv),"");
   $("rGrid").innerHTML=g;
   $("rCatCard").style.display=sec==="m"?"none":""; $("rTopCard").style.display=sec==="m"?"none":""; $("rMntCard").style.display=sec==="m"?"":"none";
 
@@ -2079,9 +2147,10 @@ function renderRep(){
   $("rBreakCard").style.display=per==="d"?"none":"";
   if(per!=="d"){
     var grp={}; LS.forEach(function(e){ var kk=per==="y"?e.date.slice(0,7):e.date; (grp[kk]=grp[kk]||[]).push(e); });
+    debtPayDates(lo,hi,sec).forEach(function(pd){ var kk=per==="y"?pd.slice(0,7):pd; grp[kk]=grp[kk]||[]; });
     var hd=sec==="m"?[t("th_rev"),t("th_cost"),t("th_profit")]:(sec==="g"?[t("th_rev"),t("th_exp"),t("th_net")]:[t("th_sales"),t("th_exp"),t("th_net")]);
     var bh='<tr><th>'+(per==="y"?t("th_month"):t("th_day"))+'</th><th>'+hd[0]+'</th><th>'+hd[1]+'</th><th>'+hd[2]+'</th></tr>', gk=Object.keys(grp).sort();
-    gk.forEach(function(kk){ var r=calc(grp[kk]), c3=sec==="m"?[r.ms,r.mc,r.mp]:(sec==="g"?[r.s-r.rt+r.ms,r.x,r.tn]:[r.s-r.rt,r.x,r.n]);
+    gk.forEach(function(kk){ var r=calc(grp[kk],{lo:per==="y"?kk+"-01":kk,hi:per==="y"?kk+"-31":kk,sec:sec}), c3=sec==="m"?[r.ms,r.mc,r.mp]:(sec==="g"?[r.s-r.rt+r.ms,r.x,r.tn]:[r.s-r.rt,r.x,r.n]);
       bh+='<tr><td>'+kk+'</td><td>'+fmt(c3[0])+'</td><td>'+fmt(c3[1])+'</td><td class="'+cl(c3[2])+'">'+fmt(c3[2])+'</td></tr>'; });
     $("rBreak").innerHTML=gk.length?bh:'<tr><td class="empty">'+(en?"No data":"لا توجد بيانات")+'</td></tr>';
   }
@@ -2464,6 +2533,7 @@ function renderDebts(){
   var tot=0, ts=0, tm=0, custs={};
   debts.forEach(function(d){ var r=dRem(d); if(r>0){ tot+=r; if(d.kind==="mnt") tm+=r; else ts+=r; custs[dKey(d)]=1; } });
   $("dTotal").textContent=fmt(tot); $("dCount").textContent=Object.keys(custs).length; $("dSalesT").textContent=fmt(ts); $("dMntT").textContent=fmt(tm);
+  var dfr=debtDeferred(); $("dDefer").textContent=fmt(dfr.s+dfr.m); $("dDeferBox").style.display=wkHidePrf()?"none":"";
   var groups={}, order=[];
   debts.slice().sort(function(a,b){ return a.id-b.id; }).forEach(function(d){
     if(f!=="all" && d.kind!==f) return;
@@ -2483,7 +2553,7 @@ function renderDebts(){
       return '<div class="drow"><div class="dr-h"><span><span class="dbadge '+(d.kind==="mnt"?"m":"s")+'">'+(d.kind==="mnt"?(en?"Repair":"صيانة"):(en?"Sales":"مبيعات"))+'</span> '+esc(d.desc||d.note||(en?"Previous debt":"دين سابق"))+'</span>'+
         '<button class="del" data-del="'+d.id+'" aria-label="Delete">'+ic("x")+'</button></div>'+
         '<small>'+esc(d.date)+' · '+(en?"Original ":"الأصلي ")+num(d.amt)+' · '+(en?"Paid ":"المدفوع ")+num(dPaid(d))+' · <b class="'+(r>0?"bad":"ok")+'">'+(r>0?((en?"Remaining ":"المتبقي ")+fmt(r)):(en?"Settled":"مسدّد"))+'</b></small>'+
-        (d.note&&d.desc?'<small>'+esc(d.note)+'</small>':'')+(pays?'<div class="dpays">'+pays+'</div>':'')+'</div>';
+        (d.note&&d.desc?'<small>'+esc(d.note)+'</small>':'')+dCapLine(d,en)+(pays?'<div class="dpays">'+pays+'</div>':'')+'</div>';
     }).join("");
     card.innerHTML='<div class="dc-h"><div><b>'+esc(g.name||"-")+'</b>'+(g.phone?'<small style="display:block;direction:ltr;text-align:start">'+esc(g.phone)+'</small>':'<small style="display:block;color:var(--bad)">'+(en?"No phone number":"لا يوجد رقم هاتف")+'</small>')+'</div><b class="'+(g.rem>0?"bad":"ok")+'" style="font-size:18px">'+fmt(g.rem)+'</b></div>'+rows+
       (g.rem>0?'<div class="invc-a"><button class="inv-btn" data-a="pay">'+ic("cash")+'<span>'+(en?"Record payment":"تسجيل دفعة")+'</span></button><button class="inv-btn wa" data-a="wa">'+'<svg class="i f"><use href="#i-wa"/></svg>'+'<span>'+(en?"WhatsApp reminder":"تذكير واتساب")+'</span></button></div>':'');
@@ -2492,6 +2562,12 @@ function renderDebts(){
     Array.prototype.forEach.call(card.querySelectorAll("[data-del]"),function(b){ b.onclick=function(){ dDel(parseFloat(b.getAttribute("data-del"))); }; });
     C.appendChild(card);
   });
+}
+function dCapLine(d,en){
+  if(wkHidePrf()) return "";
+  var f=dCalc(d); if(!f||f.PT<=0) return "";
+  var K=f.T-dRem(d);
+  return '<small>'+(en?"Cost ":"رأس المال ")+num(f.C)+' · '+(en?"Collected ":"المحصّل ")+num(K)+' · '+(en?"Profit counted ":"الربح المحتسب ")+num(dRec(f,K))+(en?" of ":" من ")+num(f.PT)+'</small>';
 }
 function dDel(id){
   var d=debts.filter(function(x){ return x.id===id; })[0]; if(!d) return;
@@ -2554,7 +2630,12 @@ function cartDebtVals(){
 }
 function updateDebtBox(){
   var on=$("cartDebt").checked; $("cartDebtBox").style.display=on?"":"none";
-  if(on) $("cartRemain").textContent=fmt(cartDebtVals().rem);
+  if(on){
+    var dv=cartDebtVals(); $("cartRemain").textContent=fmt(dv.rem);
+    var C=cart.reduce(function(a,l){ return a+l.cost*l.qty; },0), PT=dv.total-C, pn=$("cartProfNote");
+    if(wkHidePrf()||dv.rem<=0) pn.textContent="";
+    else pn.textContent=(isEn()?"Profit counted now: ":"الربح المحتسب الآن: ")+fmt(dRec({PT:PT,C:C},dv.paid))+(isEn()?" — capital is recovered first, profit appears after collecting the cost.":" — يُسترد رأس المال أولاً ويظهر الربح بعد تجاوز التكلفة.");
+  }
 }
 function cartResetDebt(){ $("cartDebt").checked=false; $("cartPaid").value=0; $("cartPhone").value=""; updateDebtBox(); }
 $("cartDebt").onchange=updateDebtBox; $("cartPaid").oninput=updateDebtBox;
@@ -2615,7 +2696,7 @@ function dlgHint(){
   if(!mPayTouched) $("mPay").value=due;
   var rem=Math.max(0,dRound(due-Math.min(due,Math.max(0,mNum($("mPay").value)))));
   $("mDP").textContent=(tItem.parts&&tItem.parts.length)?((en?"Stock parts used: ":"قطع مستخدمة من المخزون: ")+tItem.parts.map(function(p){ return p.name+"×"+p.qty; }).join("، ")+(wkHidePrf()?"":" = "+fmt(pt))):"";
-  $("mDS").textContent=(en?"Deposit Paid: ":"العربون المدفوع: ")+fmt(tItem.dep)+(en?" — Due Now: ":" — المستحق الآن: ")+fmt(due)+(rem>0?((en?" — Goes to debt: ":" — يُسجَّل دين: ")+fmt(rem)):"")+(wkHidePrf()?"":(en?" — Profit: ":" — الربح: ")+fmt(fp-pc));
+  $("mDS").textContent=(en?"Deposit Paid: ":"العربون المدفوع: ")+fmt(tItem.dep)+(en?" — Due Now: ":" — المستحق الآن: ")+fmt(due)+(rem>0?((en?" — Goes to debt: ":" — يُسجَّل دين: ")+fmt(rem)):"")+(wkHidePrf()?"":(rem>0?((en?" — Profit now (capital first): ":" — الربح المحتسب الآن (رأس المال أولاً): ")+fmt(dRec({PT:fp-pc,C:pc},(tItem.dep||0)+Math.min(due,Math.max(0,mNum($("mPay").value))))) ):(en?" — Profit: ":" — الربح: ")+fmt(fp-pc)));
 }
 function repDeliver(){
   var tItem=mFind(mDelId); if(!tItem) return;
@@ -2741,7 +2822,7 @@ function renderMnt(){
     var recTxt = (currentLang==="en") ? "Received: " : "استلام: ";
     var delivTxt = (currentLang==="en") ? " · Delivered: " : " · تسليم: ";
     var priceDetails = fin
-      ? ((currentLang==="en"?"Final Price ":"السعر النهائي ")+fmt(tItem.fprice)+' · '+(currentLang==="en"?"Parts Cost ":"تكلفة القطع ")+fmt(tItem.pcost)+(wkHidePrf()?'':' · '+(currentLang==="en"?"Profit ":"ربح ")+fmt(tItem.fprice-tItem.pcost)))
+      ? ((currentLang==="en"?"Final Price ":"السعر النهائي ")+fmt(tItem.fprice)+' · '+(currentLang==="en"?"Parts Cost ":"تكلفة القطع ")+fmt(tItem.pcost)+(wkHidePrf()?'':' · '+(currentLang==="en"?"Profit ":"ربح ")+fmt(profitNow("r"+tItem.id,tItem.fprice-tItem.pcost))))
       : ((currentLang==="en"?"Price ":"السعر ")+fmt(tItem.price)+' · '+(currentLang==="en"?"Deposit ":"عربون ")+fmt(tItem.dep)+' · '+(currentLang==="en"?"Remaining ":"المتبقي ")+fmt(tItem.price-tItem.dep));
 
     d.innerHTML='<div style="display:flex;justify-content:space-between;gap:8px"><b>#'+tItem.no+' · '+esc(tItem.dev)+'</b><span class="'+(tItem.status==="ready"?"ok":(tItem.status==="unrep"?"bad":""))+'">'+MS[tItem.status]+'</span></div>'
