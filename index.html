@@ -231,9 +231,9 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
 .lic-x{position:absolute;top:12px;inset-inline-start:12px;width:38px;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .lic-x .i{margin:0}
 .lic-brand{text-align:center;color:#fff;margin-bottom:18px}
-.lic-mark{width:72px;height:72px;margin:0 auto 12px;border-radius:20px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(29,78,216,.5)}
+.lic-mark{width:76px;height:76px;margin:0 auto 12px;border-radius:20px;background:transparent;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(0,0,0,.4);overflow:hidden}
 .lic-mark .i{width:36px;height:36px;margin:0;color:#fff}
-.lic-brand h1{text-align:center;color:#fff;font-size:30px;margin:0 0 6px;letter-spacing:.5px}
+.lic-brand h1{display:flex;justify-content:center;align-items:center;text-align:center;color:#fff;font-size:30px;margin:0 0 6px;letter-spacing:.5px}
 .lic-brand p{margin:0 0 12px;color:rgba(255,255,255,.75);font-size:14px;line-height:1.6}
 .lic-plats{display:flex;justify-content:center;gap:10px}
 .lic-plat{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:13px;font-weight:600}
@@ -263,7 +263,7 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
   <div class="lic-wrap">
     <button id="btnCloseLicModal" class="lic-x" style="display:none" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button>
     <div class="lic-brand">
-      <div class="lic-mark"><svg class="i"><use href="#i-store"/></svg></div>
+      <div class="lic-mark"><img src="icon-only.png" alt="Star POS" onerror="this.onerror=null;this.src='icon-192.png';" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block"></div>
       <h1>Star POS</h1>
       <p data-i18n="lic_tagline">نظام متكامل لإدارة المبيعات والمخزون والصيانة والديون</p>
       <div class="lic-plats">
@@ -3103,39 +3103,12 @@ $("rstYes").onclick = function(){
   if(typeof runAutoBackup === "function") runAutoBackup(true);
 };
 
-/* ===== دالة احتساب وتنسيق رقم الإصدار الاحترافي (1.0 إلى 1.9 ثم 2.0 وهكذا) ===== */
-var APP_VERSION = "1.0";
-
-function formatProVersion(rawVer, buildNum){
-  if(!rawVer) return "v" + APP_VERSION;
-  var str = String(rawVer).trim().replace(/^v/i, "");
-  // إذا كان الرقم بصيغة Build أو رقم تسلسلي مفرد مثل 15 أو 65
-  var numOnly = parseInt(str);
-  if(!isNaN(numOnly) && str.indexOf(".") === -1){
-    var maj = Math.floor(numOnly / 10) + 1;
-    var min = numOnly % 10;
-    return "v" + maj + "." + min;
-  }
-  // إذا كان الرقم بصيغة كسرية مثل 1.65 ونريد تحويل الزيادات العشرية إلى نظام 1.0 -> 1.9 -> 2.0
-  var parts = str.split(".");
-  if(parts.length >= 2){
-    var major = parseInt(parts[0]) || 1;
-    var minor = parseInt(parts[1]) || 0;
-    if(minor > 9){
-      major += Math.floor(minor / 10);
-      minor = minor % 10;
-    }
-    return "v" + major + "." + minor + (buildNum ? " (" + buildNum + ")" : "");
-  }
-  return "v" + str;
-}
-
 if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App){
   window.Capacitor.Plugins.App.getInfo().then(function(info){
     if(info && info.version){
-      var vTxt = formatProVersion(info.version, info.build);
-      $("appVersionTxt").textContent = vTxt;
-      if($("aboutVer")) $("aboutVer").textContent = vTxt;
+      var vClean = "v" + String(info.version).trim().replace(/^v/i, "");
+      $("appVersionTxt").textContent = vClean;
+      if($("aboutVer")) $("aboutVer").textContent = vClean;
     }
   }).catch(function(){});
 }
