@@ -787,12 +787,12 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
     <p class="hint" data-i18n="hint_merge">«دمج» يجمع العمليات الناقصة دون حذف ما لديك، ويحدث المخزون حسب آخر تعديل.</p></div></div>
 <div class="sp" id="sp-app" style="display:none"><div class="sp-head"><button class="sp-back" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2><span data-i18n="sg_app">التطبيق والترخيص</span></h2></div><div class="card">
     <div class="kv"><span data-i18n="lbl_app_name">اسم البرنامج:</span><b style="color:var(--pri)">Star POS</b></div>
-    <div class="kv"><span data-i18n="lbl_app_ver">رقم الإصدار:</span><b id="appVersionTxt" style="direction:ltr;color:var(--ok)">v2.3</b></div>
+    <div class="kv"><span data-i18n="lbl_app_ver">رقم الإصدار:</span><b id="appVersionTxt" style="direction:ltr;color:var(--ok)">v1.0</b></div>
     <div class="kv"><span data-i18n="lbl_lic_status">حالة الترخيص:</span><b id="val_lic_status_txt" style="color:var(--ok)" data-i18n="val_lic_status">نشط </b></div>
     <button class="add sec" id="btnOpenActivateModal" style="margin-top:10px"><svg class="i"><use href="#i-key"/></svg> إدخال أو تجديد مفتاح التفعيل</button></div></div>
 <div class="sp" id="sp-about" style="display:none"><div class="sp-head"><button class="sp-back" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2 data-i18n="sg_about">حقوق الملكية والتواصل</h2></div>
 <div class="card">
-  <div class="about-head"><div class="about-mark"><svg class="i"><use href="#i-store"/></svg></div><b>Star POS</b><small id="aboutVer" style="direction:ltr;display:block">v2.3</small></div>
+  <div class="about-head"><div class="about-mark"><svg class="i"><use href="#i-store"/></svg></div><b>Star POS</b><small id="aboutVer" style="direction:ltr;display:block">v1.0</small></div>
   <div class="kv"><span data-i18n="lbl_developer">المطوّر</span><b style="direction:ltr">Hasan E Sulaiman</b></div>
   <div class="kv"><span data-i18n="lbl_contact_phone">رقم التواصل</span><b style="direction:ltr">+963 931 498 598</b></div>
   <p class="about-rights" data-i18n="about_rights">© 2026 جميع الحقوق محفوظة للمطوّر. هذا البرنامج ملكية خاصة للمطوّر، ويُمنع نسخه أو توزيعه أو إعادة بيعه أو تعديله دون إذن خطي مسبق.</p>
@@ -3103,10 +3103,39 @@ $("rstYes").onclick = function(){
   if(typeof runAutoBackup === "function") runAutoBackup(true);
 };
 
+/* ===== دالة احتساب وتنسيق رقم الإصدار الاحترافي (1.0 إلى 1.9 ثم 2.0 وهكذا) ===== */
+var APP_VERSION = "1.0";
+
+function formatProVersion(rawVer, buildNum){
+  if(!rawVer) return "v" + APP_VERSION;
+  var str = String(rawVer).trim().replace(/^v/i, "");
+  // إذا كان الرقم بصيغة Build أو رقم تسلسلي مفرد مثل 15 أو 65
+  var numOnly = parseInt(str);
+  if(!isNaN(numOnly) && str.indexOf(".") === -1){
+    var maj = Math.floor(numOnly / 10) + 1;
+    var min = numOnly % 10;
+    return "v" + maj + "." + min;
+  }
+  // إذا كان الرقم بصيغة كسرية مثل 1.65 ونريد تحويل الزيادات العشرية إلى نظام 1.0 -> 1.9 -> 2.0
+  var parts = str.split(".");
+  if(parts.length >= 2){
+    var major = parseInt(parts[0]) || 1;
+    var minor = parseInt(parts[1]) || 0;
+    if(minor > 9){
+      major += Math.floor(minor / 10);
+      minor = minor % 10;
+    }
+    return "v" + major + "." + minor + (buildNum ? " (" + buildNum + ")" : "");
+  }
+  return "v" + str;
+}
+
 if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App){
   window.Capacitor.Plugins.App.getInfo().then(function(info){
     if(info && info.version){
-      $("appVersionTxt").textContent = "v" + info.version + " (" + (info.build || "Build") + ")"; if($("aboutVer")) $("aboutVer").textContent = $("appVersionTxt").textContent;
+      var vTxt = formatProVersion(info.version, info.build);
+      $("appVersionTxt").textContent = vTxt;
+      if($("aboutVer")) $("aboutVer").textContent = vTxt;
     }
   }).catch(function(){});
 }
