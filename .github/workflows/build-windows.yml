@@ -61,12 +61,15 @@ jobs:
           const fs = require("fs");
           const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
           pkg.main = "main.js";
-          pkg.version = "1.0." + (process.env.GITHUB_RUN_NUMBER || "1");
+          const runNum = parseInt(process.env.GITHUB_RUN_NUMBER || "1");
+          const major = Math.floor((runNum - 1) / 10) + 1;
+          const minor = (runNum - 1) % 10;
+          pkg.version = `${major}.${minor}.0`;
           pkg.scripts = {
             "dist": "electron-builder --win portable"
           };
           pkg.build = {
-            "appId": "com.starphone.pos",
+            "appId": "com.starpos.app",
             "productName": "Star POS",
             "directories": {
               "output": "release"
@@ -92,6 +95,6 @@ jobs:
       - name: Upload Windows Executable
         uses: actions/upload-artifact@v4
         with:
-          name: StarPhone-Windows-Portable
+          name: StarPOS-Windows-Portable
           path: release/*.exe
           

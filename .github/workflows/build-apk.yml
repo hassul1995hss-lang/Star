@@ -39,8 +39,8 @@ jobs:
           
           cat << 'EOF' > capacitor.config.json
           {
-            "appId": "com.starphone.pos",
-            "appName": "Star Phone POS",
+            "appId": "com.starpos.app",
+            "appName": "Star POS",
             "webDir": "dist",
             "bundledWebRuntime": false
           }
@@ -50,14 +50,18 @@ jobs:
             npx cap add android
           fi
           npx cap sync android
+          
+          # تأكيد اسم التطبيق على الشاشة الرئيسية وعند التثبيت
+          sed -i -E 's|<string name="app_name">.*</string>|<string name="app_name">Star POS</string>|g' android/app/src/main/res/values/strings.xml || true
+          sed -i -E 's|<string name="title_activity_main">.*</string>|<string name="title_activity_main">Star POS</string>|g' android/app/src/main/res/values/strings.xml || true
 
       - name: Add Native Print Plugin
         run: |
-          JAVA_DIR=android/app/src/main/java/com/starphone/pos
+          JAVA_DIR=android/app/src/main/java/com/starpos/app
           mkdir -p "$JAVA_DIR"
 
           cat << 'EOF' > "$JAVA_DIR/PrinterPlugin.java"
-          package com.starphone.pos;
+          package com.starpos.app;
 
           import android.content.Context;
           import android.print.PrintAttributes;
@@ -102,7 +106,7 @@ jobs:
           EOF
 
           cat << 'EOF' > "$JAVA_DIR/MainActivity.java"
-          package com.starphone.pos;
+          package com.starpos.app;
 
           import android.os.Bundle;
           import com.getcapacitor.BridgeActivity;
@@ -153,17 +157,17 @@ jobs:
           echo "Using Android Build Tools: $BUILD_TOOLS_DIR"
           
           UNSIGNED_APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
-          $BUILD_TOOLS_DIR/zipalign -v -p 4 "$UNSIGNED_APK" StarPhone-Aligned.apk
+          $BUILD_TOOLS_DIR/zipalign -v -p 4 "$UNSIGNED_APK" StarPOS-Aligned.apk
           
           # فك تشفير المفتاح الثابت المدمج لضمان تطابق التوقيع دائماً
           echo "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" | base64 -d > starphone_consistent.jks
           
-          $BUILD_TOOLS_DIR/apksigner sign --ks starphone_consistent.jks --ks-key-alias starphone --ks-pass pass:"StarPhone2026" --key-pass pass:"StarPhone2026" --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true --out StarPhone-POS-Release.apk StarPhone-Aligned.apk
+          $BUILD_TOOLS_DIR/apksigner sign --ks starphone_consistent.jks --ks-key-alias starphone --ks-pass pass:"StarPhone2026" --key-pass pass:"StarPhone2026" --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true --out StarPOS-Release.apk StarPOS-Aligned.apk
           
-          $BUILD_TOOLS_DIR/apksigner verify -v StarPhone-POS-Release.apk
+          $BUILD_TOOLS_DIR/apksigner verify -v StarPOS-Release.apk
 
       - name: Upload Verified Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: StarPhone-POS-Android-App
-          path: StarPhone-POS-Release.apk
+          name: StarPOS-Android-App
+          path: StarPOS-Release.apk
