@@ -396,7 +396,7 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
       <label style="margin:0;font-weight:bold" data-i18n="lbl_step2_item">2. اختر الصنف التابع للفئة:</label>
       <span id="stockBadge" style="display:none" class="stock-badge"></span>
     </div>
-    <select id="stockSel" style="margin-top:3px"></select>
+    <input id="itemFind" data-i18n-ph="ph_item_find" placeholder="🔍 بحث سريع: اكتب أول حرف من اسم الصنف..." autocomplete="off" style="margin-top:3px;margin-bottom:6px"><select id="stockSel" style="margin-top:3px"></select>
     
     <div id="stockInfoBox" style="display:none" class="stock-avail-box">
       <span data-i18n="lbl_stock_avail">الكمية المتوفرة بالمخزون:</span>
@@ -1062,6 +1062,7 @@ var I18N = {
     btn_inv_pdf: "تصدير فاتورة",
     btn_inv_print: "طباعة",
     ph_part_find: "ابحث عن قطعة غيار...",
+    ph_item_find: "🔍 بحث سريع: اكتب أول حرف من اسم الصنف...",
     hint_parts_only: "تظهر هنا قطع الغيار فقط (فئة «قطع غيار» في المخزون).",
     sg_shop: "المحل والفاتورة", sg_shop_d: "الاسم واللوغو وبيانات الفاتورة",
     sg_pref: "التفضيلات", sg_pref_d: "اللغة والعملة",
@@ -1317,6 +1318,7 @@ var I18N = {
     btn_inv_pdf: "Export Invoice",
     btn_inv_print: "Print",
     ph_part_find: "Search spare parts...",
+    ph_item_find: "🔍 Quick search: type the first letters of the item...",
     hint_parts_only: "Only spare parts are listed here (inventory category “Spare Parts”).",
     sg_shop: "Shop & Invoice", sg_shop_d: "Name, logo and invoice details",
     sg_pref: "Preferences", sg_pref_d: "Language & currency",
@@ -1496,14 +1498,32 @@ function calc(list,o){
 }
 function sums(day){ return calc(getActiveShiftData(day),{lo:day,hi:day,shift:true}); }
 
+/* بحث ذكي: تطبيع الحروف العربية + مطابقة بداية الاسم أو بداية أي كلمة فيه */
+function normAr(x){
+  return String(x==null?"":x).toLowerCase()
+    .replace(/[\u064B-\u065F\u0670\u0640]/g,"")
+    .replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه");
+}
+function smartMatch(name,q){
+  q=normAr(q).trim(); if(!q) return true;
+  var n=normAr(name);
+  if(n.indexOf(q)===0) return true;
+  var words=n.split(/[\s\-_\/\.,()]+/);
+  var qs=q.split(/\s+/);
+  return qs.every(function(w){
+    return words.some(function(x){ return x.indexOf(w)===0; });
+  });
+}
 function updateItemsForSelectedCategory(){
   var selectedCat = $("cat") ? $("cat").value : "";
   var stockSel = $("stockSel");
   if(!stockSel) return;
 
   var currentVal = stockSel.value;
+  var findQ = $("itemFind") ? $("itemFind").value.trim() : "";
   var filteredItems = inv.filter(function(item){
     if(selectedCat && item.cat !== selectedCat) return false;
+    if(findQ && !smartMatch(item.name,findQ) && !(item.barcode && String(item.barcode).indexOf(findQ)===0)) return false;
     return mode === "ret" || item.qty > 0;
   });
 
@@ -1513,14 +1533,24 @@ function updateItemsForSelectedCategory(){
   });
 
   stockSel.innerHTML = h;
+  /* أثناء البحث تظهر النتائج مباشرة كقائمة مفتوحة */
+  if(findQ && filteredItems.length) stockSel.size = Math.min(filteredItems.length+1,7);
+  else stockSel.removeAttribute("size");
 
   // إذا كان الصنف المختار سابقاً لا يزال ضمن القائمة المختارة نحافظ عليه
   var exists = filteredItems.some(function(i){ return String(i.id) === currentVal; });
   if(exists) stockSel.value = currentVal;
   else stockSel.value = "";
 
+  /* نتيجة واحدة فقط: اخترها تلقائياً */
+  if(findQ && filteredItems.length===1 && stockSel.value!==String(filteredItems[0].id)){
+    stockSel.value = String(filteredItems[0].id);
+    if(stockSel.onchange) stockSel.onchange();
+    return;
+  }
   updateStockDisplay();
 }
+if($("itemFind")) $("itemFind").oninput = function(){ updateItemsForSelectedCategory(); };
 
 function updateStockDisplay(){
   var sid=$("stockSel").value;
@@ -1583,6 +1613,7 @@ $("stockSel").onchange=function(){
     $("name").value=it.name;
     $("price").value=it.retail;
     $("cost").value=it.whole;
+    $("stockSel").removeAttribute("size");
   }
   updateStockDisplay();
 };
@@ -1597,7 +1628,7 @@ $("addBtn").onclick=function(){
     var sid=$("stockSel").value, it=sid?inv.filter(function(i){return String(i.id)===sid})[0]:null;
     if(it){ if(k==="back") it.qty+=q; else it.dmg=(it.dmg||0)+q; }
     data.push({id:Date.now(),date:day,type:"ret",name:name||catVal,cat:catVal,price:p,cost:c,qty:q,kind:k,note:$("inote").value.trim(),sid:it?it.id:null,curr:curSymbol});
-    $("stockSel").value=""; $("inote").value="";
+    $("stockSel").value=""; $("inote").value=""; if($("itemFind")){$("itemFind").value="";} updateItemsForSelectedCategory();
   } else if(mode==="sale"){
     /* البيع: إضافة الصنف إلى سلة الفاتورة الحالية (يمكن إضافة عدة أصناف) */
     var p=parseFloat($("price").value), c=parseFloat($("cost").value)||0, q=Math.max(1,parseInt($("qty").value)||1);
@@ -1612,6 +1643,7 @@ $("addBtn").onclick=function(){
     }
     cartAdd({sid:it?it.id:null,name:name||catName(catVal),cat:catVal,price:p,cost:c,qty:q});
     $("stockSel").value="";
+    if($("itemFind")){ $("itemFind").value=""; updateItemsForSelectedCategory(); if($("stockSel")) $("stockSel").value=""; }
     ["name","price","cost"].forEach(function(i){$(i).value=""});
     $("qty").value=1;
     updateStockDisplay(); renderCart();
@@ -2800,7 +2832,7 @@ var mPartsId=null;
 function partsOpen(id){ mPartsId=id; if($("mPFind")) $("mPFind").value=""; renderParts(); $("mPartsDlg").style.display="flex"; }
 function fillPartsSel(){
   var q=($("mPFind")?$("mPFind").value.trim().toLowerCase():""), en=(currentLang==="en");
-  var list=inv.filter(function(i){ return isPart(i) && i.qty>0 && (!q || String(i.name).toLowerCase().indexOf(q)>-1); });
+  var list=inv.filter(function(i){ return isPart(i) && i.qty>0 && smartMatch(i.name,q); });
   var o=list.length
     ? '<option value="">'+t("opt_no_stock")+'</option>'
     : '<option value="">'+(en?"No spare parts available":"لا توجد قطع غيار متوفرة")+'</option>';
@@ -2808,6 +2840,8 @@ function fillPartsSel(){
     o+='<option value="'+i.id+'">'+esc(i.name)+' ['+t("txt_available")+' '+i.qty+']'+(wkHidePrf()?'':' · '+fmt(i.whole))+'</option>';
   });
   $("mPSel").innerHTML=o;
+  if(q && list.length) $("mPSel").size=Math.min(list.length+1,7); else $("mPSel").removeAttribute("size");
+  if(q && list.length===1) $("mPSel").value=String(list[0].id);
 }
 if($("mPFind")) $("mPFind").oninput=fillPartsSel;
 function renderParts(){
@@ -3278,6 +3312,7 @@ $("btnSaveRegisterClose").onclick = function(){
     
     if(match){
       if($("cat")) $("cat").value = match.cat;
+      if($("itemFind")) $("itemFind").value = "";
       updateItemsForSelectedCategory();
       $("stockSel").value = String(match.id);
       $("name").value = match.name;
