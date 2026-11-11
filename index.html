@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1d6fe0">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-only.png">
+<link rel="apple-touch-icon" href="icon-only.png">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Star POS</title>
 <style>
@@ -339,7 +339,7 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
     <button id="btnCloseLicModal" class="lic-x" style="display:none" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button>
     <div class="lic-brand">
       <div class="lic-mark">
-        <img src="icon-192.png" alt="Star POS" class="app-brand-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <img src="icon-only.png" alt="Star POS" class="app-brand-logo" onerror="if(!this._fb){this._fb=1;this.src='icon-192.png';}else{this.style.display='none';if(this.nextElementSibling)this.nextElementSibling.style.display='flex';}">
         <div class="app-logo-fallback" style="display:none;align-items:center;justify-content:center;width:100%;height:100%">
           <svg class="i"><use href="#i-store"/></svg>
         </div>
@@ -880,7 +880,7 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
 <div class="sp" id="sp-about" style="display:none"><div class="sp-head"><button class="sp-back" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2 data-i18n="sg_about">حقوق الملكية والتواصل</h2></div>
 <div class="card">
   <div class="about-head"><div class="about-mark">
-    <img src="icon-192.png" alt="Star POS" class="app-brand-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+    <img src="icon-only.png" alt="Star POS" class="app-brand-logo" onerror="if(!this._fb){this._fb=1;this.src='icon-192.png';}else{this.style.display='none';if(this.nextElementSibling)this.nextElementSibling.style.display='flex';}">
     <div class="app-logo-fallback" style="display:none;align-items:center;justify-content:center;width:100%;height:100%">
       <svg class="i"><use href="#i-store"/></svg>
     </div>
