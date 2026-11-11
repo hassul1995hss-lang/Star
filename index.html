@@ -146,7 +146,7 @@ h2 .i{color:var(--pri)}
 .card{box-shadow:0 1px 2px rgba(15,27,45,.04),0 6px 18px rgba(15,27,45,.04);border-radius:14px;padding:14px}
 label{font-weight:600;font-size:12.5px;color:var(--mut)}
 input,select,textarea{border-radius:10px;transition:border-color .15s,box-shadow .15s}
-input:focus,select:focus,textarea:focus{outline:0;border-color:var(--pri);box-shadow:0 0 0 3px rgba(37,99,235,.16)}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--pri);box-shadow:0 0 0 3px color-mix(in srgb,var(--pri) 18%,transparent)}
 .add{display:flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;font-weight:700;padding:12px 14px;transition:filter .15s,transform .05s}
 .add:hover{filter:brightness(1.06)}.add:active{transform:translateY(1px)}
 .stat{border-radius:12px;box-shadow:0 1px 2px rgba(15,27,45,.04);border-inline-start:3px solid var(--line)}
@@ -158,7 +158,7 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--pri);box-sh
 /* ===== التبويبات ===== */
 .tabs{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
 .tabs button{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;background:transparent;color:var(--mut);border-radius:9px;font-weight:600;transition:background .15s,color .15s}
-.tabs button.on{background:var(--pri);color:#fff;box-shadow:0 2px 8px rgba(37,99,235,.3)}
+.tabs button.on{background:var(--pri);color:#fff;box-shadow:0 2px 8px color-mix(in srgb,var(--pri) 35%,transparent)}
 #navTabs{position:sticky;top:0;z-index:30;margin-bottom:12px;box-shadow:0 4px 12px rgba(15,27,45,.06)}
 #navTabs button{flex-direction:column;gap:3px;padding:8px 2px;font-size:11.5px}
 #navTabs .i{width:21px;height:21px}
@@ -180,7 +180,7 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--pri);box-sh
 /* ===== الإعدادات: قائمة رئيسية وصفحات ===== */
 .mrow{display:flex;align-items:center;gap:13px;width:100%;padding:13px 14px;margin-bottom:9px;background:var(--card);border:1px solid var(--line);border-radius:13px;color:var(--text);font:inherit;text-align:start;cursor:pointer;box-shadow:0 1px 2px rgba(15,27,45,.04);transition:border-color .15s,background .15s}
 .mrow:hover{border-color:var(--pri)}
-.mrow .ic,.sg>summary .ic{flex:none;width:40px;height:40px;border-radius:11px;background:rgba(37,99,235,.1);color:var(--pri);display:flex;align-items:center;justify-content:center}
+.mrow .ic,.sg>summary .ic{flex:none;width:40px;height:40px;border-radius:11px;background:color-mix(in srgb,var(--pri) 12%,transparent);color:var(--pri);display:flex;align-items:center;justify-content:center}
 .mrow .ic .i{width:21px;height:21px}
 .mrow .mt{flex:1;min-width:0;font-weight:700;font-size:15px}
 .mrow .mt small{display:block;color:var(--mut);font-weight:400;font-size:12px;margin-top:1px}
@@ -217,7 +217,7 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
 .dpays{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
 .dpays span{font-size:11px;background:rgba(15,138,95,.1);color:var(--ok);border-radius:6px;padding:2px 7px}
 .dbadge{font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px;margin-inline-end:4px}
-.dbadge.s{background:rgba(36,87,197,.12);color:var(--pri)}
+.dbadge.s{background:color-mix(in srgb,var(--pri) 14%,transparent);color:var(--pri)}
 .dbadge.m{background:rgba(184,110,0,.14);color:var(--warn)}
 .inv-btn.wa{background:#1fa855;border-color:#1fa855;color:#fff}
 .inv-btn.wa:hover{filter:brightness(1.06);color:#fff}
@@ -231,17 +231,13 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
 .lic-x{position:absolute;top:12px;inset-inline-start:12px;width:38px;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .lic-x .i{margin:0}
 .lic-brand{text-align:center;color:#fff;margin-bottom:18px}
-.lic-mark{width:76px;height:76px;margin:0 auto 12px;border-radius:20px;background:transparent;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(0,0,0,.4);overflow:hidden}
+.lic-mark{width:72px;height:72px;margin:0 auto 12px;border-radius:20px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(29,78,216,.5)}
 .lic-mark .i{width:36px;height:36px;margin:0;color:#fff}
-.lic-brand h1{display:flex;justify-content:center;align-items:center;text-align:center;color:#fff;font-size:30px;margin:0 0 6px;letter-spacing:.5px}
+.lic-brand h1{text-align:center;color:#fff;font-size:30px;margin:0 0 6px;letter-spacing:.5px}
 .lic-brand p{margin:0 0 12px;color:rgba(255,255,255,.75);font-size:14px;line-height:1.6}
 .lic-plats{display:flex;justify-content:center;gap:10px}
 .lic-plat{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:13px;font-weight:600}
 .lic-card{background:var(--card);color:var(--text);border-radius:18px;padding:18px;box-shadow:0 24px 60px rgba(0,0,0,.45)}
-.lic-offer{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:linear-gradient(135deg,rgba(15,138,95,.14),rgba(36,87,197,.12));border:1px solid rgba(15,138,95,.35);margin-bottom:12px}
-.lic-offer .i{width:28px;height:28px;color:var(--ok);margin:0}
-.lic-offer b{display:block;font-size:15px}
-.lic-offer small{display:block;color:var(--mut);font-size:12px;margin-top:2px}
 .lic-desc{margin:0 0 12px;font-size:13px;line-height:1.7;text-align:center}
 .lic-desc:empty{display:none}
 .lic-active{display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;background:rgba(15,138,95,.12);color:var(--ok);font-weight:700;font-size:14px;margin-bottom:12px}
@@ -254,16 +250,91 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
 .lic-lbl{display:block;margin:12px 0 4px;text-align:start}
 .lic-mono{font-family:"Consolas","Courier New",monospace;direction:ltr;text-align:center;letter-spacing:1.5px;font-weight:700;font-size:15px}
 .lic-foot{direction:ltr;text-align:center;color:rgba(255,255,255,.45);font-size:12px;margin:14px 0 0}
+
+/* ===== سياسة الخصوصية ===== */
+.pol-screen{position:fixed;inset:0;z-index:1000000;overflow-y:auto;background:radial-gradient(1200px 600px at 50% -10%,var(--pri) 0%,#0f1b3d 60%,#0a1226 100%);display:none;justify-content:center;align-items:flex-start}
+.pol-wrap{position:relative;width:100%;max-width:520px;margin:auto;padding:22px 14px 20px}
+.pol-card{background:var(--card);color:var(--text);border-radius:18px;padding:18px;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+.pol-card h1{justify-content:center;font-size:19px;margin:0 0 4px}
+.pol-sub{text-align:center;color:var(--mut);font-size:12.5px;margin:0 0 12px}
+.pol-body{max-height:48vh;overflow-y:auto;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--bg);font-size:13.5px;line-height:1.85}
+.pol-body h3{font-size:14px;margin:14px 0 4px;color:var(--pri)}
+.pol-body h3:first-child{margin-top:0}
+.pol-body p,.pol-body ul{margin:0 0 6px}
+.pol-body ul{padding-inline-start:20px}
+.pol-agree{display:flex;align-items:flex-start;gap:10px;margin-top:14px;font-size:13.5px;color:var(--text);cursor:pointer;line-height:1.6}
+.pol-agree input{width:20px;height:20px;flex:none;margin:2px 0 0;accent-color:var(--pri)}
+.pol-btn:disabled{opacity:.45;cursor:not-allowed}
+/* ===== المظهر والثيمات ===== */
+.th-modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
+.th-modes button{padding:10px 6px;border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:10px;font:inherit;font-size:13.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.th-modes button.on{background:var(--pri);color:#fff;border-color:var(--pri);font-weight:700}
+.th-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:6px}
+.th-card{border:2px solid var(--line);background:var(--bg);color:var(--text);border-radius:14px;padding:10px;font:inherit;cursor:pointer;text-align:start;transition:transform .12s,border-color .12s}
+.th-card:active{transform:scale(.97)}
+.th-card.on{border-color:var(--pri);box-shadow:0 0 0 3px color-mix(in srgb,var(--pri) 20%,transparent)}
+.th-prev{height:46px;border-radius:9px;display:flex;overflow:hidden;border:1px solid rgba(128,128,128,.3);margin-bottom:8px}
+.th-prev i{flex:1}
+.th-prev i:first-child{flex:2}
+.th-card b{display:flex;align-items:center;justify-content:space-between;font-size:13.5px}
+.th-card b em{font-style:normal;color:var(--pri);font-size:15px;opacity:0}
+.th-card.on b em{opacity:1}
 </style>
+<script>
+/* ===== محرك المظهر والثيمات ===== */
+var THEMES=[
+ {id:"classic",ar:"أزرق كلاسيكي",en:"Classic Blue",l:null,d:null,sw:["#2457c5","#f2f4f8","#ffffff"],sd:["#5b9bff","#10141c","#1a212d"]},
+ {id:"emerald",ar:"زمرد",en:"Emerald",l:{pri:"#0b8f6a",bg:"#eef7f3",card:"#ffffff",line:"#d5e8df",mut:"#546a60"},d:{pri:"#14a37f",bg:"#0d1613",card:"#15231e",line:"#25382f",mut:"#8fa89d"}},
+ {id:"purple",ar:"بنفسجي ملكي",en:"Royal Purple",l:{pri:"#6d3fd1",bg:"#f4f1fb",card:"#ffffff",line:"#e2dcf2",mut:"#675f7d"},d:{pri:"#8b6cf0",bg:"#130f1e",card:"#1d1830",line:"#322a4d",mut:"#a39bbd"}},
+ {id:"rose",ar:"وردي",en:"Rose",l:{pri:"#d6336c",bg:"#fbf0f4",card:"#ffffff",line:"#f1dbe3",mut:"#7a5d67"},d:{pri:"#ec4a86",bg:"#1a1014",card:"#281a20",line:"#432831",mut:"#b59aa5"}},
+ {id:"orange",ar:"برتقالي غروب",en:"Sunset Orange",l:{pri:"#e8590c",bg:"#fcf3ec",card:"#ffffff",line:"#f3e0d0",mut:"#7d6552"},d:{pri:"#f0701a",bg:"#19120c",card:"#261b12",line:"#3f2d1d",mut:"#b8a08a"}},
+ {id:"teal",ar:"أزرق محيطي",en:"Ocean Teal",l:{pri:"#0c8599",bg:"#edf6f8",card:"#ffffff",line:"#d3e7ec",mut:"#52707a"},d:{pri:"#1aa3b8",bg:"#0b1519",card:"#122329",line:"#20393f",mut:"#8aa9b2"}},
+ {id:"graphite",ar:"رمادي جرافيت",en:"Graphite",l:{pri:"#334155",bg:"#f1f3f6",card:"#ffffff",line:"#dfe3e9",mut:"#5b6472"},d:{pri:"#6b7f99",bg:"#0b0e13",card:"#151a21",line:"#263040",mut:"#93a0b4"}},
+ {id:"gold",ar:"ذهبي",en:"Gold",l:{pri:"#b7791f",bg:"#faf5e9",card:"#ffffff",line:"#eee2c6",mut:"#7a6a45"},d:{pri:"#c98a1c",bg:"#16130a",card:"#221d10",line:"#3a3219",mut:"#b5a77f"}}
+];
+THEMES.forEach(function(t){ if(!t.sw){ t.sw=[t.l.pri,t.l.bg,t.l.card]; t.sd=[t.d.pri,t.d.bg,t.d.card]; } });
+function themeGet(k,def){ try{ return localStorage.getItem(k)||def; }catch(e){ return def; } }
+function themeResolve(){
+  var m=themeGet("star_theme_mode","auto");
+  if(m==="auto") m=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";
+  return m;
+}
+function applyAppTheme(){
+  var root=document.documentElement, mode=themeResolve(), id=themeGet("star_theme_accent","classic");
+  var th=THEMES.filter(function(t){return t.id===id;})[0]||THEMES[0];
+  root.setAttribute("data-theme",mode);
+  ["--pri","--bg","--card","--line","--mut"].forEach(function(v){ root.style.removeProperty(v); });
+  var p=(mode==="dark")?th.d:th.l;
+  if(p){ root.style.setProperty("--pri",p.pri); root.style.setProperty("--bg",p.bg); root.style.setProperty("--card",p.card); root.style.setProperty("--line",p.line); root.style.setProperty("--mut",p.mut); }
+  var mt=document.querySelector('meta[name="theme-color"]');
+  if(mt) mt.setAttribute("content",p?p.bg:(mode==="dark"?"#10141c":"#f2f4f8"));
+  root.style.colorScheme=mode;
+}
+applyAppTheme();
+if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventListener("change",function(){ if(themeGet("star_theme_mode","auto")==="auto") applyAppTheme(); }); }catch(e){} }
+</script>
 </head>
 <body>
 <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol><symbol id="i-unlock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></symbol><symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol><symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l3-2 2.5 2L12 20l2.5 2L17 20l3 2V2l-3 2-2.5-2L12 4 9.5 2 7 4z"/><path d="M8 9h8M8 13h8"/></symbol><symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol><symbol id="i-cash" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></symbol><symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.7 2.7-2.3-.7-.7-2.3z"/></symbol><symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/></symbol><symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></symbol><symbol id="i-chip" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></symbol><symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol><symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></symbol><symbol id="i-package" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.5L12 12l8.7-4.5M12 22V12"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16v-5M12 16V7M17 16v-8"/></symbol><symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol><symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8M11 8v8M15 8v8M18 8v8"/></symbol><symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></symbol><symbol id="i-archive" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/></symbol><symbol id="i-store" viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v9h14v-9M10 21v-5h4v5"/></symbol><symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></symbol><symbol id="i-dollar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.5-1.5-3-1.5-1.8 0-3 .9-3 2.2s1.2 1.9 3 2.3 3 1 3 2.3-1.2 2.2-3 2.2c-1.5 0-2.6-.6-3-1.7M12 6v2M12 16v2"/></symbol><symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></symbol><symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></symbol><symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></symbol><symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></symbol><symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></symbol><symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2M16 7l3 3M14 9l2 2"/></symbol><symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol><symbol id="i-message" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol><symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol><symbol id="i-chev" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.7-4 3-9 3s-9-1.3-9-3M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol><symbol id="i-wallet" viewBox="0 0 24 24"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></symbol><symbol id="i-wa" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></symbol></svg>
+<!-- سياسة الخصوصية والاستخدام -->
+<div id="policyModal" class="pol-screen">
+  <div class="pol-wrap">
+    <div class="pol-card">
+      <h1><svg class="i"><use href="#i-shield"/></svg><span data-i18n="pol_title">سياسة الخصوصية وشروط الاستخدام</span></h1>
+      <p class="pol-sub" id="polSub"></p>
+      <div class="pol-body" id="polBody"></div>
+      <label class="pol-agree" id="polAgreeRow"><input type="checkbox" id="polChk"><span data-i18n="pol_agree">لقد قرأت سياسة الخصوصية وشروط الاستخدام وأوافق عليها.</span></label>
+      <button class="add pol-btn" id="btnPolAccept" disabled><svg class="i"><use href="#i-shield"/></svg><span data-i18n="pol_accept">أوافق وأتابع</span></button>
+      <button class="add sec" id="btnPolClose" style="display:none"><span data-i18n="pol_close">إغلاق</span></button>
+    </div>
+  </div>
+</div>
 <!-- شاشة القفل وتفعيل الترخيص (License Activation Modal) -->
 <div id="licLockModal" class="lic-screen" style="display:none">
   <div class="lic-wrap">
     <button id="btnCloseLicModal" class="lic-x" style="display:none" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button>
     <div class="lic-brand">
-      <div class="lic-mark"><img src="icon-only.png" alt="Star POS" onerror="this.onerror=null;this.src='icon-192.png';" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block"></div>
+      <div class="lic-mark"><svg class="i"><use href="#i-store"/></svg></div>
       <h1>Star POS</h1>
       <p data-i18n="lic_tagline">نظام متكامل لإدارة المبيعات والمخزون والصيانة والديون</p>
       <div class="lic-plats">
@@ -272,17 +343,12 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
       </div>
     </div>
     <div class="lic-card">
-      <div id="licOffer" class="lic-offer">
-        <svg class="i"><use href="#i-shield"/></svg>
-        <div><b data-i18n="lic_offer_t">تجربة مجانية لمدة 3 أشهر</b><small data-i18n="lic_offer_d">متاحة عند أول تفعيل لكل جهاز، اطلبها الآن من المطوّر.</small></div>
-      </div>
       <p id="licStatusDesc" class="lic-desc"></p>
 
       <div id="licActiveBox" class="lic-active" style="display:none"><svg class="i"><use href="#i-shield"/></svg><span id="licActiveTxt"></span></div>
 
       <div id="licStepReq">
         <div class="lic-step"><span class="lic-n">1</span><span data-i18n="lic_step1">اطلب كود التفعيل من المطوّر</span></div>
-        <button class="wa-cta" id="btnLicWaTrial" style="margin-top:8px"><svg class="i f"><use href="#i-wa"/></svg><span data-i18n="lic_wa_trial">احصل على تجربتك المجانية عبر واتساب</span></button>
         <button class="lic-link" id="btnLicWaBuy"><svg class="i f"><use href="#i-wa"/></svg><span data-i18n="lic_wa_buy">للاشتراك أو التجديد: تواصل مع المطوّر</span></button>
         <p class="lic-hint" data-i18n="lic_wa_hint">سيتم فتح واتساب برسالة جاهزة تتضمن كود جهازك تلقائياً.</p>
       </div>
@@ -294,7 +360,7 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
         <button class="qb" id="btnCopyHw" style="width:44px;padding:0" title="Copy"><svg class="i"><use href="#i-clipboard"/></svg></button>
       </div>
       <label class="lic-lbl" data-i18n="lbl_act_code">كود التفعيل</label>
-      <input id="inLicKey" class="lic-mono" data-i18n-ph="ph_act_code" placeholder="XXXXX-XXXXX-XXXXX-XXXXX" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="23">
+      <input id="inLicKey" class="lic-mono" data-i18n-ph="ph_act_code" placeholder="XXXXX-XXXXX-XXXXX-..." autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="140" style="font-size:11.5px">
       <button class="add" id="btnActivateApp" style="margin-top:12px"><svg class="i"><use href="#i-key"/></svg><span data-i18n="btn_activate">تفعيل</span></button>
     </div>
     <p class="lic-foot">© 2026 Hasan E Sulaiman</p>
@@ -378,7 +444,7 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
     <button id="tRet"><svg class="i"><use href="#i-undo"/></svg><span data-i18n="btn_ret_tab">مرتجع</span></button>
   </div>
 
-  <div class="desk-only" style="background:rgba(29,111,224,0.06);border:1px dashed var(--pri);border-radius:10px;padding:10px;margin-bottom:12px">
+  <div class="desk-only" style="background:color-mix(in srgb,var(--pri) 7%,transparent);border:1px dashed var(--pri);border-radius:10px;padding:10px;margin-bottom:12px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <label style="margin:0;font-weight:bold;color:var(--pri)"><svg class="i"><use href="#i-scan"/></svg><span data-i18n="lbl_scan_barcode">مسح باركود المنتج (Barcode Scanner)</span></label>
       <small id="barStatus" style="font-weight:600;font-size:12px;color:var(--ok)"></small>
@@ -752,7 +818,18 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
       <option value="د.ع">دينار عراقي (د.ع)</option>
       <option value="€">يورو (€)</option>
     </select>
-    <p class="hint" data-i18n="desc_currency">تبقى المبيعات القديمة محفوظة بعملتها الأصلية لتفادي أي أخطاء في الصندوق.</p></div></div>
+    <p class="hint" data-i18n="desc_currency">تبقى المبيعات القديمة محفوظة بعملتها الأصلية لتفادي أي أخطاء في الصندوق.</p>
+    <div class="sg-sub" data-i18n="sg_look">المظهر</div>
+    <label data-i18n="lbl_mode">وضع التطبيق:</label>
+    <div class="th-modes" id="thModes">
+      <button data-m="light"><span data-i18n="mode_light">فاتح</span></button>
+      <button data-m="dark"><span data-i18n="mode_dark">داكن</span></button>
+      <button data-m="auto"><span data-i18n="mode_auto">تلقائي</span></button>
+    </div>
+    <label data-i18n="lbl_theme">الثيم (لون التطبيق):</label>
+    <div class="th-grid" id="thGrid"></div>
+    <p class="hint" data-i18n="hint_theme">يُطبَّق الثيم فوراً ويُحفظ تلقائياً على هذا الجهاز.</p>
+</div></div>
 <div class="sp" id="sp-bk" style="display:none"><div class="sp-head"><button class="sp-back" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2><span data-i18n="sg_bk">النسخ الاحتياطي</span></h2></div><div class="card">
     <div style="background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;margin:10px 0">
       <div style="display:flex;align-items:center;gap:6px">
@@ -789,7 +866,8 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
     <div class="kv"><span data-i18n="lbl_app_name">اسم البرنامج:</span><b style="color:var(--pri)">Star POS</b></div>
     <div class="kv"><span data-i18n="lbl_app_ver">رقم الإصدار:</span><b id="appVersionTxt" style="direction:ltr;color:var(--ok)">v1.0</b></div>
     <div class="kv"><span data-i18n="lbl_lic_status">حالة الترخيص:</span><b id="val_lic_status_txt" style="color:var(--ok)" data-i18n="val_lic_status">نشط </b></div>
-    <button class="add sec" id="btnOpenActivateModal" style="margin-top:10px"><svg class="i"><use href="#i-key"/></svg> إدخال أو تجديد مفتاح التفعيل</button></div></div>
+    <button class="add sec" id="btnOpenActivateModal" style="margin-top:10px"><svg class="i"><use href="#i-key"/></svg> إدخال أو تجديد مفتاح التفعيل</button>
+    <button class="add sec" id="btnViewPolicy" style="margin-top:10px"><svg class="i"><use href="#i-shield"/></svg><span data-i18n="pol_view">سياسة الخصوصية وشروط الاستخدام</span></button></div></div>
 <div class="sp" id="sp-about" style="display:none"><div class="sp-head"><button class="sp-back" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2 data-i18n="sg_about">حقوق الملكية والتواصل</h2></div>
 <div class="card">
   <div class="about-head"><div class="about-mark"><svg class="i"><use href="#i-store"/></svg></div><b>Star POS</b><small id="aboutVer" style="direction:ltr;display:block">v1.0</small></div>
@@ -1028,10 +1106,9 @@ var I18N = {
     st_m_recv: "أجهزة مستلمة بالفترة", st_m_deliv: "أجهزة مسلّمة بالفترة", st_m_unrep: "غير قابلة للإصلاح",
     txt_invoice: "فاتورة",
     lic_tagline: "نظام متكامل لإدارة المبيعات والمخزون والصيانة والديون",
-    lic_offer_t: "تجربة مجانية لمدة 3 أشهر",
-    lic_offer_d: "متاحة عند أول تفعيل لكل جهاز، اطلبها الآن من المطوّر.",
+    pol_title: "سياسة الخصوصية وشروط الاستخدام", pol_agree: "لقد قرأت سياسة الخصوصية وشروط الاستخدام وأوافق عليها.", pol_accept: "أوافق وأتابع", pol_close: "إغلاق", pol_view: "سياسة الخصوصية وشروط الاستخدام",
+    sg_look: "المظهر", lbl_mode: "وضع التطبيق:", mode_light: "فاتح", mode_dark: "داكن", mode_auto: "تلقائي", lbl_theme: "الثيم (لون التطبيق):", hint_theme: "يُطبَّق الثيم فوراً ويُحفظ تلقائياً على هذا الجهاز.",
     lic_step1: "اطلب كود التفعيل من المطوّر",
-    lic_wa_trial: "احصل على تجربتك المجانية عبر واتساب",
     lic_wa_buy: "للاشتراك أو التجديد: تواصل مع المطوّر",
     lic_wa_hint: "سيتم فتح واتساب برسالة جاهزة تتضمن كود جهازك تلقائياً.",
     lic_step2: "أدخل كود التفعيل",
@@ -1065,7 +1142,7 @@ var I18N = {
     ph_item_find: "🔍 بحث سريع: اكتب أول حرف من اسم الصنف...",
     hint_parts_only: "تظهر هنا قطع الغيار فقط (فئة «قطع غيار» في المخزون).",
     sg_shop: "المحل والفاتورة", sg_shop_d: "الاسم واللوغو وبيانات الفاتورة",
-    sg_pref: "التفضيلات", sg_pref_d: "اللغة والعملة",
+    sg_pref: "التفضيلات", sg_pref_d: "اللغة والعملة والمظهر",
     sg_bk: "النسخ الاحتياطي", sg_bk_d: "حفظ تلقائي واستعادة",
     sg_sync: "نقل ومزامنة البيانات", sg_sync_d: "بين الجوال والكمبيوتر",
     sg_app: "التطبيق والترخيص", sg_app_d: "الإصدار وتفعيل الاشتراك",
@@ -1284,10 +1361,9 @@ var I18N = {
     st_m_recv: "Devices Received", st_m_deliv: "Devices Delivered", st_m_unrep: "Unrepairable",
     txt_invoice: "Invoice",
     lic_tagline: "A complete system for sales, inventory, repairs and debts",
-    lic_offer_t: "3-month free trial",
-    lic_offer_d: "Available on first activation per device. Request it now from the developer.",
+    pol_title: "Privacy Policy & Terms of Use", pol_agree: "I have read and agree to the Privacy Policy and Terms of Use.", pol_accept: "Agree & Continue", pol_close: "Close", pol_view: "Privacy Policy & Terms of Use",
+    sg_look: "Appearance", lbl_mode: "App mode:", mode_light: "Light", mode_dark: "Dark", mode_auto: "Auto", lbl_theme: "Theme (app colors):", hint_theme: "The theme is applied instantly and saved on this device.",
     lic_step1: "Request your activation code",
-    lic_wa_trial: "Get your free trial via WhatsApp",
     lic_wa_buy: "To subscribe or renew: contact the developer",
     lic_wa_hint: "WhatsApp opens with a ready message that includes your device code.",
     lic_step2: "Enter the activation code",
@@ -1321,7 +1397,7 @@ var I18N = {
     ph_item_find: "🔍 Quick search: type the first letters of the item...",
     hint_parts_only: "Only spare parts are listed here (inventory category “Spare Parts”).",
     sg_shop: "Shop & Invoice", sg_shop_d: "Name, logo and invoice details",
-    sg_pref: "Preferences", sg_pref_d: "Language & currency",
+    sg_pref: "Preferences", sg_pref_d: "Language, currency & theme",
     sg_bk: "Backup", sg_bk_d: "Auto-save & restore",
     sg_sync: "Transfer & Sync", sg_sync_d: "Between phone and PC",
     sg_app: "App & License", sg_app_d: "Version & activation",
@@ -2168,7 +2244,7 @@ function renderInv(){
   
   inv.slice().reverse().forEach(function(i){
     var d=document.createElement("div"); d.className="item";
-    var bcTag = i.barcode ? ' <span style="background:rgba(29,111,224,0.12);color:var(--pri);padding:1px 6px;border-radius:4px;font-size:11px;font-family:monospace">#'+esc(i.barcode)+'</span>' : '';
+    var bcTag = i.barcode ? ' <span style="background:color-mix(in srgb,var(--pri) 14%,transparent);color:var(--pri);padding:1px 6px;border-radius:4px;font-size:11px;font-family:monospace">#'+esc(i.barcode)+'</span>' : '';
     var wholeTxt = (currentLang==="en") ? "Cost " : "جملة ";
     var retailTxt = (currentLang==="en") ? "Retail " : "مفرق ";
     var dmgTxt = (currentLang==="en") ? "Scrap " : "تالف ";
@@ -3347,19 +3423,25 @@ $("btnSaveRegisterClose").onclick = function(){
 
 applyLang(currentLang);
 
-/* ===== نظام التراخيص v2: مفاتيح قصيرة بتاريخ انتهاء مطلق مرتبطة بالجهاز ===== */
-var LIC_SECRET = "SP2-17F872E0B9AD97D0A53B5939B1FE8B72";
+/* ===== نظام التراخيص v3: توقيع رقمي غير متماثل (ECDSA) — لا يوجد أي سر داخل التطبيق ===== */
+/* المفتاح أدناه هو مفتاح عام (Public Key) فقط، لا يمكن استخدامه لتوليد مفاتيح تفعيل مهما تم فك شيفرة الكود،
+   لأن التوقيع يتطلب المفتاح الخاص (Private Key) الموجود حصراً داخل أداة الكيجن ولا يُشحن أبداً مع التطبيق. */
+var PUB_KEY_JWK = {"kty":"EC","x":"T_HXslmj02zk9Z-ZLIi0bPcJQG5SpKfC4rnXZm_Wkcg","y":"OV0NUFZWVhk9rG3eBXhFVECPHJb2E_2sk4vYF57S1rI","crv":"P-256"};
+var _pubKeyPromise = (window.crypto && crypto.subtle) ? crypto.subtle.importKey("jwk", PUB_KEY_JWK, {name:"ECDSA", namedCurve:"P-256"}, false, ["verify"]) : Promise.reject("no-subtle");
 var LIC_ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 var LIC_EPOCH = Date.UTC(2026, 0, 1);
 var LIC_DEV_PHONE = "963931498598";
-var cachedFixedHwId = null;
+var LIC_PAYLOAD_BITS = 40;   // نوع(2) + يوم الانتهاء(16) + رقم عشوائي(22)
+var LIC_SIG_BITS = 512;      // توقيع ECDSA P-256 خام (64 بايت)
+var LIC_TOTAL_BITS = LIC_PAYLOAD_BITS + LIC_SIG_BITS;
+var LIC_KEY_CHARS = Math.ceil(LIC_TOTAL_BITS / 5); // 111 حرفاً
 
-/* إلغاء جميع التراخيص والتجارب القديمة (مرة واحدة عند أول تشغيل بهذا الإصدار) */
+/* إلغاء جميع التراخيص والتجارب القديمة (مرة واحدة عند أول تشغيل بهذا الإصدار — نظام v3 غير متوافق مع مفاتيح v2 القديمة) */
 (function(){
   try{
-    if(localStorage.getItem("star_lic_ver") !== "2"){
+    if(localStorage.getItem("star_lic_ver") !== "3"){
       ["star_license_key","star_lic_sec_data","star_trial_start","star_used_keys"].forEach(function(k){ localStorage.removeItem(k); });
-      localStorage.setItem("star_lic_ver","2");
+      localStorage.setItem("star_lic_ver","3");
     }
   }catch(e){}
 })();
@@ -3377,6 +3459,13 @@ function generateCryptoSeed(){
   return Array.prototype.map.call(a, function(x){ return ("0" + x.toString(16)).slice(-2); }).join("").toUpperCase();
 }
 
+function fnv1aHash(str){
+  var h = 0x811c9dc5;
+  for(var i = 0; i < str.length; i++){ h ^= str.charCodeAt(i); h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24); }
+  return "STAR-" + (h >>> 0).toString(16).toUpperCase().padStart(8, "0");
+}
+
+// جهاز بلا معرّف نظام حقيقي (متصفح عادي): بصمة تقريبية + رقم عشوائي محفوظ محلياً (fallback فقط)
 function computeHwHash(seed){
   var glRenderer = "no-gl";
   try {
@@ -3386,96 +3475,136 @@ function computeHwHash(seed){
   } catch(e){}
   var minDim = Math.min(screen.width || 0, screen.height || 0), maxDim = Math.max(screen.width || 0, screen.height || 0);
   var rawComponents = [minDim + "x" + maxDim, screen.colorDepth || 24, window.devicePixelRatio || 1, navigator.hardwareConcurrency || 4, (navigator.platform || ""), glRenderer, seed || ""].join("###");
-  var h = 0x811c9dc5;
-  for(var i = 0; i < rawComponents.length; i++){ h ^= rawComponents.charCodeAt(i); h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24); }
-  return "STAR-" + (h >>> 0).toString(16).toUpperCase().padStart(8, "0");
+  return fnv1aHash(rawComponents);
 }
 
 function getDeterministicHwId(){
-  if(cachedFixedHwId) return cachedFixedHwId;
-  try {
-    var savedId = localStorage.getItem("star_fixed_hw_id");
-    if(savedId && /^STAR-[A-F0-9]{8}$/.test(savedId)){
-      cachedFixedHwId = savedId;
-      return cachedFixedHwId;
+  return cachedFixedHwId || "STAR-00000000";
+}
+function getFullClientCode(){ return getDeterministicHwId(); }
+
+/* مواقع متعددة متفرقة لحفظ نسخة احتياطية من بذرة الجهاز (fallback فقط)، بحيث لا يؤدي حذف مجلد واحد إلى فقدانها */
+var SEED_BACKUP_NAMES = [".star_dev_seed.dat", ".cache/.sp_sys_a.tmp", "logs/.sp_sys_b.tmp"];
+function seedBackupWriteAll(seed){
+  if(typeof fsWrite !== "function") return;
+  SEED_BACKUP_NAMES.forEach(function(name){ fsWrite(name, seed).catch(function(){}); });
+}
+function seedBackupReadAny(){
+  if(typeof fsRead !== "function") return Promise.resolve("");
+  var chain = Promise.resolve("");
+  SEED_BACKUP_NAMES.forEach(function(name){
+    chain = chain.then(function(found){
+      if(found) return found;
+      return fsRead(name).then(function(res){ return (res && res.data ? res.data : "").trim(); }).catch(function(){ return ""; });
+    });
+  });
+  return chain;
+}
+
+/* معرّف جهاز حقيقي ثابت من نظام التشغيل (لا يتأثر بمسح بيانات التطبيق أو إعادة تثبيته):
+   أندرويد: Settings.Secure.ANDROID_ID عبر إضافة Capacitor أصلية (DeviceId)
+   ويندوز: MachineGuid من سجل النظام عبر Electron (electronAPI)
+   يتغيّر فقط عند ضبط المصنع (أندرويد) أو إعادة تثبيت نظام التشغيل (ويندوز) — وهذا سلوك متوقع وصحيح. */
+var deviceIdReady = (async function initDeviceId(){
+  var anchor = null;
+  try{
+    if(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform() && window.Capacitor.Plugins && window.Capacitor.Plugins.DeviceId){
+      var r = await window.Capacitor.Plugins.DeviceId.getId();
+      if(r && r.id && String(r.id).length >= 6) anchor = "AND:" + r.id;
+    } else if(window.electronAPI && window.electronAPI.getMachineGuid){
+      var g = await window.electronAPI.getMachineGuid();
+      if(g && String(g).length >= 6) anchor = "WIN:" + g;
     }
   } catch(e){}
 
-  try {
-    devSeed = localStorage.getItem("star_dev_seed");
-  } catch(e){}
+  if(anchor){
+    cachedFixedHwId = fnv1aHash(anchor);
+    try { localStorage.setItem("star_fixed_hw_id", cachedFixedHwId); } catch(e){}
+    try { localStorage.setItem("star_hw_kind", "system"); } catch(e){}
+    if($("myHwId")) $("myHwId").value = cachedFixedHwId;
+    return cachedFixedHwId;
+  }
+
+  // لا يوجد معرّف نظام (متصفح عادي أو إضافة غير متاحة): العودة لبصمة تقريبية + بذرة عشوائية محفوظة ومتفرقة
+  try { cachedFixedHwId = localStorage.getItem("star_fixed_hw_id") || null; } catch(e){}
+  try { devSeed = localStorage.getItem("star_dev_seed"); } catch(e){}
+
+  var diskSeed = await seedBackupReadAny();
+  if(diskSeed && diskSeed.length >= 8 && diskSeed !== devSeed){
+    devSeed = diskSeed;
+    try { localStorage.setItem("star_dev_seed", devSeed); } catch(e){}
+    cachedFixedHwId = null;
+  }
 
   if(!devSeed){
     devSeed = generateCryptoSeed();
     try { localStorage.setItem("star_dev_seed", devSeed); } catch(e){}
   }
 
-  cachedFixedHwId = computeHwHash(devSeed);
-  try { localStorage.setItem("star_fixed_hw_id", cachedFixedHwId); } catch(e){}
+  if(!cachedFixedHwId || !/^STAR-[A-F0-9]{8}$/.test(cachedFixedHwId)){
+    cachedFixedHwId = computeHwHash(devSeed);
+    try { localStorage.setItem("star_fixed_hw_id", cachedFixedHwId); } catch(e){}
+  }
+  try { localStorage.setItem("star_hw_kind", "fallback"); } catch(e){}
+  seedBackupWriteAll(devSeed);
+  if($("myHwId")) $("myHwId").value = cachedFixedHwId;
   return cachedFixedHwId;
-}
-
-// مزامنة واسترجاع معرف الجهاز من ملف النظام المشفر (حتى يظل ثابتاً في حال مسح بيانات التطبيق على أندرويد)
-function syncHwIdWithStorage(){
-  if(typeof fsRead !== "function") return Promise.resolve(getDeterministicHwId());
-  return fsRead(".star_dev_seed.dat").then(function(res){
-    var diskSeed = (res && res.data ? res.data : "").trim();
-    if(diskSeed && diskSeed.length >= 8){
-      if(devSeed !== diskSeed){
-        devSeed = diskSeed;
-        try { localStorage.setItem("star_dev_seed", devSeed); } catch(e){}
-        cachedFixedHwId = computeHwHash(devSeed);
-        try { localStorage.setItem("star_fixed_hw_id", cachedFixedHwId); } catch(e){}
-        if($("myHwId")) $("myHwId").value = cachedFixedHwId;
-      }
-    } else {
-      if(devSeed) fsWrite(".star_dev_seed.dat", devSeed).catch(function(){});
-    }
-    return cachedFixedHwId;
-  }).catch(function(){
-    if(devSeed && typeof fsWrite === "function"){
-      fsWrite(".star_dev_seed.dat", devSeed).catch(function(){});
-    }
-    return cachedFixedHwId;
-  });
-}
-function getFullClientCode(){ return getDeterministicHwId(); }
+})();
 
 
-/* ---- ترميز المفتاح: 40 بت (نوع 2 + يوم الانتهاء 16 + رقم عشوائي 22) + توقيع 60 بت = 20 رمزاً ---- */
+/* ---- ترميز المفتاح: 40 بت بيانات (نوع 2 + يوم الانتهاء 16 + رقم عشوائي 22) + 512 بت توقيع ECDSA = 111 رمزاً ---- */
 function licNorm(k){ return String(k||"").toUpperCase().replace(/[^A-Z0-9]/g,""); }
 function licFmt(n){ return (n.match(/.{1,5}/g)||[]).join("-"); }
-function licStrToBits(str){
+function licAlphaToBits(str, totalBitsExpected){
   var out="";
   for(var i=0;i<str.length;i++){ var v=LIC_ALPHA.indexOf(str.charAt(i)); if(v<0) return null; out+=("00000"+v.toString(2)).slice(-5); }
+  return out.length>=totalBitsExpected ? out.slice(0,totalBitsExpected) : null;
+}
+function licBitsToBytes(bits){
+  var out=new Uint8Array(Math.floor(bits.length/8));
+  for(var i=0;i<out.length;i++) out[i]=parseInt(bits.substr(i*8,8),2);
   return out;
 }
-async function licHmacHex(text){
-  var enc=new TextEncoder();
-  var key=await crypto.subtle.importKey("raw",enc.encode(LIC_SECRET),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
-  var sig=await crypto.subtle.sign("HMAC",key,enc.encode(text));
-  return Array.from(new Uint8Array(sig)).map(function(b){ return b.toString(16).padStart(2,"0"); }).join("");
-}
-function licHexToBits(hex){ var o=""; for(var i=0;i<hex.length;i++) o+=("0000"+parseInt(hex.charAt(i),16).toString(2)).slice(-4); return o; }
 
 async function verifyKeyString(key){
   var en=(currentLang==="en"), n=licNorm(key);
-  if(n.length!==20) return {valid:false,msg:en?"Invalid activation code format.":"صيغة كود التفعيل غير صحيحة."};
-  var bits=licStrToBits(n); if(!bits) return {valid:false,msg:en?"Invalid activation code format.":"صيغة كود التفعيل غير صحيحة."};
-  var payload=bits.slice(0,40), sigBits=bits.slice(40);
-  var hex=await licHmacHex("SPK2|"+getDeterministicHwId()+"|"+payload);
-  if(licHexToBits(hex.slice(0,15))!==sigBits) return {valid:false,msg:en?"Invalid code, or it belongs to another device.":"كود غير صالح أو مخصص لجهاز آخر."};
+  if(n.length!==LIC_KEY_CHARS) return {valid:false,msg:en?"Invalid activation code format.":"صيغة كود التفعيل غير صحيحة."};
+  var bits=licAlphaToBits(n, LIC_TOTAL_BITS);
+  if(!bits) return {valid:false,msg:en?"Invalid activation code format.":"صيغة كود التفعيل غير صحيحة."};
+  var payload=bits.slice(0,LIC_PAYLOAD_BITS), sigBits=bits.slice(LIC_PAYLOAD_BITS);
+  var sigBytes=licBitsToBytes(sigBits);
+  await deviceIdReady;
+  var msg=new TextEncoder().encode("SPK3|"+getDeterministicHwId()+"|"+payload);
+  var ok=false;
+  try{
+    var pubKey=await _pubKeyPromise;
+    ok=await crypto.subtle.verify({name:"ECDSA",hash:"SHA-256"}, pubKey, sigBytes, msg);
+  }catch(e){ ok=false; }
+  if(!ok) return {valid:false,msg:en?"Invalid code, or it belongs to another device.":"كود غير صالح أو مخصص لجهاز آخر."};
   var type=parseInt(payload.slice(0,2),2), day=parseInt(payload.slice(2,18),2);
   var life=(type===2);
   return {valid:true,type:type,life:life,expiryMs:life?Infinity:(LIC_EPOCH+(day+1)*86400000),key:n};
 }
 
-/* الوقت الحالي مع حماية بسيطة من إرجاع ساعة الجهاز للخلف */
+/* الوقت الحالي مع حماية من إرجاع ساعة الجهاز للخلف: يقارن مع آخر وقت مُسجَّل محلياً وفي نسخة احتياطية متفرقة بالتخزين */
+var _lastSeenDiskCache = 0;
+if(typeof fsRead === "function"){
+  seedBackupReadLastSeen().then(function(v){ _lastSeenDiskCache = v; }).catch(function(){});
+}
+function seedBackupReadLastSeen(){
+  if(typeof fsRead !== "function") return Promise.resolve(0);
+  return fsRead(".sp_last_seen.dat").then(function(res){ return parseInt((res&&res.data)||"0")||0; }).catch(function(){ return 0; });
+}
 function licNow(){
   var n=Date.now(), last=0;
   try{ last=parseInt(localStorage.getItem("star_last_seen"))||0; }catch(e){}
+  if(_lastSeenDiskCache>last) last=_lastSeenDiskCache;
   if(n<last) n=last;
-  try{ if(n>last) localStorage.setItem("star_last_seen",String(n)); }catch(e){}
+  if(n>last){
+    try{ localStorage.setItem("star_last_seen",String(n)); }catch(e){}
+    _lastSeenDiskCache=n;
+    if(typeof fsWrite==="function") fsWrite(".sp_last_seen.dat", String(n)).catch(function(){});
+  }
   return n;
 }
 function licRemSec(r){ return r.life ? 99999*86400 : Math.floor((r.expiryMs-licNow())/1000); }
@@ -3483,8 +3612,8 @@ function licRemSec(r){ return r.life ? 99999*86400 : Math.floor((r.expiryMs-licN
 /* ---- رسالة واتساب التلقائية للمطوّر ---- */
 function licWaOpen(kind){
   var en=(currentLang==="en"), code=getDeterministicHwId(), msg;
-  if(en) msg=(kind==="trial"?"Hello, I would like to get my free 3-month trial activation code for Star POS.":"Hello, I would like to subscribe to / renew Star POS.")+"\nMy device code: "+code;
-  else msg=(kind==="trial"?"مرحباً، أرغب بالحصول على كود التجربة المجانية (3 أشهر) لبرنامج Star POS.":"مرحباً، أرغب بالاشتراك / تجديد اشتراك برنامج Star POS.")+"\nكود جهازي: "+code;
+  if(en) msg="Hello, I would like to subscribe to / renew Star POS.\nMy device code: "+code;
+  else msg="مرحباً، أرغب بالاشتراك / تجديد اشتراك برنامج Star POS.\nكود جهازي: "+code;
   window.open("https://wa.me/"+LIC_DEV_PHONE+"?text="+encodeURIComponent(msg),"_blank");
 }
 
@@ -3496,8 +3625,7 @@ function showLockScreen(mode, info){
   if($("myHwId")) $("myHwId").value=getFullClientCode();
   if($("btnCloseLicModal")) $("btnCloseLicModal").style.display=(mode==="active")?"flex":"none";
   var active=(mode==="active");
-  $("licOffer").style.display=(mode==="new")?"flex":"none";
-  $("licStepReq").style.display="block"; $("btnLicWaTrial").style.display=(mode==="new")?"flex":"none";
+  $("licStepReq").style.display="block";
   $("licActiveBox").style.display=active?"block":"none";
   var d=$("licStatusDesc");
   if(mode==="new"){ d.textContent=en?"Welcome! The app is locked until activated. Request your activation code below.":"مرحباً بك! البرنامج مقفل حتى يتم تفعيله. اطلب كود التفعيل من المطوّر عبر الزر أدناه."; d.style.color="var(--mut)"; }
@@ -3506,13 +3634,14 @@ function showLockScreen(mode, info){
   if(active && info){
     var days=Math.floor(licRemSec(info)/86400);
     $("licActiveTxt").textContent=info.life ? (en?"Lifetime license":"ترخيص دائم (مدى الحياة)")
-      : ((info.type===1?(en?"Free trial":"تجربة مجانية"):(en?"Active subscription":"اشتراك فعّال"))+" — "+(en?"ends ":"ينتهي ")+new Date(info.expiryMs-86400000).toLocaleDateString("en-GB")+" ("+days+(en?" days left)":" يوم متبقٍ)"));
+      : ((en?"Active subscription":"اشتراك فعّال")+" — "+(en?"ends ":"ينتهي ")+new Date(info.expiryMs-86400000).toLocaleDateString("en-GB")+" ("+days+(en?" days left)":" يوم متبقٍ)"));
   }
 }
 function hideLockScreen(){ var m=$("licLockModal"); if(m) m.style.display="none"; }
 if($("btnCloseLicModal")) $("btnCloseLicModal").onclick=hideLockScreen;
 
 async function checkLicenseStatus(manualOpen){
+  await deviceIdReady;
   if($("myHwId")) $("myHwId").value=getFullClientCode();
   var saved=null; try{ saved=localStorage.getItem("star_license_key"); }catch(e){}
   var expired=false;
@@ -3522,6 +3651,7 @@ async function checkLicenseStatus(manualOpen){
       var rem=licRemSec(r);
       if(rem>0){
         hideLockScreen(); updateLicBarDisplay(rem,r.type===1,r);
+        if(!policyAccepted()) showPolicy(true);
         if(manualOpen) showLockScreen("active",r);
         return true;
       }
@@ -3539,7 +3669,7 @@ function updateLicBarDisplay(sec, isTrial, r){
   if(!setLicEl) setLicEl=document.querySelector('[data-i18n="val_lic_status"]');
   var text="", color="var(--ok)";
   if(r && r.life){ text=en?"Active: lifetime license":"مفعّل: ترخيص دائم"; }
-  else if(days>15){ text=isTrial?(en?("Free Trial: "+days+" days left"):("تجربة مجانية: متبقي "+days+" يوم")):(en?("Active: "+days+" days left"):("مفعّل: متبقي "+days+" يوم")); }
+  else if(days>15){ text=en?("Active: "+days+" days left"):("مفعّل: متبقي "+days+" يوم"); }
   else if(days>0){ text=en?("RENEW SOON: "+days+" days left!"):("تنبيه: متبقي "+days+" يوم فقط على انتهاء الاشتراك! يرجى التجديد"); color="var(--warn)"; }
   else { text=en?("RENEW TODAY: "+hours+" hours left!"):("تنبيه عاجل: متبقي أقل من يوم ("+hours+" ساعة) على انتهاء الاشتراك!"); color="var(--bad)"; }
   if(licEl){ licEl.textContent=text; licEl.style.color=color; }
@@ -3547,7 +3677,7 @@ function updateLicBarDisplay(sec, isTrial, r){
 }
 
 if($("inLicKey")) $("inLicKey").addEventListener("input",function(){
-  var n=licNorm(this.value).slice(0,20); this.value=licFmt(n);
+  var n=licNorm(this.value).slice(0,LIC_KEY_CHARS); this.value=licFmt(n);
 });
 if($("btnActivateApp")){
   $("btnActivateApp").onclick=async function(){
@@ -3564,7 +3694,7 @@ if($("btnActivateApp")){
     try{ localStorage.setItem("star_license_key",res.key); }catch(e){}
     if(typeof fsWrite==="function"){ fsWrite(".license.key",licFmt(res.key)).catch(function(){}); }
     $("inLicKey").value="";
-    await syncHwIdWithStorage().then(function(){ checkLicenseStatus(false); });
+    await checkLicenseStatus(false);
     alert(en?"App activated successfully!":"تم تفعيل البرنامج بنجاح.");
     renderAll();
   };
@@ -3574,9 +3704,82 @@ if($("btnCopyHw")){
     copyToClipboard($("myHwId").value,function(){ alert(currentLang==="en"?"Device code copied.":"تم نسخ كود الجهاز."); },function(){});
   };
 }
-if($("btnLicWaTrial")) $("btnLicWaTrial").onclick=function(){ licWaOpen("trial"); };
 if($("btnLicWaBuy")) $("btnLicWaBuy").onclick=function(){ licWaOpen("buy"); };
 if($("btnOpenActivateModal")) $("btnOpenActivateModal").onclick=function(){ checkLicenseStatus(true); };
+
+/* ===== سياسة الخصوصية وشروط الاستخدام (موافقة إجبارية بعد التفعيل) ===== */
+var POLICY_VER="1.0";
+var POLICY_HTML={
+ar:'<h3>1. مقدمة</h3><p>باستخدامك برنامج Star POS («البرنامج») فإنك توافق على هذه السياسة وشروط الاستخدام. إن لم توافق فلا يحق لك استخدام البرنامج.</p>'+
+'<h3>2. البيانات التي نتعامل معها</h3><p>يعمل البرنامج محلياً على جهازك. جميع بياناتك (المبيعات، المخزون، الصيانة، الديون، العملاء، إعدادات المحل) تُحفظ على جهازك فقط، ولا يتم رفعها إلى أي خادم ولا يطّلع عليها المطوّر.</p>'+
+'<h3>3. كود الجهاز والتفعيل</h3><p>يولّد البرنامج «كود جهاز» تقني لربط الترخيص بجهازك والتحقق من كود التفعيل. لا يحتوي هذا الكود على بيانات شخصية، ولا يُرسَل إلا عندما تضغط بنفسك زر المراسلة عبر واتساب.</p>'+
+'<h3>4. واتساب والتواصل</h3><p>أزرار واتساب (تذكير الديون، التواصل مع المطوّر…) تفتح تطبيق واتساب برسالة جاهزة بإرادتك الكاملة، ولا يرسل البرنامج أي رسالة تلقائياً. أنت المسؤول عن محتوى الرسائل وعن موافقة عملائك على التواصل معهم.</p>'+
+'<h3>5. النسخ الاحتياطي ومسؤولية البيانات</h3><p>أنت المسؤول عن حفظ نسخ احتياطية دورية من بياناتك. قد تُفقد البيانات عند مسح بيانات المتصفح أو التطبيق أو ضبط المصنع أو تعطل الجهاز، ولا يتحمل المطوّر مسؤولية أي فقد للبيانات.</p>'+
+'<h3>6. الترخيص والاشتراك</h3><p>الترخيص شخصي وغير قابل للنقل، ومخصص لجهاز واحد. يُمنع مشاركة كود التفعيل أو محاولة كسر الحماية أو تعديل البرنامج أو تجاوز نظام الترخيص. تنتهي صلاحية الاشتراك بانتهاء مدته ويلزم تجديده للاستمرار.</p>'+
+'<h3>7. حقوق الملكية</h3><p>جميع حقوق البرنامج محفوظة للمطوّر. يُمنع نسخه أو توزيعه أو إعادة بيعه أو الهندسة العكسية له دون إذن خطي مسبق.</p>'+
+'<h3>8. إخلاء المسؤولية</h3><p>يُقدَّم البرنامج «كما هو». رغم الحرص على الدقة، فإنك مسؤول عن مراجعة حساباتك وتقاريرك وفواتيرك، ولا يتحمل المطوّر أي خسارة ناتجة عن سوء الاستخدام أو الأعطال أو الأخطاء في الإدخال.</p>'+
+'<h3>9. التعديلات</h3><p>قد تُحدَّث هذه السياسة مستقبلاً، وقد يُطلب منك الموافقة عليها مجدداً عند تغيّرها جوهرياً.</p>'+
+'<h3>10. التواصل</h3><p>للاستفسار والدعم: المطوّر Hasan E Sulaiman — +963 931 498 598 (واتساب).</p>',
+en:'<h3>1. Introduction</h3><p>By using Star POS (the "App") you agree to this Privacy Policy and these Terms of Use. If you do not agree, you may not use the App.</p>'+
+'<h3>2. Data We Handle</h3><p>The App runs locally on your device. All your data (sales, inventory, repairs, debts, customers, shop settings) is stored on your device only. It is not uploaded to any server and the developer cannot access it.</p>'+
+'<h3>3. Device Code & Activation</h3><p>The App generates a technical "device code" used to bind the license to your device and verify activation codes. It contains no personal data and is only sent when you yourself tap a WhatsApp contact button.</p>'+
+'<h3>4. WhatsApp & Communication</h3><p>WhatsApp buttons (debt reminders, contacting the developer, etc.) open WhatsApp with a prepared message at your own initiative. The App never sends messages automatically. You are responsible for message content and for your customers\' consent to be contacted.</p>'+
+'<h3>5. Backups & Data Responsibility</h3><p>You are responsible for keeping regular backups. Data may be lost if browser/app data is cleared, on factory reset, or on device failure. The developer is not liable for any data loss.</p>'+
+'<h3>6. License & Subscription</h3><p>The license is personal, non-transferable and tied to one device. Sharing activation codes, bypassing the license system, cracking or modifying the App is prohibited. A subscription ends when its term ends and must be renewed to continue.</p>'+
+'<h3>7. Intellectual Property</h3><p>All rights to the App are reserved by the developer. Copying, distributing, reselling or reverse-engineering it without prior written permission is prohibited.</p>'+
+'<h3>8. Disclaimer</h3><p>The App is provided "as is". You are responsible for reviewing your accounts, reports and invoices. The developer is not liable for losses resulting from misuse, malfunctions or data-entry errors.</p>'+
+'<h3>9. Changes</h3><p>This policy may be updated; you may be asked to accept it again if it changes materially.</p>'+
+'<h3>10. Contact</h3><p>Support: developer Hasan E Sulaiman — +963 931 498 598 (WhatsApp).</p>'
+};
+function policyAccepted(){ try{ return localStorage.getItem("star_policy_ok")===POLICY_VER; }catch(e){ return false; } }
+var polMandatory=false;
+function renderPolicy(){
+  var en=(currentLang==="en");
+  if($("polBody")) $("polBody").innerHTML=POLICY_HTML[en?"en":"ar"];
+  if($("polSub")) $("polSub").textContent=(en?"Version ":"الإصدار ")+POLICY_VER+(en?" — please read to the end":" — يرجى قراءتها حتى النهاية");
+}
+function showPolicy(mandatory){
+  var m=$("policyModal"); if(!m) return;
+  if(mandatory && polMandatory && m.style.display==="flex") return;
+  polMandatory=!!mandatory;
+  renderPolicy();
+  m.style.display="flex";
+  $("polAgreeRow").style.display=mandatory?"flex":"none";
+  $("btnPolAccept").style.display=mandatory?"flex":"none";
+  $("btnPolClose").style.display=mandatory?"none":"block";
+  if(mandatory){ $("polChk").checked=false; $("btnPolAccept").disabled=true; }
+  if($("polBody")) $("polBody").scrollTop=0;
+}
+if($("polChk")) $("polChk").onchange=function(){ $("btnPolAccept").disabled=!this.checked; };
+if($("btnPolAccept")) $("btnPolAccept").onclick=function(){
+  if(!$("polChk").checked) return;
+  try{ localStorage.setItem("star_policy_ok",POLICY_VER); localStorage.setItem("star_policy_date",new Date().toISOString()); }catch(e){}
+  $("policyModal").style.display="none";
+};
+if($("btnPolClose")) $("btnPolClose").onclick=function(){ $("policyModal").style.display="none"; };
+if($("btnViewPolicy")) $("btnViewPolicy").onclick=function(){ showPolicy(false); };
+
+/* ===== واجهة المظهر والثيمات ===== */
+function renderThemeUI(){
+  var en=(currentLang==="en"), mode=themeGet("star_theme_mode","auto"), acc=themeGet("star_theme_accent","classic");
+  var dark=(themeResolve()==="dark");
+  document.querySelectorAll("#thModes button").forEach(function(b){ b.className=(b.getAttribute("data-m")===mode)?"on":""; });
+  var g=$("thGrid"); if(!g) return;
+  g.innerHTML=THEMES.map(function(t){
+    var sw=dark?t.sd:t.sw;
+    return '<button type="button" class="th-card'+(t.id===acc?' on':'')+'" data-t="'+t.id+'"><div class="th-prev"><i style="background:'+sw[0]+'"></i><i style="background:'+sw[2]+'"></i><i style="background:'+sw[1]+'"></i></div><b><span>'+(en?t.en:t.ar)+'</span><em>✓</em></b></button>';
+  }).join("");
+  g.querySelectorAll(".th-card").forEach(function(c){ c.onclick=function(){ try{ localStorage.setItem("star_theme_accent",this.getAttribute("data-t")); }catch(e){} applyAppTheme(); renderThemeUI(); }; });
+}
+document.querySelectorAll("#thModes button").forEach(function(b){
+  b.onclick=function(){ try{ localStorage.setItem("star_theme_mode",this.getAttribute("data-m")); }catch(e){} applyAppTheme(); renderThemeUI(); };
+});
+(function(){
+  var _al=applyLang;
+  applyLang=function(l){ _al(l); renderThemeUI(); if($("policyModal")&&$("policyModal").style.display==="flex") renderPolicy(); };
+})();
+if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventListener("change",function(){ renderThemeUI(); }); }catch(e){} }
+renderThemeUI();
 
 checkLicenseStatus(false);
 setInterval(function(){ checkLicenseStatus(false); }, 60000);
