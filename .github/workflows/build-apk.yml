@@ -36,7 +36,8 @@ jobs:
           
           npm init -y
           npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/filesystem@6 @capacitor/app@6 @capacitor/share@6
-          
+          npm install --save-dev javascript-obfuscator@4
+
           cat << 'EOF' > capacitor.config.json
           {
             "appId": "com.starpos.app",
@@ -45,7 +46,45 @@ jobs:
             "bundledWebRuntime": false
           }
           EOF
-          
+
+      - name: Obfuscate Client JavaScript (dist copy only — source on GitHub stays readable)
+        run: |
+          cat << 'EOF' > obfuscate.js
+          const fs = require('fs');
+          const JavaScriptObfuscator = require('javascript-obfuscator');
+
+          const file = 'dist/index.html';
+          let html = fs.readFileSync(file, 'utf8');
+
+          html = html.replace(/<script>([\s\S]*?)<\/script>/g, function(match, code) {
+            const result = JavaScriptObfuscator.obfuscate(code, {
+              compact: true,
+              controlFlowFlattening: true,
+              controlFlowFlatteningThreshold: 0.75,
+              deadCodeInjection: true,
+              deadCodeInjectionThreshold: 0.3,
+              identifierNamesGenerator: 'hexadecimal',
+              renameGlobals: false,
+              selfDefending: true,
+              stringArray: true,
+              stringArrayEncoding: ['base64'],
+              stringArrayThreshold: 0.8,
+              splitStrings: true,
+              splitStringsChunkLength: 8,
+              transformObjectKeys: true,
+              numbersToExpressions: true,
+              disableConsoleOutput: true
+            }).getObfuscatedCode();
+            return '<script>' + result + '</script>';
+          });
+
+          fs.writeFileSync(file, html);
+          console.log('Obfuscation done: ' + file);
+          EOF
+          node obfuscate.js
+
+      - name: Add Capacitor Android Project
+        run: |
           if [ ! -d "android" ]; then
             npx cap add android
           fi
@@ -55,10 +94,42 @@ jobs:
           sed -i -E 's|<string name="app_name">.*</string>|<string name="app_name">Star POS</string>|g' android/app/src/main/res/values/strings.xml || true
           sed -i -E 's|<string name="title_activity_main">.*</string>|<string name="title_activity_main">Star POS</string>|g' android/app/src/main/res/values/strings.xml || true
 
-      - name: Add Native Print Plugin
+      - name: Add Native Print & Device-ID Plugins
         run: |
           JAVA_DIR=android/app/src/main/java/com/starpos/app
           mkdir -p "$JAVA_DIR"
+
+          cat << 'EOF' > "$JAVA_DIR/DeviceIdPlugin.java"
+          package com.starpos.app;
+
+          import android.provider.Settings;
+
+          import com.getcapacitor.JSObject;
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+
+          // يعيد معرّف النظام (ANDROID_ID): ثابت لكل جهاز+تثبيت نظام، لا يتأثر بمسح بيانات التطبيق
+          // أو إعادة تثبيته، ولا يتطلب أي صلاحية. يتغيّر فقط عند ضبط المصنع الكامل للجهاز.
+          @CapacitorPlugin(name = "DeviceId")
+          public class DeviceIdPlugin extends Plugin {
+              @PluginMethod
+              public void getId(PluginCall call) {
+                  try {
+                      String id = Settings.Secure.getString(
+                          getContext().getContentResolver(),
+                          Settings.Secure.ANDROID_ID
+                      );
+                      JSObject ret = new JSObject();
+                      ret.put("id", id == null ? "" : id);
+                      call.resolve(ret);
+                  } catch (Exception e) {
+                      call.reject("DeviceId failed: " + e.getMessage());
+                  }
+              }
+          }
+          EOF
 
           cat << 'EOF' > "$JAVA_DIR/PrinterPlugin.java"
           package com.starpos.app;
@@ -115,6 +186,7 @@ jobs:
               @Override
               public void onCreate(Bundle savedInstanceState) {
                   registerPlugin(PrinterPlugin.class);
+                  registerPlugin(DeviceIdPlugin.class);
                   super.onCreate(savedInstanceState);
               }
           }
