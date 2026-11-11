@@ -167,6 +167,8 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--pri);box-sh
 
 /* ===== الترويسة وشريط الترخيص ===== */
 .header-logo{border-radius:10px}
+.main-header-bar{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0 12px;text-align:center;width:100%}
+#appTitle{justify-content:center;text-align:center;width:auto}
 #licBar{border-radius:10px;box-shadow:none;background:transparent;border-style:dashed}
 
 /* ===== الشريط السفلي ===== */
@@ -199,7 +201,8 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
 
 /* ===== حقوق الملكية والتواصل ===== */
 .about-head{text-align:center;padding:8px 0 14px;border-bottom:1px solid var(--line);margin-bottom:6px}
-.about-mark{width:64px;height:64px;margin:0 auto 10px;border-radius:18px;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:center}
+.about-mark{width:64px;height:64px;margin:0 auto 10px;border-radius:18px;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 6px 18px rgba(36,87,197,.25)}
+.about-mark .app-brand-logo{width:100%;height:100%;object-fit:cover;border-radius:18px;display:block}
 .about-mark .i{width:32px;height:32px}
 .about-head b{display:block;font-size:20px}
 .about-head small{color:var(--mut)}
@@ -231,9 +234,10 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
 .lic-x{position:absolute;top:12px;inset-inline-start:12px;width:38px;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .lic-x .i{margin:0}
 .lic-brand{text-align:center;color:#fff;margin-bottom:18px}
-.lic-mark{width:72px;height:72px;margin:0 auto 12px;border-radius:20px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(29,78,216,.5)}
+.lic-mark{width:72px;height:72px;margin:0 auto 12px;border-radius:20px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(29,78,216,.5);overflow:hidden}
+.lic-mark .app-brand-logo{width:100%;height:100%;object-fit:cover;border-radius:20px;display:block}
 .lic-mark .i{width:36px;height:36px;margin:0;color:#fff}
-.lic-brand h1{text-align:center;color:#fff;font-size:30px;margin:0 0 6px;letter-spacing:.5px}
+.lic-brand h1{display:flex;justify-content:center;align-items:center;text-align:center;color:#fff;font-size:30px;margin:0 0 6px;letter-spacing:.5px}
 .lic-brand p{margin:0 0 12px;color:rgba(255,255,255,.75);font-size:14px;line-height:1.6}
 .lic-plats{display:flex;justify-content:center;gap:10px}
 .lic-plat{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);color:#fff;font-size:13px;font-weight:600}
@@ -334,7 +338,12 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
   <div class="lic-wrap">
     <button id="btnCloseLicModal" class="lic-x" style="display:none" aria-label="Close"><svg class="i"><use href="#i-x"/></svg></button>
     <div class="lic-brand">
-      <div class="lic-mark"><svg class="i"><use href="#i-store"/></svg></div>
+      <div class="lic-mark">
+        <img src="icon-192.png" alt="Star POS" class="app-brand-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="app-logo-fallback" style="display:none;align-items:center;justify-content:center;width:100%;height:100%">
+          <svg class="i"><use href="#i-store"/></svg>
+        </div>
+      </div>
       <h1>Star POS</h1>
       <p data-i18n="lic_tagline">نظام متكامل لإدارة المبيعات والمخزون والصيانة والديون</p>
       <div class="lic-plats">
@@ -363,13 +372,13 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
       <input id="inLicKey" class="lic-mono" data-i18n-ph="ph_act_code" placeholder="XXXXX-XXXXX-XXXXX-..." autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="140" style="font-size:11.5px">
       <button class="add" id="btnActivateApp" style="margin-top:12px"><svg class="i"><use href="#i-key"/></svg><span data-i18n="btn_activate">تفعيل</span></button>
     </div>
-    <p class="lic-foot">© 2026 Hasan E Sulaiman</p>
+    <p class="lic-foot">© 2026 Hasan E Sulaiman · <span id="licFootVer">v1.0</span></p>
   </div>
 </div>
 
-<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+<div class="main-header-bar" style="display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0 12px;text-align:center">
   <img id="topShopLogo" class="header-logo" alt="Logo">
-  <h1 id="appTitle" style="margin:0"><span id="shopDisplayTitle">Star POS</span></h1>
+  <h1 id="appTitle" style="margin:0;display:flex;align-items:center;justify-content:center;text-align:center"><span id="shopDisplayTitle">Star POS</span></h1>
 </div>
 
 <div class="card" id="licBar" style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px">
@@ -870,7 +879,12 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
     <button class="add sec" id="btnViewPolicy" style="margin-top:10px"><svg class="i"><use href="#i-shield"/></svg><span data-i18n="pol_view">سياسة الخصوصية وشروط الاستخدام</span></button></div></div>
 <div class="sp" id="sp-about" style="display:none"><div class="sp-head"><button class="sp-back" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2 data-i18n="sg_about">حقوق الملكية والتواصل</h2></div>
 <div class="card">
-  <div class="about-head"><div class="about-mark"><svg class="i"><use href="#i-store"/></svg></div><b>Star POS</b><small id="aboutVer" style="direction:ltr;display:block">v1.0</small></div>
+  <div class="about-head"><div class="about-mark">
+    <img src="icon-192.png" alt="Star POS" class="app-brand-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+    <div class="app-logo-fallback" style="display:none;align-items:center;justify-content:center;width:100%;height:100%">
+      <svg class="i"><use href="#i-store"/></svg>
+    </div>
+  </div><b>Star POS</b><small id="aboutVer" style="direction:ltr;display:block">v1.0</small></div>
   <div class="kv"><span data-i18n="lbl_developer">المطوّر</span><b style="direction:ltr">Hasan E Sulaiman</b></div>
   <div class="kv"><span data-i18n="lbl_contact_phone">رقم التواصل</span><b style="direction:ltr">+963 931 498 598</b></div>
   <p class="about-rights" data-i18n="about_rights">© 2026 جميع الحقوق محفوظة للمطوّر. هذا البرنامج ملكية خاصة للمطوّر، ويُمنع نسخه أو توزيعه أو إعادة بيعه أو تعديله دون إذن خطي مسبق.</p>
@@ -3179,14 +3193,41 @@ $("rstYes").onclick = function(){
   if(typeof runAutoBackup === "function") runAutoBackup(true);
 };
 
+/* ===== إدارة وتنسيق إصدار التطبيق (v1.0 -> v1.9 -> v2.0) ===== */
+var APP_VERSION = "v1.0";
+function formatAppVersion(raw){
+  if(!raw) return APP_VERSION;
+  var s = String(raw).trim().replace(/^v/i, "");
+  var parts = s.split(".");
+  if(parts.length >= 2){
+    var maj = parseInt(parts[0], 10);
+    var min = parseInt(parts[1], 10);
+    if(!isNaN(maj) && !isNaN(min)){
+      return "v" + maj + "." + min;
+    }
+  } else if(parts.length === 1){
+    var num = parseInt(parts[0], 10);
+    if(!isNaN(num)) return "v" + num + ".0";
+  }
+  return "v1.0";
+}
+
+function updateAppVersionUI(rawVer){
+  var ver = formatAppVersion(rawVer);
+  APP_VERSION = ver;
+  if($("appVersionTxt")) $("appVersionTxt").textContent = ver;
+  if($("aboutVer")) $("aboutVer").textContent = ver;
+  if($("licFootVer")) $("licFootVer").textContent = ver;
+}
+
 if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App){
   window.Capacitor.Plugins.App.getInfo().then(function(info){
     if(info && info.version){
-      var vClean = "v" + String(info.version).trim().replace(/^v/i, "");
-      $("appVersionTxt").textContent = vClean;
-      if($("aboutVer")) $("aboutVer").textContent = vClean;
+      updateAppVersionUI(info.version);
     }
   }).catch(function(){});
+} else {
+  updateAppVersionUI(APP_VERSION);
 }
 
 function applyLang(lang){
