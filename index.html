@@ -3402,14 +3402,19 @@ function updateAppVersionUI(rawVer){
   if($("licFootVer")) $("licFootVer").textContent = ver;
 }
 
+updateAppVersionUI(APP_VERSION);
 if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App){
   window.Capacitor.Plugins.App.getInfo().then(function(info){
     if(info && info.version){
       updateAppVersionUI(info.version);
     }
   }).catch(function(){});
-} else {
-  updateAppVersionUI(APP_VERSION);
+} else if(window.electronAPI && window.electronAPI.getAppVersion){
+  window.electronAPI.getAppVersion().then(function(ver){
+    if(ver){
+      updateAppVersionUI(ver);
+    }
+  }).catch(function(){});
 }
 
 function applyLang(lang){
