@@ -63,6 +63,8 @@ jobs:
             });
           });
 
+          ipcMain.handle('get-app-version', () => app.getVersion());
+
           app.whenReady().then(createWindow);
 
           app.on('window-all-closed', () => {
@@ -73,7 +75,8 @@ jobs:
           cat << 'EOF' > preload.js
           const { contextBridge, ipcRenderer } = require('electron');
           contextBridge.exposeInMainWorld('electronAPI', {
-            getMachineGuid: () => ipcRenderer.invoke('get-machine-guid')
+            getMachineGuid: () => ipcRenderer.invoke('get-machine-guid'),
+            getAppVersion: () => ipcRenderer.invoke('get-app-version')
           });
           EOF
 
@@ -125,6 +128,9 @@ jobs:
           const major = Math.floor((runNum - 1) / 10) + 1;
           const minor = (runNum - 1) % 10;
           pkg.version = `${major}.${minor}.0`;
+          if (process.env.GITHUB_ENV) {
+            fs.appendFileSync(process.env.GITHUB_ENV, `APP_VER=v${major}.${minor}\n`);
+          }
           pkg.scripts = {
             "dist": "electron-builder --win portable"
           };
@@ -156,6 +162,6 @@ jobs:
       - name: Upload Windows Executable
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: windows-v1.0.${{ github.run_number }}
-          name: Star POS Windows (v1.0.${{ github.run_number }})
+          tag_name: windows-${{ env.APP_VER }}
+          name: Star POS Windows (${{ env.APP_VER }})
           files: release/*.exe
