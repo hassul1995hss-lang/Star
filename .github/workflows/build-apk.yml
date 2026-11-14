@@ -5,6 +5,9 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-android:
     runs-on: ubuntu-latest
@@ -239,7 +242,8 @@ jobs:
           $BUILD_TOOLS_DIR/apksigner verify -v StarPOS-Release.apk
 
       - name: Upload Verified Release APK
-        uses: actions/upload-artifact@v4
+        uses: softprops/action-gh-release@v2
         with:
-          name: StarPOS-Android-App
-          path: StarPOS-Release.apk
+          tag_name: android-v1.0.${{ github.run_number }}
+          name: Star POS Android (v1.0.${{ github.run_number }})
+          files: StarPOS-Release.apk

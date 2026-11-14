@@ -5,6 +5,9 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -151,8 +154,8 @@ jobs:
           npm run dist
 
       - name: Upload Windows Executable
-        uses: actions/upload-artifact@v4
+        uses: softprops/action-gh-release@v2
         with:
-          name: StarPOS-Windows-Portable
-          path: release/*.exe
-          
+          tag_name: windows-v1.0.${{ github.run_number }}
+          name: Star POS Windows (v1.0.${{ github.run_number }})
+          files: release/*.exe
