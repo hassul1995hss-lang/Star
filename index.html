@@ -283,6 +283,181 @@ html[dir="ltr"] .sp-back .i{transform:scaleX(-1)}
 .th-card b{display:flex;align-items:center;justify-content:space-between;font-size:13.5px}
 .th-card b em{font-style:normal;color:var(--pri);font-size:15px;opacity:0}
 .th-card.on b em{opacity:1}
+
+/* =====================================================
+   طبقة الكثافة المضغوطة (Compact Density) - مظهر احترافي
+   تقلّل الفراغات وأحجام الحقول والأزرار دون تغيير المنطق
+   ===================================================== */
+:root{--r-sm:7px;--r-md:9px;--r-lg:11px;--fld-h:36px;--btn-h:36px}
+body{padding:8px;padding-bottom:64px;font-size:14px;line-height:1.4}
+h1{font-size:17px;margin:4px 0 8px;font-weight:700}
+h2{font-size:14px;margin:0 0 7px;gap:6px}
+.main-header-bar{margin:2px 0 8px!important;gap:8px!important}
+.header-logo{width:28px;height:28px;border-radius:7px}
+
+/* البطاقات */
+.card{padding:10px 12px;margin-bottom:8px;border-radius:var(--r-lg);box-shadow:0 1px 2px rgba(15,27,45,.05)}
+.sp .card{margin-bottom:8px}
+#licBar{padding:5px 10px!important}
+
+/* الإحصائيات */
+.grid{gap:6px}
+.stat{padding:7px 10px;border-radius:var(--r-md);box-shadow:none}
+.stat small{font-size:11.5px;line-height:1.3}
+.stat b{font-size:16px}
+.net b{font-size:20px}
+
+/* التبويبات */
+.tabs{gap:3px;padding:3px;margin-bottom:8px;border-radius:var(--r-md)}
+.tabs button{padding:7px 8px;font-size:13px;border-radius:var(--r-sm)}
+.tabs .i{width:1.05em;height:1.05em}
+#navTabs{margin-bottom:8px}
+#navTabs button{padding:5px 2px;font-size:11px;gap:2px}
+#navTabs .i{width:18px;height:18px}
+
+/* الحقول */
+label{font-size:12px;margin:6px 0 2px;font-weight:600}
+input,select,textarea{padding:6px 10px;min-height:var(--fld-h);font-size:14px;border-radius:var(--r-sm);line-height:1.3}
+textarea{min-height:64px}
+input:focus,select:focus,textarea:focus{box-shadow:0 0 0 2px color-mix(in srgb,var(--pri) 20%,transparent)}
+input[type=checkbox]{min-height:0}
+.row{gap:6px}
+.fld2{gap:6px}
+.chk{margin:7px 0;font-size:13.5px;gap:8px}
+.hint{margin:5px 0 0;font-size:11.5px}
+.stock-avail-box{padding:5px 10px;margin-top:4px;font-size:12.5px;border-radius:var(--r-sm)}
+
+/* الأزرار */
+.add{padding:0 12px;min-height:var(--btn-h);margin-top:8px;font-size:13.5px;border-radius:var(--r-sm);gap:6px}
+.add:hover{filter:brightness(1.05)}
+.btn2{gap:6px}
+.qb{width:28px;height:28px;font-size:16px;border-radius:7px}
+.inv-btn{padding:5px 8px;font-size:12.5px;border-radius:7px;gap:5px}
+.invc-a{gap:6px;margin-top:6px}
+.lang-btn{border-radius:8px}
+.del{padding:4px;border-radius:7px}
+.del .i{width:16px;height:16px}
+
+/* القوائم */
+.item{padding:7px 0;gap:6px}
+.empty{padding:8px;font-size:12.5px}
+.invc{padding:7px 0}
+.invc-l{padding:2px 0;font-size:12.5px}
+table{font-size:12.5px}
+th,td{padding:5px 4px}
+.cart-total{padding:6px 0 2px;font-size:14px}
+.cart-total b{font-size:18px}
+.dcard{padding:9px 11px}
+.drow{padding:6px 0}
+#saleMsg,#dMsg{padding:6px 10px;margin:0 0 6px;font-size:13px}
+
+/* الإعدادات */
+.mrow{padding:8px 12px;margin-bottom:6px;gap:10px;border-radius:var(--r-md);box-shadow:none}
+.mrow .ic,.sg>summary .ic{width:32px;height:32px;border-radius:8px}
+.mrow .ic .i{width:17px;height:17px}
+.mrow .mt{font-size:14px}
+.mrow .mt small{font-size:11.5px}
+.mrow .chev{width:17px;height:17px}
+.sg{margin-bottom:6px;border-radius:var(--r-md)}
+.sg>summary{padding:8px 12px;gap:10px;font-size:14px}
+.sg-body{padding:2px 12px 10px}
+.sg-sub{margin:10px 0 3px;font-size:12.5px}
+.sp .sg-sub{margin-top:12px}
+.sp-head{margin-bottom:8px;gap:8px}
+.sp-head h2{font-size:16px}
+.sp-back{width:34px;height:34px;border-radius:9px}
+.kv{padding:6px 0;font-size:13.5px}
+.th-modes{gap:6px}
+.th-modes button{padding:6px 4px;font-size:13px;border-radius:var(--r-sm)}
+.th-grid{gap:8px}
+.th-card{padding:8px;border-radius:var(--r-md)}
+.th-prev{height:34px;margin-bottom:6px}
+.about-head{padding:4px 0 10px}
+.about-mark{width:52px;height:52px;border-radius:14px;margin-bottom:8px}
+.about-head b{font-size:17px}
+.wa-cta{padding:9px;margin-top:10px;font-size:14px;border-radius:var(--r-md);box-shadow:none}
+.about-rights{padding:8px 10px;margin-top:8px}
+
+/* الشريط السفلي */
+#bottomActionsBar{padding:5px 10px;gap:8px}
+#bottomActionsBar button{padding:7px 10px;font-size:12.5px;border-radius:var(--r-sm);max-width:240px}
+
+/* شاشات التفعيل والخصوصية */
+.lic-wrap{padding:20px 14px 14px}
+.lic-brand{margin-bottom:12px}
+.lic-mark{width:56px;height:56px;border-radius:16px;margin-bottom:8px}
+.lic-brand h1{font-size:24px}
+.lic-card{padding:14px;border-radius:14px}
+.lic-link{padding:8px;font-size:13px}
+.lic-lbl{margin:8px 0 3px}
+.pol-card{padding:14px;border-radius:14px}
+.pol-body{padding:9px 11px;font-size:13px;line-height:1.7}
+
+/* شاشات الحوار المنبثقة */
+#registerModal>.card,#dPayDlg>.card,#dNewDlg>.card{padding:12px 14px}
+
+/* سطح المكتب (ويندوز): نفس الكثافة بدون تكبير */
+@media (min-width:768px){
+  body{max-width:1000px;padding:14px 16px;padding-bottom:64px}
+  h1{font-size:19px;margin-bottom:10px}
+  .card{padding:12px 14px;margin-bottom:10px;border-radius:var(--r-lg)}
+  #navTabs{gap:4px;margin-bottom:10px}
+  #navTabs button{padding:7px 12px;font-size:13px;gap:6px}
+  #navTabs .i{width:17px;height:17px}
+  .grid{gap:8px}
+  .stat{padding:8px 12px}
+  .stat b{font-size:18px}
+  .stat.net b{font-size:22px}
+  .row{gap:8px}
+  input,select,textarea{padding:6px 10px;font-size:13.5px}
+  table{font-size:13px}
+  th,td{padding:6px 6px}
+  .add{max-width:none}
+}
+@media (min-width:1024px){body{max-width:1060px}}
+
+/* حماية iOS من التكبير التلقائي عند التركيز على الحقول */
+@supports (-webkit-touch-callout:none){input,select,textarea{font-size:16px}}
+
+/* =====================================================
+   الفاتورة الحالية: تمييز لوني + إجمالي بارز
+   ألوانها مشتقة من ثيم التطبيق لتتناسق مع كل الثيمات
+   ===================================================== */
+#cartCard{
+  background:color-mix(in srgb,var(--pri) 6%,var(--card));
+  border:1px solid color-mix(in srgb,var(--pri) 30%,var(--line))!important;
+  border-inline-start:4px solid var(--pri)!important;
+  box-shadow:0 2px 10px color-mix(in srgb,var(--pri) 12%,transparent)
+}
+#cartCard h2{
+  color:var(--pri);margin:-2px -4px 6px;padding:2px 4px 7px;
+  border-bottom:1px dashed color-mix(in srgb,var(--pri) 35%,var(--line));
+  justify-content:space-between
+}
+#cartCard h2 #cartCount{
+  background:var(--pri);color:#fff!important;font-weight:700!important;font-size:12px;
+  min-width:22px;text-align:center;padding:1px 8px;border-radius:999px
+}
+#cartCard h2 #cartCount:empty{display:none}
+#cartCard .item{border-bottom-color:color-mix(in srgb,var(--pri) 16%,var(--line))}
+#cartCard .item b.ok{color:var(--text);font-weight:700}
+#cartCard .qb{background:var(--card)}
+#cartCard input,#cartCard select{background:var(--card)}
+
+/* إجمالي الفاتورة بالأحمر */
+#cartCard .cart-grand{
+  margin:8px 0 8px;padding:8px 12px;border-radius:var(--r-md);
+  background:color-mix(in srgb,var(--bad) 9%,var(--card));
+  border:1px solid color-mix(in srgb,var(--bad) 38%,transparent);
+  border-top:1px solid color-mix(in srgb,var(--bad) 38%,transparent);
+  font-weight:700;color:var(--text)
+}
+#cartCard .cart-grand b{color:var(--bad);font-size:23px;font-weight:800;letter-spacing:-.3px}
+
+/* وميض خفيف للسطر الذي أُضيف للتو */
+@keyframes cartFlash{from{background:color-mix(in srgb,var(--pri) 26%,transparent)}to{background:transparent}}
+#cartCard .item.flash{animation:cartFlash 1.1s ease-out;border-radius:var(--r-sm)}
+@media (prefers-reduced-motion:reduce){#cartCard .item.flash{animation:none}}
 </style>
 <script>
 /* ===== محرك المظهر والثيمات ===== */
@@ -517,7 +692,7 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
 <div class="card" id="cartCard" style="display:none;border-color:var(--pri)">
   <h2><span><svg class="i"><use href="#i-cart"/></svg><span data-i18n="h2_cart">الفاتورة الحالية</span></span> <span id="cartCount" style="color:var(--mut);font-weight:400"></span></h2>
   <div id="cartList"></div>
-  <div class="cart-total"><span data-i18n="lbl_cart_total">الإجمالي</span><b id="cartTotal">0</b></div>
+  <div class="cart-total cart-grand"><span data-i18n="lbl_cart_total">الإجمالي</span><b id="cartTotal">0</b></div>
   <input id="cartCust" data-i18n-ph="ph_cust" placeholder="اسم العميل (اختياري)" style="margin-top:6px">
   <label class="chk" style="margin-top:10px;margin-bottom:0"><input type="checkbox" id="cartDebt"><span data-i18n="lbl_on_debt">بيع بالدين / دفع جزئي</span></label>
   <div id="cartDebtBox" style="display:none;border:1px dashed var(--line);border-radius:10px;padding:0 10px 10px;margin-top:8px">
@@ -1688,7 +1863,7 @@ function setMode(m){
   updateItemsForSelectedCategory();
   renderCart();
 }
-$("tSale").onclick=function(){setMode("sale")};
+$("tSale").onclick=function(){setMode("sale"); if(typeof focusSaleBarcode==="function") focusSaleBarcode();};
 $("tExp").onclick=function(){setMode("exp")};
 $("tRet").onclick=function(){setMode("ret")};
 
@@ -1785,13 +1960,14 @@ function cartTotal(){ return cart.reduce(function(a,l){ return a+l.price*l.qty; 
 function cartAdd(x){
   var ex=x.sid?cart.filter(function(l){ return l.sid===x.sid && l.price===x.price && l.cost===x.cost; })[0]:null;
   if(ex) ex.qty+=x.qty; else cart.push(x);
+  window._cartFlash=ex||x;
 }
 function renderCart(){
   var card=$("cartCard"); if(!card) return;
   card.style.display=(cart.length && mode==="sale")?"":"none";
   var L=$("cartList"); L.innerHTML="";
   cart.forEach(function(l,ix){
-    var d=document.createElement("div"); d.className="item";
+    var d=document.createElement("div"); d.className="item"+(l===window._cartFlash?" flash":"");
     d.innerHTML='<div><b>'+esc(l.name)+'</b><small>'+fmt(l.price)+' × '+l.qty+'</small></div>'+
       '<div class="ctl"><button class="qb" data-a="m">−</button><b>'+l.qty+'</b><button class="qb" data-a="p">+</button>'+
       '<b class="ok" style="min-width:70px;text-align:end">'+fmt(l.price*l.qty)+'</b><button class="del" aria-label="Remove">'+ic("x")+'</button></div>';
@@ -1800,6 +1976,7 @@ function renderCart(){
     d.querySelector(".del").onclick=function(){ cart.splice(ix,1); renderCart(); };
     L.appendChild(d);
   });
+  window._cartFlash=null;
   $("cartTotal").textContent=fmt(cartTotal());
   $("cartCount").textContent=cart.length?("("+cart.length+")"):"";
   updateDebtBox();
@@ -2207,7 +2384,12 @@ function setView(v){
     $(a[2]).className=v===a[0]?"on":"";
   });
 }
-$("nS").onclick=function(){setView("s")};
+function focusSaleBarcode(){
+  var b=$("saleBarcode");
+  if(!b||!document.body.classList.contains("is-desktop")) return;
+  setTimeout(function(){ try{ b.focus(); }catch(e){} },30);
+}
+$("nS").onclick=function(){setView("s"); focusSaleBarcode();};
 $("nI").onclick=function(){setView("i")};
 $("nM").onclick=function(){setView("m")};
 $("nR").onclick=function(){setView("r")};
@@ -3463,6 +3645,7 @@ $("btnSaveRegisterClose").onclick = function(){
 })();
 
 applyLang(currentLang);
+focusSaleBarcode();
 
 /* ===== نظام التراخيص v3: توقيع رقمي غير متماثل (ECDSA) — لا يوجد أي سر داخل التطبيق ===== */
 /* المفتاح أدناه هو مفتاح عام (Public Key) فقط، لا يمكن استخدامه لتوليد مفاتيح تفعيل مهما تم فك شيفرة الكود،
