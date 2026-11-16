@@ -886,7 +886,7 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
 </div>
 </div>
 
-<div id="payDlg" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.5);z-index:60;align-items:center;justify-content:center;padding:16px">
+<div id="payDlg" style="display:none;position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.5);z-index:70;align-items:center;justify-content:center;padding:16px">
   <div class="card" style="width:100%;max-width:420px;margin:0">
     <h2 id="payT"></h2>
     <p class="hint" id="payTot" style="font-weight:700;margin-top:0"></p>
@@ -1022,6 +1022,8 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
     <label id="secRateLbl" data-i18n="lbl_sec_rate">سعر الصرف: 1 من العملة الرئيسية =</label>
     <input id="secRate" type="number" inputmode="decimal" min="0" step="any" placeholder="140">
     <p class="hint" id="secEx"></p>
+    <label id="secPrintL"></label>
+    <select id="secPrint"><option value="both"></option><option value="main"></option><option value="sec"></option></select>
     <p class="hint" data-i18n="desc_sec">غيّر سعر الصرف متى شئت؛ الفواتير الجديدة تُحفظ بسعر اليوم، وتبقى الفواتير القديمة بسعرها وقت البيع.</p>
     <button class="add" id="secSave" style="margin-top:10px" data-i18n="btn_sec_save">حفظ العملة الثانوية</button></div></div>
 <div class="sp" id="sp-pref" style="display:none"><div class="sp-head"><button class="sp-back" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2><span data-i18n="sg_pref">التفضيلات</span></h2></div><div class="card">
@@ -1723,7 +1725,7 @@ function today(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth
 function fmt(n){ return Number(n||0).toLocaleString("en-US",{maximumFractionDigits:2}) + " " + curSymbol; }
 function $(id){ return document.getElementById(id); }
 /* ===== العملة الثانوية ===== */
-var secCfg={on:localStorage.getItem("star_sec_on")==="1", sym:localStorage.getItem("star_sec_sym")||"ل.س", rate:parseFloat(localStorage.getItem("star_sec_rate"))||0};
+var secCfg={on:localStorage.getItem("star_sec_on")==="1", sym:localStorage.getItem("star_sec_sym")||"ل.س", rate:parseFloat(localStorage.getItem("star_sec_rate"))||0, print:localStorage.getItem("star_sec_print")||"both"};
 function secOn(){ return secCfg.on && secCfg.rate>0 && secCfg.sym!==curSymbol; }
 function secFmt(n,rate){ var r=rate||secCfg.rate, v=Number(n||0)*r; return v.toLocaleString("en-US",{maximumFractionDigits:(r>=50?0:2)})+" "+secCfg.sym; }
 function secLine(n,rate){ return secOn()?secFmt(n,rate):""; }
@@ -2041,31 +2043,34 @@ function nextInvNo(){
 function cartCheckout(){
   if(!cart.length) return;
   if(!secOn() || $("cartDebt").checked){ cartCheckoutDo(0); return; }
-  var en=isEn(), tot=cartTotal();
-  if(!(tot>0)){ cartCheckoutDo(0); return; }
+  var tot=cartTotal(); if(!(tot>0)){ cartCheckoutDo(0); return; }
+  payOpen(tot,cartCheckoutDo,false);
+}
+var payActual=0, payCtx=null;
+function payOpen(tot,done,isRepair){
+  var en=isEn(); payCtx={tot:tot,done:done};
   $("payT").textContent=en?"Actual amount received":"المقبوض الفعلي";
-  $("payTot").textContent=(en?"Invoice total: ":"قيمة الفاتورة: ")+fmt(tot)+" = "+secFmt(tot);
+  $("payTot").textContent=(isRepair?(en?"Amount due now: ":"المستحق الآن: "):(en?"Invoice total: ":"قيمة الفاتورة: "))+fmt(tot)+" = "+secFmt(tot);
   $("payUL").textContent=(en?"Received in ":"المقبوض بـ ")+curSymbol; $("paySL").textContent=(en?"Received in ":"المقبوض بـ ")+secCfg.sym;
-  $("payOk").textContent=en?"Confirm with received amount":"تأكيد البيع بالمقبوض الفعلي";
+  $("payOk").textContent=en?"Confirm with received amount":"تأكيد بالمقبوض الفعلي";
   $("payNo").textContent=en?"Complete as is":"إتمام بدون تعديل"; $("payX").textContent=en?"Cancel":"إلغاء";
   payActual=tot; $("payUsd").value=Math.round(tot*10000)/10000; $("paySec").value=Math.round(tot*secCfg.rate*100)/100; payDiffShow();
   $("payDlg").style.display="flex";
 }
-var payActual=0;
 function payDiffShow(){
-  var tot=cartTotal(), adj=payActual-tot, en=isEn(), b=$("payDiff");
+  var tot=payCtx?payCtx.tot:0, adj=payActual-tot, en=isEn(), b=$("payDiff");
   if(Math.abs(adj)<0.00005){ b.textContent=en?"No difference.":"لا يوجد فرق."; b.style.color=""; return; }
-  b.textContent=(en?"Difference: ":"الفرق: ")+(adj>0?"+":"-")+Math.abs(adj).toLocaleString("en-US",{maximumFractionDigits:4})+" "+curSymbol+" ("+(adj>0?"+":"-")+secFmt(Math.abs(adj))+")";
+  b.textContent=(adj<0?(en?"Discount: ":"الحسم: "):(en?"Extra received: ":"زيادة مقبوضة: "))+Math.abs(adj).toLocaleString("en-US",{maximumFractionDigits:4})+" "+curSymbol+" ("+secFmt(Math.abs(adj))+")";
   b.style.color=adj>0?"var(--ok)":"var(--bad)";
 }
 $("payUsd").oninput=function(){ var u=parseFloat($("payUsd").value); if(isNaN(u)||u<0){ return; } payActual=u; $("paySec").value=Math.round(u*secCfg.rate*100)/100; payDiffShow(); };
 $("paySec").oninput=function(){ var v=parseFloat($("paySec").value); if(isNaN(v)||v<0){ return; } payActual=v/secCfg.rate; $("payUsd").value=Math.round(payActual*10000)/10000; payDiffShow(); };
-$("payX").onclick=function(){ $("payDlg").style.display="none"; };
-$("payNo").onclick=function(){ $("payDlg").style.display="none"; cartCheckoutDo(0); };
+$("payX").onclick=function(){ $("payDlg").style.display="none"; payCtx=null; };
+$("payNo").onclick=function(){ $("payDlg").style.display="none"; var c=payCtx; payCtx=null; if(c) c.done(0); };
 $("payOk").onclick=function(){
-  var u=parseFloat($("payUsd").value); if(isNaN(u)||u<0){ $("payUsd").focus(); return; }
-  var adj=Math.round((payActual-cartTotal())*10000)/10000; if(Math.abs(adj)<0.00005) adj=0;
-  $("payDlg").style.display="none"; cartCheckoutDo(adj);
+  var u=parseFloat($("payUsd").value); if(isNaN(u)||u<0||!payCtx){ $("payUsd").focus(); return; }
+  var adj=Math.round((payActual-payCtx.tot)*10000)/10000; if(Math.abs(adj)<0.00005) adj=0;
+  $("payDlg").style.display="none"; var c=payCtx; payCtx=null; c.done(adj);
 };
 function cartCheckoutDo(adj){
   var en=isEn(), day=$("day").value||today(), base=Date.now(), cust=$("cartCust").value.trim(), total=Math.round((cartTotal()+adj)*10000)/10000;
@@ -2077,7 +2082,7 @@ function cartCheckoutDo(adj){
     if(it){ tk=Math.min(l.qty,it.qty); it.qty-=tk; }
     data.push({id:base+ix,date:day,type:"sale",name:l.name,cat:l.cat,price:l.price,cost:l.cost,qty:l.qty,sid:it?it.id:null,tk:tk,curr:curSymbol,bid:base,ino:no,cust:cust,sr:secOn()?secCfg.rate:0,ss:secOn()?secCfg.sym:""});
   });
-  if(adj!==0) data.push({id:base+cart.length+5,date:day,type:"sale",name:en?"Currency rounding adjustment":"تسوية تقريب العملة",cat:"تقريب",price:adj,cost:0,qty:1,sid:null,tk:0,curr:curSymbol,bid:base,ino:no,cust:cust,sr:secOn()?secCfg.rate:0,ss:secOn()?secCfg.sym:""});
+  if(adj!==0) data.push({id:base+cart.length+5,date:day,type:"sale",name:adj<0?(en?"Discount":"حسم"):(en?"Extra received":"زيادة مقبوضة"),cat:adj<0?"حسم":"زيادة مقبوضة",adj:1,price:adj,cost:0,qty:1,sid:null,tk:0,curr:curSymbol,bid:base,ino:no,cust:cust,sr:secOn()?secCfg.rate:0,ss:secOn()?secCfg.sym:""});
   if(rem>0) dAdd({id:base+cart.length+1,cust:cust,phone:phone,kind:"sale",amt:rem,ref:"b"+base,date:day,desc:(en?"Invoice #":"فاتورة #")+no});
   cart=[]; $("cartCust").value=""; cartResetDebt();
   save(); renderAll(); renderCart();
@@ -2104,16 +2109,28 @@ function delInv(bid){
 }
 
 /* ---------- بيانات الفاتورة ---------- */
-function invData(lines){
+function isAdjE(e){ return !!(e.adj||e.cat==="تقريب"); }
+function invData(lines){ return invMode(invData0(lines)); }
+function invData0(lines){
+  lines=lines.filter(function(l){ return !(isAdjE(l)&&l.price>0); }); if(!lines.length) lines=[{id:0,price:0,qty:0,name:"",date:today()}];
   var f=lines[0], d=new Date(f.bid||f.id), tot=0, ref=f.bid?("b"+f.bid):("s"+f.id), ds=dFor(ref);
   lines.forEach(function(l){ tot+=l.price*l.qty; });
   var rem=ds.reduce(function(a,x){ return a+dRem(x); },0);
   return {
     no:f.ino?String(f.ino):String(f.id).slice(-6), date:f.date, time:pad(d.getHours())+":"+pad(d.getMinutes()),
     cust:f.cust||"", curr:f.curr||curSymbol, total:tot, hasDebt:ds.length>0, rem:rem, paid:dRound(tot-rem),
-    lines:lines.map(function(l){ return {name:l.name,qty:l.qty,price:l.price}; }),
+    lines:lines.map(function(l){ return {name:(isAdjE(l)?(isEn()?"Discount":"حسم"):l.name),qty:l.qty,price:l.price}; }),
     sec:(f.sr>0&&f.ss&&f.ss!==(f.curr||curSymbol))?{r:f.sr,s:f.ss}:((f.sr===undefined&&secOn())?{r:secCfg.rate,s:secCfg.sym}:null)
   };
+}
+function invMode(d){
+  var m=secCfg.print||"both";
+  if(!d.sec||m==="both") return d;
+  if(m==="sec"){
+    var r=d.sec.r; d.lines=d.lines.map(function(l){ return {name:l.name,qty:l.qty,price:l.price*r}; });
+    d.total*=r; d.paid*=r; d.rem*=r; d.curr=d.sec.s;
+  }
+  d.sec=null; return d;
 }
 function IV(k){
   var D={title:["فاتورة مبيعات","Sales Invoice"],no:["رقم الفاتورة","Invoice No."],date:["التاريخ","Date"],cust:["العميل","Customer"],
@@ -3060,7 +3077,7 @@ function dPayUpd(){
   var amt=parseFloat($("dPayAmt").value), en=isEn(), diff=Math.round((dSel.rem-(isNaN(amt)?0:amt))*10000)/10000;
   var show=!isNaN(amt)&&amt>0&&diff>0.00005&&diff<=0.1*dSel.rem;
   $("dPayRndW").style.display=show?"":"none"; if(!show) $("dPayRnd").checked=false;
-  if(show) $("dPayRndT").textContent=en?("Treat as full settlement; record the difference "+fmt(diff)+" = "+secFmt(diff)+" as currency rounding"):("اعتبار الدفعة تسديداً كاملاً وتسجيل الفرق "+fmt(diff)+" = "+secFmt(diff)+" كتقريب عملة");
+  if(show) $("dPayRndT").textContent=en?("Treat as full settlement; record the difference "+fmt(diff)+" = "+secFmt(diff)+" as a discount"):("اعتبار الدفعة تسديداً كاملاً وتسجيل الفرق "+fmt(diff)+" = "+secFmt(diff)+" كحسم");
 }
 function dPayOpen(g){
   dSel=g; var en=isEn();
@@ -3097,10 +3114,10 @@ $("dPayOk").onclick=function(){
       d.pays=d.pays||[]; d.pays.push({id:now+(k++),amt:r4(take),adj:1}); d.upd=Date.now(); al=r4(al-take); lastD=d;
     });
     var bn=(lastD&&lastD.ref&&lastD.ref.charAt(0)==="b")?Number(lastD.ref.slice(1)):null, src=bn?data.filter(function(x){ return x.type==="sale"&&x.bid===bn; })[0]:null;
-    data.push({id:now+500,date:today(),type:"sale",name:en?"Currency rounding adjustment":"تسوية تقريب العملة",cat:"تقريب",price:-adj,cost:0,qty:1,sid:null,tk:0,curr:curSymbol,bid:bn||undefined,ino:src?src.ino:undefined,cust:name,sr:secCfg.rate,ss:secCfg.sym});
+    data.push({id:now+500,date:today(),type:"sale",name:en?"Discount":"حسم",cat:"حسم",adj:1,price:-adj,cost:0,qty:1,sid:null,tk:0,curr:curSymbol,bid:bn||undefined,ino:src?src.ino:undefined,cust:name,sr:secCfg.rate,ss:secCfg.sym});
   }
   save(); $("dPayDlg").style.display="none"; dSel=null; renderAll();
-  var m=$("dMsg"); m.className="saleok"; m.textContent=en?("Payment of "+(so?secBoth(applied):fmt(applied))+" recorded for "+name+(adj>0?(" — rounding "+fmt(adj)):"")):("تم تسجيل دفعة "+(so?secBoth(applied):fmt(applied))+" من "+name+(adj>0?(" — تقريب العملة "+fmt(adj)):"")+(left>0?(" (الزائد "+fmt(left)+" لم يُحتسب)"):""));
+  var m=$("dMsg"); m.className="saleok"; m.textContent=en?("Payment of "+(so?secBoth(applied):fmt(applied))+" recorded for "+name+(adj>0?(" — discount "+fmt(adj)):"")):("تم تسجيل دفعة "+(so?secBoth(applied):fmt(applied))+" من "+name+(adj>0?(" — حسم "+fmt(adj)):"")+(left>0?(" (الزائد "+fmt(left)+" لم يُحتسب)"):""));
   clearTimeout(dMsgT); dMsgT=setTimeout(function(){ m.textContent=""; m.className=""; },8000);
 };
 var dMsgT=null;
@@ -3205,15 +3222,21 @@ function dlgSec(){
   var en=currentLang==="en", fp=mNum($("mFP").value), due=Math.max(0,fp-(tItem.dep||0));
   b.textContent=(en?"Due now: ":"المستحق الآن: ")+fmt(due)+(en?" or ":" أو ")+secFmt(due);
 }
-function repDeliver(){
+function repDeliver(adj){
   var tItem=mFind(mDelId); if(!tItem) return;
   var fp=parseFloat($("mFP").value); if(isNaN(fp)||fp<0){ $("mFP").focus(); return; }
   var en=currentLang==="en", due=Math.max(0,fp-(tItem.dep||0));
   var pay=Math.min(due,Math.max(0,mNum($("mPay").value))), rem=dRound(due-pay);
+  if(typeof adj!=="number"){
+    if(secOn()&&rem===0&&due>0){ payOpen(due,function(a){ repDeliver(a); },true); return; }
+    adj=0;
+  }
   var xc=Math.max(0,mNum($("mPC").value)), pc=partsTotal(tItem)+xc;
   var e={id:Date.now(),date:today(),type:"mnt",name:(en?"Repair":"صيانة")+": "+tItem.dev,cat:REPAIR_CAT,price:fp,cost:pc,qty:1,sid:null,tk:0,rid:tItem.id,
          parts:(tItem.parts||[]).map(function(p){ return {sid:p.sid,name:p.name,qty:p.qty,cost:p.cost}; }),curr:curSymbol};
-  data.push(e); tItem.sale=e.id; tItem.fprice=fp; tItem.pcost=pc; tItem.xcost=xc; tItem.delivered=today(); tItem.status="delivered"; tItem.upd=Date.now();
+  data.push(e);
+  if(adj!==0) data.push({id:e.id+5,date:today(),type:"sale",name:(adj<0?(en?"Discount":"حسم"):(en?"Extra received":"زيادة مقبوضة"))+" — "+tItem.dev,cat:adj<0?"حسم":"زيادة مقبوضة",adj:1,price:adj,cost:0,qty:1,sid:null,tk:0,curr:curSymbol,cust:tItem.name,sr:secCfg.rate,ss:secCfg.sym});
+  tItem.sale=e.id; tItem.fprice=fp; tItem.pcost=pc; tItem.xcost=xc; tItem.delivered=today(); tItem.status="delivered"; tItem.upd=Date.now();
   if(rem>0) dAdd({id:e.id+1,cust:tItem.name,phone:tItem.phone||"",kind:"mnt",amt:rem,ref:"r"+tItem.id,date:today(),desc:(en?"Repair #":"صيانة #")+tItem.no+" · "+tItem.dev});
   $("mDlg").style.display="none"; mDelId=null; save(); renderAll();
 }
@@ -3491,7 +3514,7 @@ $("btnContactWa").onclick=function(){
 $("rstBtn").onclick = function(){ $("rstBox").style.display = ""; $("rstBtn").style.display = "none"; $("rstMsg").textContent = ""; };
 $("rstNo").onclick = function(){ $("rstBox").style.display = "none"; $("rstBtn").style.display = ""; };
 $("rstYes").onclick = function(){
-  [KEY, INV, TOMB, LB, REPK, REG_ARCHIVE_KEY, "star_current_shift_start", "star_inv_no", DEBTK, "star_sec_on", "star_sec_sym", "star_sec_rate"].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+  [KEY, INV, TOMB, LB, REPK, REG_ARCHIVE_KEY, "star_current_shift_start", "star_inv_no", DEBTK, "star_sec_on", "star_sec_sym", "star_sec_rate", "star_sec_print"].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
   data = []; inv = []; rep = []; regArchive = []; debts = []; tomb = {}; snap = {}; currentShiftStart = 0; cart = [];
   ["name","price","cost","amt","inote","iname","iwhole","iretail","bkIn","bkOut"].forEach(function(i){ var el=$(i); if(el) el.value=""; });
   if($("qty")) $("qty").value = 1; if($("iqty")) $("iqty").value = 1;
@@ -3673,6 +3696,8 @@ $("selCurrency").onchange = function(){
 /* ===== العملة الثانوية: الإعدادات ===== */
 function secUi(){
   $("secOn").checked=secCfg.on; $("secSym").value=secCfg.sym; $("secRate").value=secCfg.rate||"";
+  var en1=currentLang==="en"; $("secPrintL").textContent=en1?"Print invoice in:":"طباعة الفاتورة بـ:";
+  var po=$("secPrint").options; po[0].textContent=en1?"Both currencies":"كلا العملتين"; po[1].textContent=en1?"Main currency only":"العملة الرئيسية فقط"; po[2].textContent=en1?"Secondary currency only":"العملة الثانوية فقط"; $("secPrint").value=secCfg.print||"both";
   var en=currentLang==="en", r=parseFloat($("secRate").value)||0;
   $("secEx").textContent=(secCfg.sym===curSymbol)?(en?"Secondary currency must differ from the main currency.":"يجب أن تختلف العملة الثانوية عن العملة الرئيسية."):(r>0?("1"+" "+curSymbol+" = "+r.toLocaleString("en-US")+" "+$("secSym").value+"  |  5 "+curSymbol+" = "+(5*r).toLocaleString("en-US",{maximumFractionDigits:2})+" "+$("secSym").value):"");
 }
@@ -3682,8 +3707,8 @@ $("secSave").onclick=function(){
   var en=currentLang==="en", r=parseFloat($("secRate").value)||0, on=$("secOn").checked, sym=$("secSym").value;
   if(on && !(r>0)){ $("secRate").focus(); bmsg(en?"Enter a valid exchange rate.":"أدخل سعر صرف صحيح."); return; }
   if(on && sym===curSymbol){ bmsg(en?"Secondary currency must differ from the main currency.":"يجب أن تختلف العملة الثانوية عن العملة الرئيسية."); return; }
-  secCfg={on:on,sym:sym,rate:r};
-  try{ localStorage.setItem("star_sec_on",on?"1":"0"); localStorage.setItem("star_sec_sym",sym); localStorage.setItem("star_sec_rate",String(r)); }catch(e){}
+  secCfg={on:on,sym:sym,rate:r,print:$("secPrint").value};
+  try{ localStorage.setItem("star_sec_on",on?"1":"0"); localStorage.setItem("star_sec_sym",sym); localStorage.setItem("star_sec_rate",String(r)); localStorage.setItem("star_sec_print",secCfg.print); }catch(e){}
   bmsg(en?"Secondary currency saved ":"تم حفظ العملة الثانوية ");
   renderCart(); try{ dlgSec(); }catch(e){} renderAll();
 };
