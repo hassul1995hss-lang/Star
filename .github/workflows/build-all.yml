@@ -380,7 +380,7 @@ jobs:
           }
           const iconPath = fs.existsSync("icon.ico") ? "icon.ico" : (fs.existsSync("icon-only.png") ? "icon-only.png" : undefined);
           pkg.scripts = {
-            "dist": "electron-builder --win nsis"
+            "dist": "electron-builder --win nsis --publish never"
           };
           pkg.build = {
             "appId": "com.starpos.app",
