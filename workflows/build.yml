@@ -1,1 +1,424 @@
+name: Build Star POS (Android APK & Windows Setup)
 
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-android:
+    name: Build & Sign Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Prepare Web Assets & Install Capacitor
+        run: |
+          mkdir -p dist
+          cp index.html dist/index.html
+          [ -f icon-only.png ] && cp icon-only.png dist/icon-only.png || true
+          [ -f manifest.webmanifest ] && cp manifest.webmanifest dist/manifest.webmanifest || true
+          [ -f sw.js ] && cp sw.js dist/sw.js || true
+          cp -r *.png dist/ 2>/dev/null || true
+          cp -r *.json dist/ 2>/dev/null || true
+
+          npm init -y
+          npm install @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 @capacitor/filesystem@6 @capacitor/app@6 @capacitor/share@6
+          npm install --save-dev javascript-obfuscator@4
+
+          cat << 'EOF' > capacitor.config.json
+          {
+            "appId": "com.starpos.app",
+            "appName": "Star POS",
+            "webDir": "dist",
+            "bundledWebRuntime": false
+          }
+          EOF
+
+      - name: Obfuscate Client JavaScript (dist copy only)
+        run: |
+          cat << 'EOF' > obfuscate.js
+          const fs = require('fs');
+          const JavaScriptObfuscator = require('javascript-obfuscator');
+
+          const file = 'dist/index.html';
+          let html = fs.readFileSync(file, 'utf8');
+
+          html = html.replace(/(<script(?: type="text\/starmain" id="starMain")?>)([\s\S]*?)<\/script>/g, function(match, open, code) {
+            if (!code || !code.trim()) return match;
+            const result = JavaScriptObfuscator.obfuscate(code, {
+              compact: true,
+              controlFlowFlattening: true,
+              controlFlowFlatteningThreshold: 0.75,
+              deadCodeInjection: true,
+              deadCodeInjectionThreshold: 0.3,
+              identifierNamesGenerator: 'hexadecimal',
+              renameGlobals: false,
+              selfDefending: true,
+              stringArray: true,
+              stringArrayEncoding: ['base64'],
+              stringArrayThreshold: 0.8,
+              splitStrings: true,
+              splitStringsChunkLength: 8,
+              transformObjectKeys: true,
+              numbersToExpressions: true,
+              disableConsoleOutput: true
+            }).getObfuscatedCode();
+            return open + result + '</script>';
+          });
+
+          fs.writeFileSync(file, html);
+          console.log('Obfuscation done: ' + file);
+          EOF
+          node obfuscate.js
+
+      - name: Add Capacitor Android Project
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+          npx cap sync android
+
+          sed -i -E 's|<string name="app_name">.*</string>|<string name="app_name">Star POS</string>|g' android/app/src/main/res/values/strings.xml || true
+          sed -i -E 's|<string name="title_activity_main">.*</string>|<string name="title_activity_main">Star POS</string>|g' android/app/src/main/res/values/strings.xml || true
+
+      - name: Add Native Print & Device-ID Plugins
+        run: |
+          JAVA_DIR=android/app/src/main/java/com/starpos/app
+          mkdir -p "$JAVA_DIR"
+
+          cat << 'EOF' > "$JAVA_DIR/DeviceIdPlugin.java"
+          package com.starpos.app;
+
+          import android.provider.Settings;
+
+          import com.getcapacitor.JSObject;
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+
+          @CapacitorPlugin(name = "DeviceId")
+          public class DeviceIdPlugin extends Plugin {
+              @PluginMethod
+              public void getId(PluginCall call) {
+                  try {
+                      String id = Settings.Secure.getString(
+                          getContext().getContentResolver(),
+                          Settings.Secure.ANDROID_ID
+                      );
+                      JSObject ret = new JSObject();
+                      ret.put("id", id == null ? "" : id);
+                      call.resolve(ret);
+                  } catch (Exception e) {
+                      call.reject("DeviceId failed: " + e.getMessage());
+                  }
+              }
+          }
+          EOF
+
+          cat << 'EOF' > "$JAVA_DIR/PrinterPlugin.java"
+          package com.starpos.app;
+
+          import android.content.Context;
+          import android.print.PrintAttributes;
+          import android.print.PrintManager;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+
+          @CapacitorPlugin(name = "Printer")
+          public class PrinterPlugin extends Plugin {
+              private WebView printView;
+
+              @PluginMethod
+              public void print(final PluginCall call) {
+                  final String html = call.getString("content", "");
+                  getActivity().runOnUiThread(new Runnable() {
+                      @Override
+                      public void run() {
+                          try {
+                              printView = new WebView(getActivity());
+                              printView.setWebViewClient(new WebViewClient() {
+                                  @Override
+                                  public void onPageFinished(WebView view, String url) {
+                                      PrintManager pm = (PrintManager) getActivity().getSystemService(Context.PRINT_SERVICE);
+                                      String job = "Star POS Invoice";
+                                      pm.print(job, view.createPrintDocumentAdapter(job), new PrintAttributes.Builder().build());
+                                      call.resolve();
+                                  }
+                              });
+                              printView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
+                          } catch (Exception e) {
+                              call.reject("Print failed: " + e.getMessage());
+                          }
+                      }
+                  });
+              }
+          }
+          EOF
+
+          cat << 'EOF' > "$JAVA_DIR/MainActivity.java"
+          package com.starpos.app;
+
+          import android.os.Bundle;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  registerPlugin(PrinterPlugin.class);
+                  registerPlugin(DeviceIdPlugin.class);
+                  super.onCreate(savedInstanceState);
+              }
+          }
+          EOF
+
+      - name: Set App Icon From icon-only.png
+        run: |
+          rm -rf android/app/src/main/res/mipmap-anydpi-v26 || true
+          if [ -f icon-only.png ]; then
+            for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+              dir="android/app/src/main/res/mipmap-$density"
+              if [ -d "$dir" ]; then
+                cp icon-only.png "$dir/ic_launcher.png" || true
+                cp icon-only.png "$dir/ic_launcher_round.png" || true
+                cp icon-only.png "$dir/ic_launcher_foreground.png" || true
+              fi
+            done
+          fi
+
+      - name: Configure Manifest & Build Release APK
+        run: |
+          RUN_NUM=${{ github.run_number }}
+          MAJOR=$(( (RUN_NUM - 1) / 10 + 1 ))
+          MINOR=$(( (RUN_NUM - 1) % 10 ))
+          VER_NAME="${MAJOR}.${MINOR}.0"
+          echo "APP_VER=v${MAJOR}.${MINOR}" >> "$GITHUB_ENV"
+
+          sed -i -E "s/versionCode\s+[0-9]+/versionCode $RUN_NUM/g" android/app/build.gradle || true
+          sed -i -E "s/versionName\s+\"[^\"]+\"/versionName \"$VER_NAME\"/g" android/app/build.gradle || true
+          sed -i 's/android:debuggable="true"/android:debuggable="false"/g' android/app/src/main/AndroidManifest.xml || true
+
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Sign APK with Consistent Keystore
+        run: |
+          BUILD_TOOLS_DIR=$(find $ANDROID_SDK_ROOT/build-tools -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
+          if [ -z "$BUILD_TOOLS_DIR" ]; then
+            BUILD_TOOLS_DIR=$(find $ANDROID_HOME/build-tools -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n 1)
+          fi
+
+          UNSIGNED_APK=$(find android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          $BUILD_TOOLS_DIR/zipalign -v -p 4 "$UNSIGNED_APK" StarPOS-Aligned.apk
+
+          echo "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" | base64 -d > starphone_consistent.jks
+
+          $BUILD_TOOLS_DIR/apksigner sign --ks starphone_consistent.jks --ks-key-alias starphone --ks-pass pass:"StarPhone2026" --key-pass pass:"StarPhone2026" --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true --out StarPOS-Release.apk StarPOS-Aligned.apk
+          $BUILD_TOOLS_DIR/apksigner verify -v StarPOS-Release.apk
+
+      - name: Upload Verified Release APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-${{ env.APP_VER }}
+          name: Star POS Android (${{ env.APP_VER }})
+          files: StarPOS-Release.apk
+
+  build-windows:
+    name: Build Windows Setup (.exe)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Web Directory & Electron Shell
+        shell: bash
+        run: |
+          mkdir -p dist
+          cp index.html dist/index.html
+          [ -f icon-only.png ] && cp icon-only.png dist/icon-only.png || true
+          npm init -y
+          npm install --save-dev electron electron-builder javascript-obfuscator@4
+
+          cat << 'EOF' > main.js
+          const { app, BrowserWindow, ipcMain } = require('electron');
+          const { exec } = require('child_process');
+          const path = require('path');
+
+          function createWindow () {
+            const win = new BrowserWindow({
+              width: 1200,
+              height: 800,
+              minWidth: 900,
+              minHeight: 600,
+              autoHideMenuBar: true,
+              title: "Star POS",
+              webPreferences: {
+                nodeIntegration: false,
+                contextIsolation: true,
+                devTools: false,
+                preload: path.join(__dirname, 'preload.js')
+              }
+            });
+
+            win.loadFile('dist/index.html');
+          }
+
+          ipcMain.handle('get-machine-guid', () => {
+            return new Promise((resolve) => {
+              exec('reg query "HKLM\\SOFTWARE\\Microsoft\\Cryptography" /v MachineGuid', (err, stdout) => {
+                if (err) return resolve('');
+                const m = /MachineGuid\s+REG_SZ\s+([0-9a-fA-F-]+)/.exec(stdout);
+                resolve(m ? m[1] : '');
+              });
+            });
+          });
+
+          ipcMain.handle('get-app-version', () => app.getVersion());
+
+          app.whenReady().then(createWindow);
+
+          app.on('window-all-closed', () => {
+            if (process.platform !== 'darwin') app.quit();
+          });
+          EOF
+
+          cat << 'EOF' > preload.js
+          const { contextBridge, ipcRenderer } = require('electron');
+          contextBridge.exposeInMainWorld('electronAPI', {
+            getMachineGuid: () => ipcRenderer.invoke('get-machine-guid'),
+            getAppVersion: () => ipcRenderer.invoke('get-app-version')
+          });
+          EOF
+
+      - name: Obfuscate Application Code (dist/index.html, main.js, preload.js)
+        shell: bash
+        run: |
+          cat << 'EOF' > obfuscate.js
+          const fs = require('fs');
+          const JavaScriptObfuscator = require('javascript-obfuscator');
+
+          const opts = {
+            compact: true,
+            controlFlowFlattening: true,
+            controlFlowFlatteningThreshold: 0.75,
+            deadCodeInjection: true,
+            deadCodeInjectionThreshold: 0.3,
+            identifierNamesGenerator: 'hexadecimal',
+            renameGlobals: false,
+            selfDefending: true,
+            stringArray: true,
+            stringArrayEncoding: ['base64'],
+            stringArrayThreshold: 0.8,
+            splitStrings: true,
+            splitStringsChunkLength: 8,
+            transformObjectKeys: true,
+            numbersToExpressions: true,
+            disableConsoleOutput: true
+          };
+
+          const htmlFile = 'dist/index.html';
+          let html = fs.readFileSync(htmlFile, 'utf8');
+          html = html.replace(/(<script(?: type="text\/starmain" id="starMain")?>)([\s\S]*?)<\/script>/g, function(match, open, code) {
+            if (!code || !code.trim()) return match;
+            const result = JavaScriptObfuscator.obfuscate(code, opts).getObfuscatedCode();
+            return open + result + '</script>';
+          });
+          fs.writeFileSync(htmlFile, html);
+
+          ['main.js', 'preload.js'].forEach(f => {
+            const src = fs.readFileSync(f, 'utf8');
+            const out = JavaScriptObfuscator.obfuscate(src, opts).getObfuscatedCode();
+            fs.writeFileSync(f, out);
+          });
+
+          console.log('Obfuscation completed for index.html, main.js, and preload.js');
+          EOF
+          node obfuscate.js
+
+      - name: Configure Package.json for Windows Setup (NSIS only)
+        shell: bash
+        run: |
+          node -e '
+          const fs = require("fs");
+          const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+          pkg.main = "main.js";
+          const runNum = parseInt(process.env.GITHUB_RUN_NUMBER || "1");
+          const major = Math.floor((runNum - 1) / 10) + 1;
+          const minor = (runNum - 1) % 10;
+          pkg.version = `${major}.${minor}.0`;
+          if (process.env.GITHUB_ENV) {
+            fs.appendFileSync(process.env.GITHUB_ENV, `APP_VER=v${major}.${minor}\n`);
+          }
+          const iconPath = fs.existsSync("icon.ico") ? "icon.ico" : (fs.existsSync("icon-only.png") ? "icon-only.png" : undefined);
+          pkg.scripts = {
+            "dist": "electron-builder --win nsis"
+          };
+          pkg.build = {
+            "appId": "com.starpos.app",
+            "productName": "Star POS",
+            "asar": true,
+            "directories": {
+              "output": "release"
+            },
+            "win": {
+              "target": ["nsis"],
+              ...(iconPath ? { "icon": iconPath } : {})
+            },
+            "nsis": {
+              "oneClick": false,
+              "allowToChangeInstallationDirectory": true,
+              "createDesktopShortcut": true,
+              "createStartMenuShortcut": true,
+              "shortcutName": "Star POS",
+              "artifactName": "StarPOS-Setup-${version}.exe"
+            },
+            "files": [
+              "main.js",
+              "preload.js",
+              "dist/**/*",
+              ...(iconPath ? [iconPath] : [])
+            ]
+          };
+          fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2));
+          '
+
+      - name: Compile Windows Setup (.EXE)
+        shell: bash
+        run: |
+          npm run dist
+
+      - name: Upload Windows Setup Executable
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: windows-${{ env.APP_VER }}
+          name: Star POS Windows Setup (${{ env.APP_VER }})
+          files: release/*.exe
