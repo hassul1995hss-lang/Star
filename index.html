@@ -458,7 +458,293 @@ th,td{padding:5px 4px}
 @keyframes cartFlash{from{background:color-mix(in srgb,var(--pri) 26%,transparent)}to{background:transparent}}
 #cartCard .item.flash{animation:cartFlash 1.1s ease-out;border-radius:var(--r-sm)}
 @media (prefers-reduced-motion:reduce){#cartCard .item.flash{animation:none}}
+
+/* ===== المرحلة 2/3: الأرشيف والإحصائيات ===== */
+.wk:not(.wk-rep) #nX{display:none!important}
+@media (max-width:420px){ #navTabs button{font-size:10px} #navTabs .i{width:18px;height:18px} #navTabs button span{white-space:nowrap} }
+.st-row{padding:8px 0;border-bottom:1px solid var(--line)}
+.st-row:last-child{border-bottom:0}
+.st-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.st-h small{color:var(--mut);display:block}
+.st-bar{height:8px;border-radius:99px;background:var(--bg);border:1px solid var(--line);overflow:hidden;margin-top:6px}
+.st-bar i{display:block;height:100%;border-radius:99px;background:var(--pri)}
+.chart-det{min-height:18px;margin:8px 0 0;text-align:center;font-size:12.5px;color:var(--mut)}
+.chart-wrap{overflow:hidden}
+#stYear{max-width:160px}
+.arch-hint{color:var(--mut);font-size:12px;margin:6px 0 0}
+
+/* ===== تنبيه النسخ الاحتياطي كل 7 أيام ===== */
+#bkRemindBar{
+  display:none;align-items:center;justify-content:space-between;gap:10px;
+  background:var(--bad);color:#fff;border:0;border-radius:var(--r-md);
+  padding:9px 12px;margin-bottom:8px;cursor:pointer;width:100%;text-align:start;
+  font:inherit;font-size:13px;font-weight:700;line-height:1.4;
+  box-shadow:0 3px 12px color-mix(in srgb,var(--bad) 35%,transparent);
+  transition:filter .15s,transform .05s
+}
+#bkRemindBar:hover{filter:brightness(1.06)}
+#bkRemindBar:active{transform:translateY(1px)}
+#bkRemindBar .i{width:20px;height:20px;flex:none;margin:0}
+#bkRemindBar .bk-rem-btn{
+  flex:none;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.35);
+  color:#fff;padding:4px 10px;border-radius:7px;font-size:12px;font-weight:700;white-space:nowrap
+}
 </style>
+<script>
+/* ===== StarDB: طبقة تخزين IndexedDB (المرحلة 1) =====
+   - واجهة متزامنة شبيهة بـ localStorage (getItem/setItem/removeItem) فوق ذاكرة مؤقتة،
+     بينما تُكتب التغييرات إلى IndexedDB بشكل غير متزامن (تجميع + كتابة المتغيّر فقط).
+   - ترحيل تلقائي من localStorage عند أول تشغيل مع التحقق قبل اعتماده، وإبقاء النسخة القديمة كشبكة أمان.
+   - إن تعذّر IndexedDB يعمل التطبيق على localStorage كما كان سابقاً. */
+(function(){
+  "use strict";
+  var DB_NAME="star_pos_db", DB_VER=2, STORE="kv", META="meta", INVS="inv_arch", REGS="reg_arch";
+  var COLL=["telecom_acc_v1","telecom_inv_v1","telecom_tomb_v1","telecom_rep_v1","telecom_reg_closes_v1","star_debts_v1"];
+  var CLEAN_AFTER_MS=3*864e5;          /* حذف النسخ القديمة من localStorage بعد 3 أيام من ترحيل ناجح */
+  var OK_FLAG="star_idb_ok";           /* علامة: سبق أن عمل IndexedDB بنجاح على هذا الجهاز */
+  var cache={}, dirty={}, db=null, mode="ls", timer=null, retries=0, warned=false;
+  var meta={}, status={mode:"ls",migratedAt:0,migratedKeys:0,error:"",degraded:false};
+
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } }
+  function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+
+  /* تنبيه واضح عند فشل الحفظ (مرة واحدة) */
+  function warn(msg){
+    if(warned) return; warned=true;
+    function show(){
+      var d=document.createElement("div");
+      d.style.cssText="position:fixed;top:0;left:0;right:0;z-index:99999;background:#b42318;color:#fff;padding:10px 14px;font:600 13px/1.5 sans-serif;text-align:center;cursor:pointer";
+      d.textContent=msg; d.onclick=function(){ d.remove(); warned=false; };
+      document.body.appendChild(d);
+    }
+    if(document.body) show(); else document.addEventListener("DOMContentLoaded",show);
+  }
+  function fail(e){
+    status.error=String((e&&e.name)||e||"error");
+    warn("⚠ تعذّر حفظ بياناتك في ذاكرة الجهاز (" + status.error + "). صدّر نسخة احتياطية الآن ولا تُغلق التطبيق. (اضغط لإخفاء)");
+  }
+
+  function openDB(){
+    return new Promise(function(res,rej){
+      if(!window.indexedDB){ rej(new Error("no-idb")); return; }
+      var done=false, rq;
+      var tm=setTimeout(function(){ if(!done){ done=true; rej(new Error("open-timeout")); } },8000);
+      try{ rq=indexedDB.open(DB_NAME,DB_VER); }catch(e){ clearTimeout(tm); rej(e); return; }
+      rq.onupgradeneeded=function(){
+        var d=rq.result;
+        if(!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE);
+        if(!d.objectStoreNames.contains(META)) d.createObjectStore(META);
+        /* المرحلة 2: مخازن الأرشيف الدائم (إضافة فقط — لا تمسّ المخازن القديمة) */
+        var st;
+        if(!d.objectStoreNames.contains(INVS)){
+          st=d.createObjectStore(INVS,{keyPath:"k"});
+          st.createIndex("ino","inoS"); st.createIndex("ts","ts"); st.createIndex("date","date"); st.createIndex("sig","sig");
+        }
+        if(!d.objectStoreNames.contains(REGS)){
+          st=d.createObjectStore(REGS,{keyPath:"id"});
+          st.createIndex("date","date");
+        }
+      };
+      rq.onsuccess=function(){
+        clearTimeout(tm);
+        if(done){ try{ rq.result.close(); }catch(e){} return; }
+        done=true; res(rq.result);
+      };
+      rq.onerror=function(){ clearTimeout(tm); if(!done){ done=true; rej(rq.error||new Error("open-error")); } };
+    });
+  }
+  function openWithRetry(){
+    var tries=lsGet(OK_FLAG)==="1"?3:1;   /* إن كان يعمل سابقاً فلا نتخلّى عنه بسهولة */
+    function attempt(n){
+      return openDB().catch(function(e){
+        if(n>=tries) throw e;
+        return new Promise(function(r){ setTimeout(r,1000); }).then(function(){ return attempt(n+1); });
+      });
+    }
+    return attempt(1);
+  }
+
+  function readAll(store){
+    return new Promise(function(res,rej){
+      var out={}, tx=db.transaction(store,"readonly"), rq=tx.objectStore(store).openCursor();
+      rq.onsuccess=function(){ var c=rq.result; if(c){ out[c.key]=c.value; c.continue(); } };
+      tx.oncomplete=function(){ res(out); };
+      tx.onerror=tx.onabort=function(){ rej(tx.error||new Error("read-failed")); };
+    });
+  }
+  function writeTx(store,ops){
+    return new Promise(function(res,rej){
+      var keys=Object.keys(ops); if(!keys.length){ res(); return; }
+      var tx=db.transaction(store,"readwrite"), os=tx.objectStore(store);
+      keys.forEach(function(k){ if(ops[k]===null) os.delete(k); else os.put(ops[k],k); });
+      tx.oncomplete=function(){ res(); };
+      tx.onerror=function(){ rej(tx.error||new Error("write-failed")); };
+      tx.onabort=function(){ rej(tx.error||new Error("write-aborted")); };
+    });
+  }
+
+  /* ترحيل localStorage -> IndexedDB مع التحقق (لا يُعتمد إلا بعد قراءة النسخة المكتوبة ومطابقتها حرفياً) */
+  function migrate(){
+    if(meta.migratedAt) return Promise.resolve();
+    var ops={}, n=0, skip=false;
+    COLL.forEach(function(k){
+      var v=lsGet(k); if(v==null) return;
+      try{ JSON.parse(v); }catch(e){ skip=true; status.error="corrupt-legacy:"+k; return; }  /* تالف: يُترك في مكانه ولا يُحذف لاحقاً */
+      ops[k]=v; n++;
+    });
+    return writeTx(STORE,ops).then(function(){ return readAll(STORE); }).then(function(back){
+      Object.keys(ops).forEach(function(k){ if(back[k]!==ops[k]) throw new Error("verify-failed:"+k); });
+      cache=back;
+      meta={migratedAt:Date.now(),migratedKeys:n,skipClean:skip};
+      return writeTx(META,meta);
+    });
+  }
+
+  /* حذف النسخ القديمة من localStorage بعد فترة أمان وبعد التأكد أنها موجودة في IndexedDB */
+  function cleanLegacy(){
+    if(!meta.migratedAt || meta.cleaned || meta.skipClean) return;
+    if(Date.now()-meta.migratedAt<CLEAN_AFTER_MS) return;
+    var safe=COLL.every(function(k){ return lsGet(k)==null || cache[k]!=null; });
+    if(!safe) return;
+    COLL.forEach(lsDel);
+    meta.cleaned=Date.now();
+    writeTx(META,meta).catch(function(){});
+  }
+
+  function flush(){
+    if(mode!=="idb") return Promise.resolve();
+    timer=null;
+    var ops=dirty, keys=Object.keys(ops);
+    if(!keys.length) return Promise.resolve();
+    dirty={};
+    return writeTx(STORE,ops).then(function(){ retries=0; },function(e){
+      /* أعد جدولة أحدث قيمة لكل مفتاح (آمن حتى لو كُتبت قيمة أحدث بين الحين والآخر) */
+      keys.forEach(function(k){ dirty[k]=(k in cache)?cache[k]:null; });
+      fail(e);
+      if(retries<5){ retries++; setTimeout(flush,2000); }
+    });
+  }
+  /* تجميع بالـ microtask: تبدأ معاملة الكتابة فوراً بعد انتهاء save() نفسها فلا نافذة زمنية لفقدان البيانات */
+  function sched(){ if(timer) return; timer=true; Promise.resolve().then(function(){ timer=null; flush(); }); }
+
+  /* ===== الأرشيف الدائم (المرحلة 2) =====
+     مخازن مستقلة عن kv: تبقى حتى لو استُبدلت البيانات الحالية بنسخة احتياطية.
+     inv_arch: الفواتير (مفتاح k) مع فهارس: رقم الفاتورة، الوقت، التاريخ، البصمة.
+     reg_arch: إغلاقات الصندوق (مفتاح id). */
+  var arch={
+    ok:function(){ return mode==="idb" && !!db; },
+    put:function(store,recs){
+      if(!arch.ok()||!recs||!recs.length) return Promise.resolve();
+      var chunks=[], i;
+      for(i=0;i<recs.length;i+=500) chunks.push(recs.slice(i,i+500));
+      return chunks.reduce(function(p,ch){
+        return p.then(function(){ return new Promise(function(res,rej){
+          var tx=db.transaction(store,"readwrite"), os=tx.objectStore(store);
+          ch.forEach(function(r){ os.put(r); });
+          tx.oncomplete=function(){ res(); };
+          tx.onerror=tx.onabort=function(){ rej(tx.error||new Error("arch-write")); };
+        }); });
+      },Promise.resolve());
+    },
+    /* خريطة {مفتاح: بصمة} دون قراءة الفواتير نفسها (مؤشر مفاتيح فقط) */
+    sigs:function(){
+      return new Promise(function(res,rej){
+        if(!arch.ok()){ res({}); return; }
+        var out={}, tx=db.transaction(INVS,"readonly"), rq=tx.objectStore(INVS).index("sig").openKeyCursor();
+        rq.onsuccess=function(){ var c=rq.result; if(c){ out[c.primaryKey]=c.key; c.continue(); } };
+        tx.oncomplete=function(){ res(out); };
+        tx.onerror=tx.onabort=function(){ rej(tx.error||new Error("arch-sigs")); };
+      });
+    },
+    all:function(store){
+      return new Promise(function(res,rej){
+        if(!arch.ok()){ res([]); return; }
+        var out=[], tx=db.transaction(store,"readonly"), rq=tx.objectStore(store).openCursor();
+        rq.onsuccess=function(){ var c=rq.result; if(c){ out.push(c.value); c.continue(); } };
+        tx.oncomplete=function(){ res(out); };
+        tx.onerror=tx.onabort=function(){ rej(tx.error||new Error("arch-all")); };
+      });
+    },
+    /* بحث سريع: kind = ino (بادئة رقم الفاتورة) | date (بادئة تاريخ) | latest | text (فحص مع دالة test) */
+    query:function(o){
+      return new Promise(function(res,rej){
+        if(!arch.ok()){ res([]); return; }
+        var out=[], lim=o.limit||50, scanned=0, tx=db.transaction(INVS,"readonly"), os=tx.objectStore(INVS), rq;
+        try{
+          if(o.kind==="ino") rq=os.index("ino").openCursor(IDBKeyRange.bound(o.q,o.q+"\uffff"));
+          else if(o.kind==="date") rq=os.index("date").openCursor(IDBKeyRange.bound(o.q,o.q+"\uffff"),"prev");
+          else rq=os.index("ts").openCursor(null,"prev");
+        }catch(e){ rej(e); return; }
+        rq.onsuccess=function(){
+          var c=rq.result; if(!c||out.length>=lim) return;
+          var v=c.value; scanned++;
+          if(!o.test||o.test(v)) out.push(v);
+          if(scanned>400000) return;
+          c.continue();
+        };
+        tx.oncomplete=function(){ res(out); };
+        tx.onerror=tx.onabort=function(){ rej(tx.error||new Error("arch-query")); };
+      });
+    },
+    clear:function(){
+      return new Promise(function(res,rej){
+        if(!arch.ok()){ res(); return; }
+        var tx=db.transaction([INVS,REGS],"readwrite");
+        tx.objectStore(INVS).clear(); tx.objectStore(REGS).clear();
+        tx.oncomplete=function(){ res(); };
+        tx.onerror=tx.onabort=function(){ rej(tx.error||new Error("arch-clear")); };
+      });
+    }
+  };
+
+  var api={
+    getItem:function(k){
+      if(mode==="ls") return lsGet(k);
+      return (k in cache)?cache[k]:null;
+    },
+    setItem:function(k,v){
+      v=String(v);
+      if(mode==="ls"){ if(!lsSet(k,v)) fail("localStorage-full"); return; }
+      if(cache[k]===v) return;
+      cache[k]=v; dirty[k]=v; sched();
+    },
+    removeItem:function(k){
+      lsDel(k);
+      if(mode==="ls") return;
+      delete cache[k]; dirty[k]=null; sched();
+    },
+    flush:flush,
+    status:function(){ return {mode:status.mode,migratedAt:status.migratedAt,migratedKeys:status.migratedKeys,error:status.error,degraded:status.degraded,cleaned:!!meta.cleaned}; },
+    ready:null
+  };
+
+  api.ready=openWithRetry().then(function(d){
+    db=d;
+    d.onversionchange=function(){ try{ d.close(); }catch(e){} location.reload(); };
+    return readAll(META).then(function(m){ meta=m||{}; return readAll(STORE); });
+  }).then(function(all){
+    cache=all;
+    return migrate();
+  }).then(function(){
+    mode="idb"; status.mode="idb"; status.migratedAt=meta.migratedAt||0; status.migratedKeys=meta.migratedKeys||0;
+    lsSet(OK_FLAG,"1");
+    cleanLegacy();
+    try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+  }).catch(function(e){
+    mode="ls"; status.mode="ls"; status.error=String((e&&e.message)||e);
+    if(lsGet(OK_FLAG)==="1"){
+      status.degraded=true;
+      warn("⚠ تعذّر فتح قاعدة البيانات. لا تُدخل بيانات جديدة الآن؛ أعد تشغيل التطبيق، وإن استمرت المشكلة تواصل مع الدعم.");
+    }
+  });
+
+  document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="hidden") flush(); });
+  window.addEventListener("pagehide",function(){ flush(); });
+  api.arch=arch;
+  window.StarDB=api;
+})();
+</script>
 <script>
 /* ===== محرك المظهر والثيمات ===== */
 var THEMES=[
@@ -494,7 +780,7 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
 </script>
 </head>
 <body>
-<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol><symbol id="i-unlock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></symbol><symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol><symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l3-2 2.5 2L12 20l2.5 2L17 20l3 2V2l-3 2-2.5-2L12 4 9.5 2 7 4z"/><path d="M8 9h8M8 13h8"/></symbol><symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol><symbol id="i-cash" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></symbol><symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.7 2.7-2.3-.7-.7-2.3z"/></symbol><symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/></symbol><symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></symbol><symbol id="i-chip" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></symbol><symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol><symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></symbol><symbol id="i-package" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.5L12 12l8.7-4.5M12 22V12"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16v-5M12 16V7M17 16v-8"/></symbol><symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol><symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8M11 8v8M15 8v8M18 8v8"/></symbol><symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></symbol><symbol id="i-archive" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/></symbol><symbol id="i-store" viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v9h14v-9M10 21v-5h4v5"/></symbol><symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></symbol><symbol id="i-dollar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.5-1.5-3-1.5-1.8 0-3 .9-3 2.2s1.2 1.9 3 2.3 3 1 3 2.3-1.2 2.2-3 2.2c-1.5 0-2.6-.6-3-1.7M12 6v2M12 16v2"/></symbol><symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></symbol><symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></symbol><symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></symbol><symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></symbol><symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></symbol><symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2M16 7l3 3M14 9l2 2"/></symbol><symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol><symbol id="i-message" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol><symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol><symbol id="i-chev" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.7-4 3-9 3s-9-1.3-9-3M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol><symbol id="i-wallet" viewBox="0 0 24 24"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></symbol><symbol id="i-wa" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></symbol></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol><symbol id="i-unlock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></symbol><symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol><symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l3-2 2.5 2L12 20l2.5 2L17 20l3 2V2l-3 2-2.5-2L12 4 9.5 2 7 4z"/><path d="M8 9h8M8 13h8"/></symbol><symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol><symbol id="i-cash" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></symbol><symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.7 2.7-2.3-.7-.7-2.3z"/></symbol><symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/></symbol><symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></symbol><symbol id="i-chip" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></symbol><symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol><symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></symbol><symbol id="i-package" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.5L12 12l8.7-4.5M12 22V12"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16v-5M12 16V7M17 16v-8"/></symbol><symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol><symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol><symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8M11 8v8M15 8v8M18 8v8"/></symbol><symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></symbol><symbol id="i-archive" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/></symbol><symbol id="i-store" viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v9h14v-9M10 21v-5h4v5"/></symbol><symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></symbol><symbol id="i-dollar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.5-1.5-3-1.5-1.8 0-3 .9-3 2.2s1.2 1.9 3 2.3 3 1 3 2.3-1.2 2.2-3 2.2c-1.5 0-2.6-.6-3-1.7M12 6v2M12 16v2"/></symbol><symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></symbol><symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></symbol><symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></symbol><symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></symbol><symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></symbol><symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2M16 7l3 3M14 9l2 2"/></symbol><symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol><symbol id="i-message" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol><symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol><symbol id="i-chev" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.7-4 3-9 3s-9-1.3-9-3M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol><symbol id="i-wallet" viewBox="0 0 24 24"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></symbol><symbol id="i-wa" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></symbol></svg>
 <!-- سياسة الخصوصية والاستخدام -->
 <div id="policyModal" class="pol-screen">
   <div class="pol-wrap">
@@ -591,10 +877,10 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
   <b id="wkTxt" style="font-size:13px" data-i18n="wk_active"><svg class="i"><use href="#i-lock"/></svg> وضع العامل مفعّل</b>
   <button class="qb" id="wkExit" style="width:auto;padding:0 12px;font-size:13px"><svg class="i"><use href="#i-unlock"/></svg><span data-i18n="wk_unlock">فك التقييد</span></button>
 </div>
-<div class="card" id="rsBar" style="display:none;border-color:var(--ok)">
-  <p id="rsTxt" style="margin:0 0 8px"></p>
-  <button class="add" id="rsBtn" style="margin-top:0" data-i18n="btn_restore_auto">استعادة النسخة التلقائية</button>
-</div>
+<button type="button" id="bkRemindBar" style="display:none">
+  <span style="display:flex;align-items:center;gap:8px;min-width:0"><svg class="i"><use href="#i-alert"/></svg><span id="bkRemindTxt">تنبيه: مرّ أكثر من 7 أيام دون نسخة احتياطية — اضغط هنا لإنشاء نسخة احتياطية الآن</span></span>
+  <span class="bk-rem-btn" id="bkRemindAct">نسخ الآن</span>
+</button>
 
 <div class="tabs" id="navTabs">
   <button id="nS" class="on"><svg class="i"><use href="#i-receipt"/></svg><span data-i18n="tab_sales">المبيعات</span></button>
@@ -602,6 +888,7 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
   <button id="nI"><svg class="i"><use href="#i-package"/></svg><span data-i18n="tab_inv">المخزون</span></button>
   <button id="nM"><svg class="i"><use href="#i-wrench"/></svg><span data-i18n="tab_mnt">الصيانة</span></button>
   <button id="nR"><svg class="i"><use href="#i-chart"/></svg><span data-i18n="tab_rep">الجرد</span></button>
+  <button id="nX"><svg class="i"><use href="#i-trend"/></svg><span data-i18n="tab_stat">الإحصائيات</span></button>
   <button id="nB"><svg class="i"><use href="#i-gear"/></svg><span data-i18n="tab_set">الإعدادات</span></button>
 </div>
 
@@ -837,10 +1124,37 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
   </div>
   <div id="rLow" style="margin-top:8px"></div>
 </div>
-<div class="card"><h2><svg class="i"><use href="#i-archive"/></svg><span data-i18n="h2_reg_archive">أرشيف إغلاقات الصندوق</span></h2><div id="regArchiveList"></div></div>
+<div class="card" id="invArchCard"><h2><svg class="i"><use href="#i-search"/></svg> <span data-i18n="h2_inv_arch">أرشيف الفواتير</span></h2>
+  <input type="text" id="invFind" autocomplete="off" enterkeyhint="search">
+  <div id="invArchList" style="margin-top:8px"></div>
+</div>
+<div class="card"><h2><svg class="i"><use href="#i-archive"/></svg><span data-i18n="h2_reg_archive">أرشيف إغلاقات الصندوق</span></h2>
+  <input type="text" id="regFind" autocomplete="off" style="margin-bottom:6px">
+  <div id="regArchiveList"></div></div>
 </div>
 
 <!-- 4. شاشة الصيانة -->
+<div id="vStat" style="display:none">
+<div class="card">
+  <label style="margin-top:0" for="stYear" data-i18n="lbl_stat_year">السنة</label>
+  <select id="stYear"></select>
+  <p class="hint" id="stHint"></p>
+</div>
+<div class="grid" id="stGrid" style="margin-bottom:12px"></div>
+<div class="card prf" id="stMonCard"><h2><svg class="i"><use href="#i-trend"/></svg> <span data-i18n="h2_stat_mon">الأرباح الشهرية</span></h2>
+  <div class="chart-wrap" id="stMonChart"></div><p class="chart-det" id="stMonDet"></p></div>
+<div class="card prf" id="stYrCard"><h2><svg class="i"><use href="#i-chart"/></svg> <span data-i18n="h2_stat_yr">الأرباح السنوية</span></h2>
+  <div class="chart-wrap" id="stYrChart"></div><p class="chart-det" id="stYrDet"></p></div>
+<div class="card" id="stTopCard"><h2><svg class="i"><use href="#i-package"/></svg> <span data-i18n="h2_stat_top">أكثر القطع مبيعاً</span></h2>
+  <div class="tabs" id="stTopTabs">
+    <button data-t="m" class="on" data-i18n="st_top_m">هذا الشهر</button>
+    <button data-t="y" data-i18n="st_top_y">السنة المختارة</button>
+    <button data-t="a" data-i18n="st_top_a">كل الفترات</button>
+  </div>
+  <div id="stTop"></div>
+</div>
+</div>
+
 <div id="vMnt" style="display:none">
 <div class="grid" style="margin-bottom:12px">
   <div class="stat"><small data-i18n="st_m_work">قيد العمل</small><b id="mWork">0</b></div>
@@ -978,8 +1292,7 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
 <button class="mrow" data-sp="shop"><span class="ic"><svg class="i"><use href="#i-store"/></svg></span><span class="mt"><span data-i18n="sg_shop">المحل والفاتورة</span><small data-i18n="sg_shop_d">الاسم واللوغو وبيانات الفاتورة</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
 <button class="mrow" data-sp="pref"><span class="ic"><svg class="i"><use href="#i-sliders"/></svg></span><span class="mt"><span data-i18n="sg_pref">التفضيلات</span><small data-i18n="sg_pref_d">اللغة والعملة</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
 <button class="mrow" data-sp="sec"><span class="ic"><svg class="i"><use href="#i-cash"/></svg></span><span class="mt"><span data-i18n="sg_sec">العملة الثانوية</span><small data-i18n="sg_sec_d">عرض الفاتورة بعملة ثانية وسعر الصرف</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
-<button class="mrow" data-sp="bk"><span class="ic"><svg class="i"><use href="#i-save"/></svg></span><span class="mt"><span data-i18n="sg_bk">النسخ الاحتياطي</span><small data-i18n="sg_bk_d">حفظ تلقائي واستعادة</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
-<button class="mrow" data-sp="sync"><span class="ic"><svg class="i"><use href="#i-refresh"/></svg></span><span class="mt"><span data-i18n="sg_sync">نقل ومزامنة البيانات</span><small data-i18n="sg_sync_d">بين الجوال والكمبيوتر</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+<button class="mrow" data-sp="sync"><span class="ic"><svg class="i"><use href="#i-save"/></svg></span><span class="mt"><span data-i18n="sg_sync">النسخ الاحتياطي والمزامنة</span><small data-i18n="sg_sync_d">تصدير واستيراد ملف نسخة مشفّرة بين الأجهزة</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
 <button class="mrow" data-sp="app"><span class="ic"><svg class="i"><use href="#i-info"/></svg></span><span class="mt"><span data-i18n="sg_app">التطبيق والترخيص</span><small data-i18n="sg_app_d">الإصدار وتفعيل الاشتراك</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
 <button class="mrow" data-sp="about"><span class="ic"><svg class="i"><use href="#i-user"/></svg></span><span class="mt"><span data-i18n="sg_about">حقوق الملكية والتواصل</span><small data-i18n="sg_about_d">المطوّر والدعم الفني</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
 <button class="mrow danger" data-sp="danger"><span class="ic"><svg class="i"><use href="#i-trash"/></svg></span><span class="mt"><span style="color:var(--bad)" data-i18n="sg_danger">منطقة الخطر</span><small data-i18n="sg_danger_d">ضبط المصنع ومسح البيانات</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
@@ -1053,34 +1366,17 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
     <div class="th-grid" id="thGrid"></div>
     <p class="hint" data-i18n="hint_theme">يُطبَّق الثيم فوراً ويُحفظ تلقائياً على هذا الجهاز.</p>
 </div></div>
-<div class="sp" id="sp-bk" style="display:none"><div class="sp-head"><button class="sp-back" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2><span data-i18n="sg_bk">النسخ الاحتياطي</span></h2></div><div class="card">
-    <div style="background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;margin:10px 0">
-      <div style="display:flex;align-items:center;gap:6px">
-        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--ok)"></span>
-        <b style="font-size:14px;color:var(--ok)" data-i18n="lbl_auto_active">الحفظ التلقائي بعد كل تعديل: نشط ومفعّل</b>
-      </div>
-      <small id="autoStatusTxt" style="display:block;color:var(--mut);margin-top:4px;font-size:12px">المسار: Download/StarPhoneBackup</small>
-    </div>
-    <button class="add sec" id="btnBackupNow" style="margin-top:0"><svg class="i"><use href="#i-save"/></svg><span data-i18n="btn_bk_now">حفظ نسخة إضافية الآن يدوياً</span></button>
-    <label style="margin-top:14px" data-i18n="lbl_last_bk">آخر النسخ المحفوظة بالهاتف (اضغط استعادة للرجوع لأي نقطة):</label>
-    <div id="schList"></div></div></div>
-<div class="sp" id="sp-sync" style="display:none"><div class="sp-head"><button class="sp-back" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2><span data-i18n="sg_sync">نقل ومزامنة البيانات</span></h2></div><div class="card">
-    <p class="hint" data-i18n="desc_sync">احفظ ملف النسخة أو انسخ النص وأرسله للجهاز الآخر ثم اضغط «دمج».</p>
-    <div class="sg-sub" data-i18n="sg_export">① تصدير من هذا الجهاز</div>
-    <div class="row" style="grid-template-columns:1fr 1fr">
-      <button class="add" id="bkSave" style="margin-top:4px"><svg class="i"><use href="#i-save"/></svg><span data-i18n="btn_save_file">حفظ ملف نسخة</span></button>
-      <button class="add sec" id="bkTxt" style="margin-top:4px"><svg class="i"><use href="#i-clipboard"/></svg><span data-i18n="btn_copy_txt">نسخ كنص</span></button>
-    </div>
-    <textarea id="bkOut" rows="3" readonly style="display:none;margin-top:8px;direction:ltr;font-size:12px"></textarea>
-    <p id="bkLast" style="margin:6px 0 0;font-size:12px"></p>
+<div class="sp" id="sp-sync" style="display:none"><div class="sp-head"><button class="sp-back" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2><span data-i18n="sg_sync">النسخ الاحتياطي والمزامنة</span></h2></div><div class="card">
+    <p class="hint" style="margin-top:0" data-i18n="desc_sync">صدّر ملف نسخة احتياطية مشفّرة لحفظ حساباتك أو مشاركتها بين أجهزتك، ثم استوردها عبر «دمج» أو «استبدال».</p>
+    <div class="sg-sub" data-i18n="sg_export">① تصدير نسخة احتياطية مشفّرة</div>
+    <button class="add" id="bkSave" style="margin-top:6px"><svg class="i"><use href="#i-share"/></svg><span data-i18n="btn_save_file">تصدير ومشاركة ملف النسخة المشفّرة</span></button>
+    <p id="bkLast" style="margin:8px 0 0;font-size:12px"></p>
 
-    <div class="sg-sub" data-i18n="sg_import">② استيراد إلى هذا الجهاز</div>
-    <button class="add" id="btnPasteClip" style="margin-top:4px;background:var(--ok)"><svg class="i"><use href="#i-clipboard"/></svg><span data-i18n="btn_paste_clip">لصق النسخة من الحافظة مباشرة</span></button>
-    <label style="margin-top:10px" data-i18n="lbl_choose_file">أو اختر ملف نسخة احتياطية (.json):</label>
+    <div class="sg-sub" data-i18n="sg_import">② استيراد نسخة إلى هذا الجهاز</div>
+    <label style="margin-top:6px" data-i18n="lbl_choose_file">اختر ملف النسخة الاحتياطية (.json):</label>
     <input type="file" id="impFile" accept=".json,application/json,text/plain">
-    <label style="margin-top:8px" data-i18n="lbl_paste_manual">أو الصق النص يدوياً هنا:</label>
-    <textarea id="bkIn" rows="3" style="direction:ltr;font-size:12px" placeholder="الصق نص النسخة الاحتياطية هنا"></textarea>
-    <div class="row" style="grid-template-columns:1fr 1fr;margin-top:8px">
+    <p class="hint" id="impFileStatus" style="margin:6px 0 0"></p>
+    <div class="row" style="grid-template-columns:1fr 1fr;margin-top:10px">
       <button class="add" id="impMerge" style="margin-top:0"><svg class="i"><use href="#i-refresh"/></svg><span data-i18n="btn_merge">دمج البيانات (مزامنة)</span></button>
       <button class="add dng" id="impRep" style="margin-top:0"><svg class="i"><use href="#i-alert"/></svg><span data-i18n="btn_replace">استبدال شامل</span></button>
     </div>
@@ -1124,7 +1420,7 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
   <button id="wkOpen" class="add sec" style="margin-top:0"><svg class="i"><use href="#i-lock"/></svg><span data-i18n="wk_open">وضع العامل</span></button>
 </div>
 
-<script>
+<script type="text/starmain" id="starMain">
 /* ===== قاموس اللغات الشامل ===== */
 var I18N = {
   ar: {
@@ -1137,6 +1433,7 @@ var I18N = {
     tab_inv: "المخزون",
     tab_mnt: "الصيانة",
     tab_rep: "الجرد",
+    tab_stat: "الإحصائيات", h2_inv_arch: "أرشيف الفواتير", h2_stat_mon: "الأرباح الشهرية", h2_stat_yr: "الأرباح السنوية", h2_stat_top: "أكثر القطع مبيعاً", lbl_stat_year: "السنة", st_top_m: "هذا الشهر", st_top_y: "السنة المختارة", st_top_a: "كل الفترات",
     tab_set: "الإعدادات",
     sg_sec: "العملة الثانوية", sg_sec_d: "عرض الفاتورة بعملة ثانية وسعر الصرف",
     lbl_cart_sec: "بالعملة الثانوية",
@@ -1290,12 +1587,12 @@ var I18N = {
     btn_bk_now: "حفظ نسخة إضافية الآن يدوياً",
     lbl_last_bk: "آخر النسخ المحفوظة بالهاتف (اضغط استعادة للرجوع لأي نقطة):",
     h2_sync: "مزامنة ونقل بيانات (جوال / كمبيوتر)",
-    desc_sync: "لحفظ ملف يدوي للمشاركة، أو نقل المبيعات والمخزون بين أجهزتك. احفظ الملف أو انسخ النص وأرسله للجهاز الآخر ثم اضغط «دمج».",
-    btn_save_file: "حفظ ملف نسخة",
+    desc_sync: "صدّر ملف نسخة احتياطية مشفّرة لحفظ حساباتك أو مشاركتها بين أجهزتك، ثم استوردها عبر «دمج» أو «استبدال».",
+    btn_save_file: "تصدير ومشاركة ملف النسخة المشفّرة",
     btn_copy_txt: "نسخ كنص",
     lbl_import: "استيراد أو مزامنة بيانات من جهاز آخر:",
     btn_paste_clip: "لصق النسخة من الحافظة مباشرة",
-    lbl_choose_file: "أو اختر ملف نسخة احتياطية (.json):",
+    lbl_choose_file: "اختر ملف النسخة الاحتياطية (.json):",
     lbl_paste_manual: "أو الصق النص يدوياً هنا:",
     btn_merge: "دمج البيانات (مزامنة)",
     btn_replace: "استبدال شامل",
@@ -1376,10 +1673,10 @@ var I18N = {
     sg_shop: "المحل والفاتورة", sg_shop_d: "الاسم واللوغو وبيانات الفاتورة",
     sg_pref: "التفضيلات", sg_pref_d: "اللغة والعملة والمظهر",
     sg_bk: "النسخ الاحتياطي", sg_bk_d: "حفظ تلقائي واستعادة",
-    sg_sync: "نقل ومزامنة البيانات", sg_sync_d: "بين الجوال والكمبيوتر",
+    sg_sync: "النسخ الاحتياطي والمزامنة", sg_sync_d: "تصدير واستيراد ملف نسخة مشفّرة بين الأجهزة",
     sg_app: "التطبيق والترخيص", sg_app_d: "الإصدار وتفعيل الاشتراك",
     sg_danger: "منطقة الخطر", sg_danger_d: "ضبط المصنع ومسح البيانات",
-    sg_export: "① تصدير من هذا الجهاز", sg_import: "② استيراد إلى هذا الجهاز",
+    sg_export: "① تصدير نسخة احتياطية مشفّرة", sg_import: "② استيراد نسخة إلى هذا الجهاز",
     lbl_shop_addr: "العنوان (اختياري):",
     lbl_inv_footer: "رسالة أسفل الفاتورة:",
     lbl_paper: "حجم ورق الطباعة (للطابعة الخارجية):",
@@ -1396,6 +1693,7 @@ var I18N = {
     tab_inv: "Inventory",
     tab_mnt: "Repairs",
     tab_rep: "Reports",
+    tab_stat: "Stats", h2_inv_arch: "Invoice Archive", h2_stat_mon: "Monthly Profit", h2_stat_yr: "Yearly Profit", h2_stat_top: "Top Selling Items", lbl_stat_year: "Year", st_top_m: "This month", st_top_y: "Selected year", st_top_a: "All time",
     tab_set: "Settings",
     sg_sec: "Secondary Currency", sg_sec_d: "Show invoices in a second currency with exchange rate",
     lbl_cart_sec: "In secondary currency",
@@ -1549,12 +1847,12 @@ var I18N = {
     btn_bk_now: "Save Manual Backup Snapshot Now",
     lbl_last_bk: "Recent Snapshots on Device (Click Restore to revert):",
     h2_sync: "Sync & Data Transfer (Mobile / PC)",
-    desc_sync: "Save backup file or copy text to transfer data between your devices, then click Merge.",
-    btn_save_file: "Export Backup File",
+    desc_sync: "Export an encrypted backup file to protect your accounts or share between devices, then import via Merge or Replace.",
+    btn_save_file: "Export & Share Encrypted Backup",
     btn_copy_txt: "Copy as Text",
     lbl_import: "Import / Sync from Another Device:",
     btn_paste_clip: "Paste Directly from Clipboard",
-    lbl_choose_file: "Or Choose Backup File (.json):",
+    lbl_choose_file: "Choose Backup File (.json):",
     lbl_paste_manual: "Or Paste Backup Text Here:",
     btn_merge: "Merge Data (Sync)",
     btn_replace: "Total Replace (Overwrite)",
@@ -1635,10 +1933,10 @@ var I18N = {
     sg_shop: "Shop & Invoice", sg_shop_d: "Name, logo and invoice details",
     sg_pref: "Preferences", sg_pref_d: "Language, currency & theme",
     sg_bk: "Backup", sg_bk_d: "Auto-save & restore",
-    sg_sync: "Transfer & Sync", sg_sync_d: "Between phone and PC",
+    sg_sync: "Backup & Sync", sg_sync_d: "Export & import encrypted backup file",
     sg_app: "App & License", sg_app_d: "Version & activation",
     sg_danger: "Danger Zone", sg_danger_d: "Factory reset & data wipe",
-    sg_export: "① Export from this device", sg_import: "② Import to this device",
+    sg_export: "① Export Encrypted Backup", sg_import: "② Import Backup File",
     lbl_shop_addr: "Address (optional):",
     lbl_inv_footer: "Invoice footer message:",
     lbl_paper: "Print paper size (external printer):",
@@ -1675,15 +1973,15 @@ var curSymbol = localStorage.getItem("star_curr_sym") || "$";
 
 var KEY="telecom_acc_v1", data=[], mode="sale", cart=[];
 var INV="telecom_inv_v1", inv=[];
-try{ data=JSON.parse(localStorage.getItem(KEY)||"[]"); }catch(e){ data=[]; }
-try{ inv=JSON.parse(localStorage.getItem(INV)||"[]"); }catch(e){ inv=[]; }
+try{ data=JSON.parse(StarDB.getItem(KEY)||"[]"); }catch(e){ data=[]; }
+try{ inv=JSON.parse(StarDB.getItem(INV)||"[]"); }catch(e){ inv=[]; }
 var REPK="telecom_rep_v1", rep=[];
-try{ rep=JSON.parse(localStorage.getItem(REPK)||"[]"); }catch(e){ rep=[]; }
+try{ rep=JSON.parse(StarDB.getItem(REPK)||"[]"); }catch(e){ rep=[]; }
 var REG_ARCHIVE_KEY = "telecom_reg_closes_v1", regArchive = [];
-try{ regArchive=JSON.parse(localStorage.getItem(REG_ARCHIVE_KEY)||"[]"); }catch(e){ regArchive=[]; }
+try{ regArchive=JSON.parse(StarDB.getItem(REG_ARCHIVE_KEY)||"[]"); }catch(e){ regArchive=[]; }
 if(!Array.isArray(data)) data=[]; if(!Array.isArray(inv)) inv=[]; if(!Array.isArray(rep)) rep=[]; if(!Array.isArray(regArchive)) regArchive=[];
 var DEBTK="star_debts_v1", debts=[];
-try{ debts=JSON.parse(localStorage.getItem(DEBTK)||"[]"); }catch(e){ debts=[]; } if(!Array.isArray(debts)) debts=[];
+try{ debts=JSON.parse(StarDB.getItem(DEBTK)||"[]"); }catch(e){ debts=[]; } if(!Array.isArray(debts)) debts=[];
 
 /* الفئات تُخزَّن دائماً بقيمتها العربية (مستقلة عن لغة الواجهة) ويُترجم العرض فقط */
 var PARTS = "قطع غيار", REPAIR_CAT = "صيانة";
@@ -1713,13 +2011,14 @@ function wkHidePrf(){ return !!(WK.on&&!(WK.perms&&WK.perms.prf)); }
 function save(){
   stamp();
   try{
-    localStorage.setItem(KEY,JSON.stringify(data));
-    localStorage.setItem(INV,JSON.stringify(inv));
-    localStorage.setItem(TOMB,JSON.stringify(tomb));
-    localStorage.setItem(REPK,JSON.stringify(rep));
-    localStorage.setItem(REG_ARCHIVE_KEY,JSON.stringify(regArchive));
-    localStorage.setItem(DEBTK,JSON.stringify(debts));
+    StarDB.setItem(KEY,JSON.stringify(data));
+    StarDB.setItem(INV,JSON.stringify(inv));
+    StarDB.setItem(TOMB,JSON.stringify(tomb));
+    StarDB.setItem(REPK,JSON.stringify(rep));
+    StarDB.setItem(REG_ARCHIVE_KEY,JSON.stringify(regArchive));
+    StarDB.setItem(DEBTK,JSON.stringify(debts));
   }catch(e){}
+  try{ archQueue(); }catch(e){}
 }
 function today(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function fmt(n){ return Number(n||0).toLocaleString("en-US",{maximumFractionDigits:2}) + " " + curSymbol; }
@@ -1748,7 +2047,7 @@ function dCalc(d){
   if(!d.ref) return null;
   var T=0, C=0, eid=0;
   if(d.kind==="mnt"){
-    var e=data.filter(function(x){ return x.type==="mnt" && ("r"+x.rid)===d.ref; })[0];
+    var e=data.filter(function(x){ return x.type==="mnt" && !x.adj && ("r"+x.rid)===d.ref; })[0];
     if(!e) return null; T=e.price*e.qty; C=e.cost*e.qty; eid=e.id;
   } else {
     var n=Number(d.ref.slice(1)), isB=d.ref.charAt(0)==="b";
@@ -1985,6 +2284,7 @@ function del(id){
   var confirmMsg = (currentLang==="en") ? "Delete this transaction?" : "حذف هذه العملية؟";
   if(!confirm(confirmMsg)) return;
   var e=data.filter(function(x){return x.id===id})[0];
+  if(e&&e.type==="sale"&&!e.bid) archMarkDel([e]);
   if(e&&e.sid){
     var it=inv.filter(function(i){return i.id===e.sid})[0];
     if(it){
@@ -2099,6 +2399,7 @@ function delInv(bid){
   var L=data.filter(function(x){ return x.bid===bid; });
   if(!L.length) return;
   if(!confirm(isEn()?"Delete this whole invoice?":"حذف هذه الفاتورة بالكامل؟")) return;
+  archMarkDel(L.filter(function(x){ return x.type==="sale"; }));
   L.forEach(function(e){
     if(e.sid){ var it=inv.filter(function(i){ return i.id===e.sid; })[0]; if(it) it.qty+=e.tk||0; }
     tomb[e.id]=Date.now();
@@ -2479,13 +2780,14 @@ function renderAll(){
   renderShopProfile();
   renderCart();
   renderDebts();
+  try{ renderStats(); }catch(e){}
 }
 
 function esc(s){ return String(s||"").replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]}); }
 
 function setView(v){
   if(v==="b") settingsMenu();
-  [["s","vSales","nS"],["d","vDebt","nD"],["i","vInv","nI"],["m","vMnt","nM"],["r","vRep","nR"],["b","vBak","nB"]].forEach(function(a){
+  [["s","vSales","nS"],["d","vDebt","nD"],["i","vInv","nI"],["m","vMnt","nM"],["r","vRep","nR"],["x","vStat","nX"],["b","vBak","nB"]].forEach(function(a){
     $(a[1]).style.display=v===a[0]?"":"none";
     $(a[2]).className=v===a[0]?"on":"";
   });
@@ -2499,6 +2801,7 @@ $("nS").onclick=function(){setView("s"); focusSaleBarcode();};
 $("nI").onclick=function(){setView("i")};
 $("nM").onclick=function(){setView("m")};
 $("nR").onclick=function(){setView("r")};
+$("nX").onclick=function(){setView("x"); renderStats();};
 $("nB").onclick=function(){setView("b")};
 
 $("iAdd").onclick=function(){
@@ -2592,7 +2895,7 @@ function renderRep(){
     g=sCard(t("st_sales"),fmt(k.s))+sCard(t("st_ret"),fmt(k.rt))+sCard(t("st_cost"),fmt(k.c))+sCard(t("st_gross"),fmt(k.g))+sCard(t("st_exp"),fmt(k.x))+sCard(t("st_dmg"),fmt(k.dm))+sCard(t("st_s_prof"),fmt(k.n),cl(k.n),1);
   } else if(sec==="m"){
     var rc=rep.filter(function(r){return r.date>=lo&&r.date<=hi;}), unr=rc.filter(function(r){return r.status==="unrep";}).length;
-    g=sCard(t("st_m_recv"),rc.length)+sCard(t("st_m_deliv"),LS.length)+sCard(t("th_rev"),fmt(k.ms))+sCard(t("th_cost")+" ("+t("lbl_m_pc").split(" (")[0].slice(0,0)+(currentLang==="en"?"parts":"القطع")+")",fmt(k.mc))+sCard(t("st_m_unrep"),unr)+sCard(t("st_m_prof"),fmt(k.mp),cl(k.mp),1);
+    g=sCard(t("st_m_recv"),rc.length)+sCard(t("st_m_deliv"),LS.filter(function(e){return !e.adj;}).length)+sCard(t("th_rev"),fmt(k.ms))+sCard(t("th_cost")+" ("+t("lbl_m_pc").split(" (")[0].slice(0,0)+(currentLang==="en"?"parts":"القطع")+")",fmt(k.mc))+sCard(t("st_m_unrep"),unr)+sCard(t("st_m_prof"),fmt(k.mp),cl(k.mp),1);
   } else {
     g=sCard(t("st_rev_all"),fmt(k.s-k.rt+k.ms))+sCard(t("st_cost_all"),fmt(k.c+k.mc))+sCard(t("st_s_prof"),fmt(k.n),cl(k.n))+sCard(t("st_m_prof"),fmt(k.mp),cl(k.mp))+sCard(t("st_exp"),fmt(k.x))+sCard(t("st_dmg"),fmt(k.dm))+sCard(t("st_tot_net"),fmt(k.tn),cl(k.tn),1);
   }
@@ -2664,31 +2967,388 @@ document.querySelectorAll("#pTabs button").forEach(function(b){
 });
 $("rday").onchange=renderRep;
 
-function renderRegisterArchive(){
-  var box = $("regArchiveList");
-  if(!box) return;
-  if(!regArchive.length){
-    box.innerHTML = '<div class="empty">'+(currentLang==="en"?"No register closures yet":"لا توجد إغلاقات مسجلة بعد")+'</div>';
-    return;
-  }
-  var h = "";
-  regArchive.slice().reverse().forEach(function(reg){
-    h += '<div class="item" style="display:block;padding:8px 0">' +
-      '<div style="display:flex;justify-content:space-between"><b>' + ic("calendar") + ' ' + reg.date + ' ' + (reg.time||"") + '</b><b class="ok">' + fmt(reg.net) + '</b></div>' +
-      '<small>' + (currentLang==="en"?"Sales: ":"المبيعات: ") + fmt(reg.sales) + (reg.mnt?' · ' + (currentLang==="en"?"Repairs: ":"الصيانة: ") + fmt(reg.mnt):'') + ' · ' + (currentLang==="en"?"Expenses: ":"المصاريف: ") + fmt(reg.exp) + (reg.dn?' · '+(isEn()?"New debts: ":"ديون جديدة: ")+fmt(reg.dn):'') + (reg.dp?' · '+(isEn()?"Debts collected: ":"تحصيل ديون: ")+fmt(reg.dp):'') + ' · ' + (currentLang==="en"?"Actual Cash: ":"العد الفعلي: ") + fmt(reg.actual) + '</small>' +
-    '</div>';
+/* =====================================================================
+   المرحلة 2: الأرشيف الدائم للفواتير وإغلاقات الصندوق
+   - كل فاتورة تُحفظ في مخزن inv_arch (مفتاحها b<bid> أو s<id>) مع فهرس برقم الفاتورة.
+   - الفاتورة المحذوفة تبقى في الأرشيف مع علامة "محذوفة" (لا تُمحى).
+   - إغلاقات الصندوق تُحفظ في reg_arch.
+   - المزامنة تلقائية بعد كل save() وتعمل بالخلفية (تجميع 400ms) وبحفظ المتغيّر فقط.
+   - إن تعذّر IndexedDB يعمل البحث على بيانات الذاكرة الحالية كبديل.
+   ===================================================================== */
+var archState=null;
+function archOk(){ try{ return !!(window.StarDB&&StarDB.arch&&StarDB.arch.ok()); }catch(e){ return false; } }
+
+/* سجل أرشيف من أسطر فاتورة واحدة (الأسطر محفوظة كما هي لإعادة الطباعة/التصدير لاحقاً) */
+function archRec(L){
+  var f=L[0], tot=0;
+  L.forEach(function(l){ if(!(isAdjE(l)&&l.price>0)) tot+=l.price*l.qty; });
+  var rec={
+    k:f.bid?("b"+f.bid):("s"+f.id),
+    inoS:f.ino?String(f.ino):String(f.id).slice(-6),
+    ino:f.ino||0, date:f.date||"", ts:f.bid||f.id,
+    cust:f.cust||"", curr:f.curr||curSymbol,
+    total:Math.round(tot*10000)/10000, n:L.length, lines:L
+  };
+  rec.sig=snapHash(JSON.stringify(rec));
+  return rec;
+}
+function archBuild(){
+  var g={}, order=[], out={};
+  data.forEach(function(e){
+    if(e.type!=="sale") return;
+    var k=e.bid?("b"+e.bid):("s"+e.id);
+    if(!g[k]){ g[k]=[]; order.push(k); }
+    g[k].push(e);
   });
-  box.innerHTML = h;
+  order.forEach(function(k){ out[k]=archRec(g[k]); });
+  return out;
 }
 
+/* كل عمليات الكتابة تمر عبر سلسلة واحدة مرتّبة فلا يتعارض حذف مع مزامنة */
+function archEnq(fn){
+  var S=archState; if(!S) return Promise.resolve();
+  S.q=S.q.then(fn).catch(function(e){ S.err=String((e&&e.message)||e); });
+  return S.q;
+}
+function archSyncJob(){
+  var S=archState; if(!S||!archOk()) return Promise.resolve();
+  var A=StarDB.arch, cur=archBuild(), put=[], cl=[];
+  Object.keys(cur).forEach(function(k){ if(S.sigs[k]!==cur[k].sig) put.push(cur[k]); });
+  regArchive.forEach(function(r){ if(r&&r.id!=null&&!S.closes[r.id]) cl.push(r); });
+  return A.put("inv_arch",put).then(function(){
+    put.forEach(function(r){ S.sigs[r.k]=r.sig; });
+    return A.put("reg_arch",cl);
+  }).then(function(){ cl.forEach(function(r){ S.closes[r.id]=r; }); });
+}
+function archQueue(){
+  var S=archState; if(!S||!archOk()||S.timer) return;
+  S.timer=setTimeout(function(){ S.timer=null; archEnq(archSyncJob); },400);
+}
+/* ينتظر أي كتابة معلّقة (يُستدعى قبل البحث وعند إغلاق الصفحة) */
+function archFlush(){
+  var S=archState; if(!S) return Promise.resolve();
+  if(S.timer){ clearTimeout(S.timer); S.timer=null; return archEnq(archSyncJob); }
+  return S.q;
+}
+function archMarkDel(L){
+  var S=archState; if(!S||!archOk()||!L||!L.length) return;
+  var rec=archRec(L.slice());
+  rec.del=Date.now(); rec.sig=rec.sig+"|d";
+  archEnq(function(){ return StarDB.arch.put("inv_arch",[rec]).then(function(){ S.sigs[rec.k]=rec.sig; }); });
+}
+function archReset(){
+  var S=archState; if(!S) return;
+  if(S.timer){ clearTimeout(S.timer); S.timer=null; }
+  archEnq(function(){ return StarDB.arch.clear().then(function(){ S.sigs={}; S.closes={}; }); });
+}
+/* إغلاقات الصندوق: اتحاد ما في الذاكرة وما في الأرشيف الدائم */
+function archCloses(){
+  var m={};
+  if(archState) Object.keys(archState.closes).forEach(function(i){ m[i]=archState.closes[i]; });
+  regArchive.forEach(function(r){ if(r&&r.id!=null) m[r.id]=r; });
+  return Object.keys(m).map(function(i){ return m[i]; }).sort(function(a,b){ return a.id-b.id; });
+}
+
+/* ---------- البحث ---------- */
+function archSpec(q){
+  var s=String(q||"").trim().replace(/^#/,"").trim();
+  if(!s) return {kind:"latest",limit:20};
+  if(/^\d+$/.test(s)) return {kind:"ino",q:s,limit:50};
+  if(/^\d{4}[-\/]\d{1,2}([-\/]\d{1,2})?$/.test(s)){
+    var p=s.split(/[-\/]/);
+    return {kind:"date",q:p[0]+"-"+("0"+p[1]).slice(-2)+(p[2]?("-"+("0"+p[2]).slice(-2)):""),limit:50};
+  }
+  return {kind:"text",q:s,limit:50,test:function(r){
+    return smartMatch(r.cust,s)||r.lines.some(function(l){ return smartMatch(l.name,s); });
+  }};
+}
+function archMemQuery(sp){
+  var m=archBuild(), a=Object.keys(m).map(function(k){ return m[k]; });
+  if(sp.kind==="ino") a=a.filter(function(r){ return r.inoS.indexOf(sp.q)===0; });
+  else if(sp.kind==="date") a=a.filter(function(r){ return r.date.indexOf(sp.q)===0; });
+  else if(sp.kind==="text") a=a.filter(sp.test);
+  a.sort(function(x,y){ return y.ts-x.ts; });
+  return a.slice(0,sp.limit||50);
+}
+function archFind(q){
+  var sp=archSpec(q), p;
+  if(archOk()) p=StarDB.arch.query(sp).catch(function(){ return archMemQuery(sp); });
+  else p=Promise.resolve(archMemQuery(sp));
+  return p.then(function(list){
+    list=list.slice().sort(function(a,b){
+      if(sp.kind==="ino"){ var ea=a.inoS===sp.q?0:1, eb=b.inoS===sp.q?0:1; if(ea!==eb) return ea-eb; }
+      return b.ts-a.ts;
+    });
+    return {list:list,spec:sp};
+  });
+}
+
+/* ---------- واجهة أرشيف الفواتير ---------- */
+function invArchRender(res){
+  var box=$("invArchList"); if(!box) return;
+  var en=isEn(), list=res.list, hint="";
+  if(!list.length){
+    box.innerHTML='<div class="empty">'+(en?"No matching invoices":"لا توجد فواتير مطابقة")+'</div>';
+    return;
+  }
+  box.innerHTML="";
+  if(!res.spec.q){ hint=en?"Latest 20 invoices":"آخر 20 فاتورة"; }
+  else { hint=(en?"Results: ":"النتائج: ")+list.length+(list.length>=(res.spec.limit||50)?(en?" (showing first matches — refine your search)":" (أول النتائج — حدّد البحث أكثر)"):""); }
+  var h0=document.createElement("p"); h0.className="arch-hint"; h0.textContent=hint; box.appendChild(h0);
+  list.forEach(function(r){
+    var d=document.createElement("div"), cur=r.curr||curSymbol, tm=new Date(r.ts), h="";
+    d.className="invc";
+    r.lines.forEach(function(l){
+      if(isAdjE(l)&&l.price>0) return;
+      h+='<div class="invc-l"><span>'+esc(isAdjE(l)?(en?"Discount":"حسم"):l.name)+' <small>'+esc(catName(l.cat))+'</small></span><span>'+l.qty+' × '+money(l.price,cur)+'</span><b>'+money(l.price*l.qty,cur)+'</b></div>';
+    });
+    d.innerHTML='<div class="invc-h"><div><b>'+ic("receipt")+' '+t("txt_invoice")+' #'+esc(r.inoS)+'</b>'+
+      '<small style="display:block;color:var(--mut)">'+esc(r.date)+' '+pad(tm.getHours())+':'+pad(tm.getMinutes())+(r.cust?' · '+esc(r.cust):'')+'</small></div>'+
+      '<div style="display:flex;align-items:center;gap:8px"><b class="ok">'+money(r.total,cur)+'</b></div></div>'+h+
+      (r.del?'<small class="bad">'+(en?"Deleted on ":"محذوفة بتاريخ ")+esc(ymd(new Date(r.del)))+'</small>':'')+
+      '<div class="invc-a"><button class="inv-btn" data-act="pdf">'+ic("share")+'<span>'+t("btn_inv_pdf")+'</span></button><button class="inv-btn" data-act="print">'+ic("printer")+'<span>'+t("btn_inv_print")+'</span></button></div>';
+    d.querySelector('[data-act="pdf"]').onclick=function(){ exportInvoicePdf(invData(r.lines)); };
+    d.querySelector('[data-act="print"]').onclick=function(){ printInvoice(invData(r.lines)); };
+    box.appendChild(d);
+  });
+}
+var invSeq=0, invTimer=null;
+function invArchRefresh(){
+  var inp=$("invFind"); if(!inp||!$("invArchList")) return;
+  inp.placeholder=isEn()?"Invoice no., customer, item, or date (2026-03)":"رقم الفاتورة، اسم الزبون، القطعة، أو تاريخ (2026-03)";
+  var seq=++invSeq;
+  archFlush().then(function(){ return archFind(inp.value); })
+    .then(function(res){ if(seq===invSeq) invArchRender(res); })
+    .catch(function(){});
+}
+if($("invFind")) $("invFind").oninput=function(){ clearTimeout(invTimer); invTimer=setTimeout(invArchRefresh,250); };
+if($("regFind")) $("regFind").oninput=function(){ renderRegisterArchive(); };
+
+/* ---------- أرشيف إغلاقات الصندوق ---------- */
+function renderRegisterArchive(){
+  var box=$("regArchiveList"); if(!box) return;
+  var en=currentLang==="en", all=archCloses(), rf=$("regFind");
+  var f=(rf?rf.value:"").trim().replace(/\//g,"-");
+  if(rf) rf.placeholder=en?"Filter by date (2026-03 or 2026-03-15)":"تصفية بالتاريخ (2026-03 أو 2026-03-15)";
+  var list=f?all.filter(function(r){ return String(r.date||"").indexOf(f)>-1; }):all;
+  if(!list.length){
+    box.innerHTML='<div class="empty">'+(f?(en?"No closures match":"لا توجد إغلاقات مطابقة"):(en?"No register closures yet":"لا توجد إغلاقات مسجلة بعد"))+'</div>';
+  } else {
+    var h="", shown=list.slice().reverse().slice(0,60);
+    shown.forEach(function(reg){
+      h += '<div class="item" style="display:block;padding:8px 0">' +
+        '<div style="display:flex;justify-content:space-between"><b>' + ic("calendar") + ' ' + reg.date + ' ' + (reg.time||"") + '</b><b class="ok">' + fmt(reg.net) + '</b></div>' +
+        '<small>' + (en?"Sales: ":"المبيعات: ") + fmt(reg.sales) + (reg.mnt?' · ' + (en?"Repairs: ":"الصيانة: ") + fmt(reg.mnt):'') + ' · ' + (en?"Expenses: ":"المصاريف: ") + fmt(reg.exp) + (reg.dn?' · '+(en?"New debts: ":"ديون جديدة: ")+fmt(reg.dn):'') + (reg.dp?' · '+(en?"Debts collected: ":"تحصيل ديون: ")+fmt(reg.dp):'') + ' · ' + (en?"Actual Cash: ":"العد الفعلي: ") + fmt(reg.actual) + '</small>' +
+      '</div>';
+    });
+    if(list.length>shown.length) h+='<p class="arch-hint">'+(en?("Showing latest "+shown.length+" of "+list.length+" — use the filter above to find older closures"):("يعرض أحدث "+shown.length+" من "+list.length+" — استخدم التصفية أعلاه للوصول للأقدم"))+'</p>';
+    box.innerHTML=h;
+  }
+  var vr=$("vRep"); if(vr&&vr.style.display!=="none") invArchRefresh();
+}
+
+/* تهيئة الأرشيف: قراءة البصمات (بدون قراءة الفواتير) + ترحيل أولي لكل ما هو موجود + إغلاقات الصندوق */
+archState={sigs:{},closes:{},q:Promise.resolve(),timer:null,err:""};
+if(archOk()){
+  archEnq(function(){
+    return StarDB.arch.sigs().then(function(m){ archState.sigs=m; return StarDB.arch.all("reg_arch"); })
+      .then(function(arr){ arr.forEach(function(r){ archState.closes[r.id]=r; }); })
+      .then(archSyncJob);
+  }).then(function(){ try{ renderRegisterArchive(); }catch(e){} });
+  document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="hidden") archFlush(); });
+  window.addEventListener("pagehide",function(){ archFlush(); });
+}
+
+/* =====================================================================
+   المرحلة 3: نافذة الإحصائيات والرسوم البيانية (بجانب الجرد)
+   - أرباح شهرية للسنة المختارة + أرباح سنوية + أكثر القطع مبيعاً.
+   - الربح يُحسب بنفس دالة calc المستخدمة في الجرد (يشمل المصاريف والصيانة والأرباح المؤجلة للديون).
+   - رسوم SVG بدون أي مكتبة خارجية فتعمل دون إنترنت وتتبع الثيم تلقائياً.
+   ===================================================================== */
+var stTopP="m";
+function stCompact(n){
+  var a=Math.abs(n), sg=n<0?"-":"";
+  if(a>=1e9) return sg+(a/1e9).toFixed(1).replace(/\.0$/,"")+"B";
+  if(a>=1e6) return sg+(a/1e6).toFixed(1).replace(/\.0$/,"")+"M";
+  if(a>=1e4) return sg+Math.round(a/1e3)+"K";
+  if(a>=1e3) return sg+(a/1e3).toFixed(1).replace(/\.0$/,"")+"K";
+  return sg+String(Math.round(a*10)/10);
+}
+/* تدريج "رقمي لطيف" لمحور الرسم */
+function stScale(mn,mx){
+  if(mx===mn){ mx=mn+1; }
+  var rough=(mx-mn)/3, mag=Math.pow(10,Math.floor(Math.log(rough)/Math.LN10)), nr=rough/mag;
+  var st=(nr<=1?1:nr<=2?2:nr<=5?5:10)*mag;
+  return {lo:Math.floor(mn/st)*st, hi:Math.ceil(mx/st)*st, st:st};
+}
+function stChart(vals,labels,dets){
+  var W=360,H=210,pl=42,pr=8,pt=20,pb=26,n=vals.length,iw=W-pl-pr,ih=H-pt-pb;
+  var sc=stScale(Math.min.apply(null,vals.concat([0])),Math.max.apply(null,vals.concat([0])));
+  var y=function(v){ return pt+(sc.hi-v)/(sc.hi-sc.lo)*ih; }, y0=y(0), step=iw/n, bw=Math.min(34,step*0.62), g, s;
+  s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="direction:ltr;display:block" role="img">';
+  for(g=sc.lo; g<=sc.hi+sc.st/2; g+=sc.st){
+    var gy=y(g);
+    s+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+gy+'" y2="'+gy+'" style="stroke:var(--line)" stroke-width="1"/>'+
+       '<text x="'+(pl-5)+'" y="'+(gy+3)+'" text-anchor="end" font-size="9" style="fill:var(--mut)">'+stCompact(g)+'</text>';
+  }
+  s+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y0+'" y2="'+y0+'" style="stroke:var(--mut)" stroke-opacity=".7" stroke-width="1"/>';
+  vals.forEach(function(v,i){
+    var cx=pl+step*i+step/2, yy=y(v), top=Math.min(yy,y0), h=Math.abs(yy-y0);
+    if(v!==0&&h<1.5) h=1.5;
+    s+='<g data-d="'+esc(dets[i])+'" style="cursor:pointer"><title>'+esc(dets[i])+'</title>'+
+       '<rect x="'+(cx-step/2)+'" y="'+pt+'" width="'+step+'" height="'+ih+'" fill="transparent"/>'+
+       '<rect x="'+(cx-bw/2)+'" y="'+top+'" width="'+bw+'" height="'+h+'" rx="3" style="fill:'+(v<0?'var(--bad)':'var(--pri)')+'"/>';
+    if(v!==0) s+='<text x="'+cx+'" y="'+(v>0?top-3:top+h+10)+'" text-anchor="middle" font-size="8.5" style="fill:var(--text)">'+stCompact(v)+'</text>';
+    s+='<text x="'+cx+'" y="'+(H-pb+13)+'" text-anchor="middle" font-size="9" style="fill:var(--mut)">'+esc(labels[i])+'</text></g>';
+  });
+  return s+'</svg>';
+}
+function stYears(){
+  var o={};
+  data.forEach(function(e){ if(e.date) o[e.date.slice(0,4)]=1; });
+  debts.forEach(function(d){ (d.pays||[]).forEach(function(p){ o[ymd(new Date(p.id)).slice(0,4)]=1; }); });
+  o[String(new Date().getFullYear())]=1;
+  return Object.keys(o).sort();
+}
+function stCard(l,v,cls,prf){ return '<div class="stat'+(prf?' prf':'')+'"><small>'+l+'</small><b class="'+(cls||'')+'">'+v+'</b></div>'; }
+
+function renderStats(){
+  var vw=$("vStat"); if(!vw||vw.style.display==="none") return;
+  var en=isEn(), sel=$("stYear"), years=stYears(), y=sel.value||String(new Date().getFullYear());
+  if(years.indexOf(y)<0) y=years[years.length-1];
+  sel.innerHTML=years.slice().reverse().map(function(v){ return '<option value="'+v+'"'+(v===y?' selected':'')+'>'+v+'</option>'; }).join("");
+
+  /* --- شهرياً --- */
+  var byM={}, byY={}, yAll=[];
+  data.forEach(function(e){
+    if(!e.date) return;
+    var yy=e.date.slice(0,4); (byY[yy]=byY[yy]||[]).push(e);
+    if(yy===y){ var mm=e.date.slice(5,7); (byM[mm]=byM[mm]||[]).push(e); yAll.push(e); }
+  });
+  var mv=[], ml=[], md=[], best=-1, active=0, m, mm, r;
+  for(m=1;m<=12;m++){
+    mm=pad(m); r=calc(byM[mm]||[],{lo:y+"-"+mm+"-01",hi:y+"-"+mm+"-31",sec:"g"});
+    mv.push(Math.round(r.tn*100)/100); ml.push(mm);
+    md.push(y+"-"+mm+" · "+(en?"Net profit: ":"صافي الربح: ")+fmt(r.tn)+" · "+(en?"Revenue: ":"الإيرادات: ")+fmt(r.s-r.rt+r.ms));
+    if((byM[mm]&&byM[mm].length)||r.tn!==0) active++;
+    if(mv[m-1]>0&&(best<0||mv[m-1]>mv[best])) best=m-1;
+  }
+  var yr=calc(yAll,{lo:y+"-01-01",hi:y+"-12-31",sec:"g"}), cl=function(v){ return v>=0?"ok":"bad"; };
+  $("stHint").textContent=en?"Tap a bar to see its details. Profit uses the same method as the Reports tab.":"اضغط على أي عمود لعرض تفاصيله. الربح محسوب بنفس طريقة تبويب الجرد.";
+  $("stGrid").innerHTML=
+    stCard(en?"Net profit (year)":"صافي ربح السنة",fmt(yr.tn),cl(yr.tn),1)+
+    stCard(en?"Revenue (year)":"إيرادات السنة",fmt(yr.s-yr.rt+yr.ms))+
+    stCard(en?"Expenses (year)":"مصاريف السنة",fmt(yr.x),"",1)+
+    stCard(en?"Best month":"أفضل شهر",best>=0?(ml[best]+" · "+fmt(mv[best])):"—","",1)+
+    stCard(en?"Monthly average":"متوسط الشهر",fmt(active?yr.tn/active:0),"",1);
+
+  var anyMon=mv.some(function(v){ return v!==0; });
+  $("stMonChart").innerHTML=anyMon?stChart(mv,ml,md):'<div class="empty">'+(en?"No data for this year":"لا توجد بيانات لهذه السنة")+'</div>';
+  $("stMonDet").textContent="";
+
+  /* --- سنوياً (آخر 8 سنوات) --- */
+  var ys=years.slice(-8), yv=[], yd=[];
+  ys.forEach(function(yy){
+    var q=calc(byY[yy]||[],{lo:yy+"-01-01",hi:yy+"-12-31",sec:"g"});
+    yv.push(Math.round(q.tn*100)/100);
+    yd.push(yy+" · "+(en?"Net profit: ":"صافي الربح: ")+fmt(q.tn)+" · "+(en?"Revenue: ":"الإيرادات: ")+fmt(q.s-q.rt+q.ms));
+  });
+  $("stYrChart").innerHTML=yv.some(function(v){ return v!==0; })?stChart(yv,ys,yd):'<div class="empty">'+(en?"No data yet":"لا توجد بيانات بعد")+'</div>';
+  $("stYrDet").textContent="";
+
+  /* --- الأكثر مبيعاً --- */
+  var lo,hi,now=new Date();
+  if(stTopP==="m"){ lo=ymd(new Date(now.getFullYear(),now.getMonth(),1)); hi=ymd(new Date(now.getFullYear(),now.getMonth()+1,0)); }
+  else if(stTopP==="y"){ lo=y+"-01-01"; hi=y+"-12-31"; }
+  else { lo="0000-00-00"; hi="9999-99-99"; }
+  var tops={};
+  data.forEach(function(e){
+    if(e.type!=="sale"||isAdjE(e)||!e.date||e.date<lo||e.date>hi) return;
+    var o=tops[e.name]=tops[e.name]||{q:0,v:0,c:e.cat};
+    o.q+=e.qty; o.v+=e.price*e.qty;
+  });
+  var tk=Object.keys(tops).sort(function(a,b){ return tops[b].q-tops[a].q||tops[b].v-tops[a].v; }).slice(0,10);
+  var mx=tk.length?tops[tk[0]].q:1;
+  $("stTop").innerHTML=tk.length?tk.map(function(k,i){
+    var o=tops[k];
+    return '<div class="st-row"><div class="st-h"><div><b>'+(i+1)+'. '+esc(k)+'</b><small>'+esc(catName(o.c))+' · '+(en?"Sold: ":"المباع: ")+o.q+'</small></div><b class="ok">'+fmt(o.v)+'</b></div>'+
+           '<div class="st-bar"><i style="width:'+Math.max(3,Math.round(o.q/mx*100))+'%"></i></div></div>';
+  }).join(""):'<div class="empty">'+t("empty_top")+'</div>';
+}
+if($("stYear")) $("stYear").onchange=renderStats;
+document.querySelectorAll("#stTopTabs button").forEach(function(b){
+  b.onclick=function(){
+    stTopP=b.getAttribute("data-t");
+    document.querySelectorAll("#stTopTabs button").forEach(function(x){ x.className=x===b?"on":""; });
+    renderStats();
+  };
+});
+["stMonChart:stMonDet","stYrChart:stYrDet"].forEach(function(p){
+  var a=p.split(":"), c=$(a[0]);
+  if(c) c.onclick=function(ev){
+    var g=ev.target&&ev.target.closest?ev.target.closest("[data-d]"):null;
+    if(g) $(a[1]).textContent=g.getAttribute("data-d");
+  };
+});
+
 var TOMB="telecom_tomb_v1", LB="telecom_lastbackup", tomb={}, snap={};
-try{ tomb=JSON.parse(localStorage.getItem(TOMB)||"{}"); }catch(e){}
+try{ tomb=JSON.parse(StarDB.getItem(TOMB)||"{}"); }catch(e){}
 function inv1(i){ var u=i.upd; delete i.upd; var j=JSON.stringify(i); if(u) i.upd=u; return j; }
 function fresh(){ inv.forEach(function(i){ snap[i.id]=inv1(i); }); }
 function stamp(){ inv.forEach(function(i){ var j=inv1(i); if(snap[i.id]!==j){ snap[i.id]=j; i.upd=Date.now(); } }); }
 fresh();
 function bmsg(tMsg){ var el=$("bkMsg"); if(el) el.textContent=tMsg; }
-function pack(){ return JSON.stringify({app:"telecom-acc",v:1,exported:new Date().toISOString(),data:data,inv:inv,rep:rep,regArchive:regArchive,debts:debts,tomb:tomb}); }
+function pack(){ return JSON.stringify({app:"telecom-acc",v:1,exported:new Date().toISOString(),data:data,inv:inv,rep:rep,regArchive:archCloses(),debts:debts,tomb:tomb}); }
+/* ===== تشفير النسخ الاحتياطية (المرحلة 4: AES-256-GCM) =====
+   يحمي الحسابات من القراءة أو التعديل اليدوي، ويكشف أي تلاعب فوراً،
+   مع دعم المزامنة بين أندرويد وويندوز واستيراد النسخ القديمة غير المشفّرة. */
+var BK_ENC_TAG="starpos-enc", _bkKeyP=null;
+function bkKey(){
+  if(_bkKeyP) return _bkKeyP;
+  if(!(window.crypto&&crypto.subtle)) return Promise.reject("no-crypto");
+  var raw=new TextEncoder().encode("StarPOS#BackupKey!2026$HasanESulaiman@v2");
+  _bkKeyP=crypto.subtle.digest("SHA-256",raw).then(function(h){
+    return crypto.subtle.importKey("raw",h,{name:"AES-GCM"},false,["encrypt","decrypt"]);
+  });
+  return _bkKeyP;
+}
+function bkB64ToU8(s){
+  var b=atob(s), u=new Uint8Array(b.length);
+  for(var i=0;i<b.length;i++) u[i]=b.charCodeAt(i);
+  return u;
+}
+function packEncrypted(){
+  var plain=pack();
+  return bkKey().then(function(k){
+    var iv=new Uint8Array(12); crypto.getRandomValues(iv);
+    return crypto.subtle.encrypt({name:"AES-GCM",iv:iv},k,new TextEncoder().encode(plain)).then(function(buf){
+      return JSON.stringify({app:BK_ENC_TAG,v:2,iv:bytesToB64(iv),ct:bytesToB64(new Uint8Array(buf))});
+    });
+  });
+}
+function unpackBackup(rawStr){
+  return Promise.resolve().then(function(){
+    var s=String(rawStr||"").trim();
+    if(!s) throw new Error("empty");
+    var o=JSON.parse(s);
+    if(o && o.app===BK_ENC_TAG && o.iv && o.ct){
+      return bkKey().then(function(k){
+        return crypto.subtle.decrypt({name:"AES-GCM",iv:bkB64ToU8(o.iv)},k,bkB64ToU8(o.ct));
+      }).then(function(buf){
+        return JSON.parse(new TextDecoder().decode(buf));
+      });
+    }
+    return o;
+  }).then(function(o){
+    if(!o||o.app!=="telecom-acc"||!Array.isArray(o.data)||!Array.isArray(o.inv)) throw new Error("invalid");
+    o.tomb=o.tomb||{};
+    o.rep=Array.isArray(o.rep)?o.rep:[];
+    o.regArchive=Array.isArray(o.regArchive)?o.regArchive:[];
+    o.debts=Array.isArray(o.debts)?o.debts:[];
+    migrate(o);
+    return o;
+  });
+}
 function bkInfo(){
   var tVal=null; try{ tVal=localStorage.getItem(LB); }catch(e){}
   var el=$("bkLast"); if(!el) return;
@@ -2697,6 +3357,14 @@ function bkInfo(){
   el.textContent=(currentLang==="en")?("Last backup: "+tVal.slice(0,10)+(days>0?" ("+days+" days ago)":" (Today)")):("آخر حفظ: "+tVal.slice(0,10)+(days>0?" (قبل "+days+" يوم)":" (اليوم)"));
   el.className=days>7?"low":"";
 }
+function dbStatInfo(){
+  var p=$("bkLast"); if(!p) return;
+  var e=$("dbStat");
+  if(!e){ e=document.createElement("p"); e.id="dbStat"; e.style.cssText="margin:4px 0 0;font-size:12px;color:var(--mut)"; p.parentNode.insertBefore(e,p.nextSibling); }
+  var s=StarDB.status(), en=(currentLang==="en");
+  e.textContent=(en?"Storage: ":"التخزين: ")+(s.mode==="idb"?"IndexedDB":(en?"localStorage (fallback)":"localStorage (احتياطي)"))+" · "+data.length+(en?" records · ":" سجل · ")+inv.length+(en?" items":" صنف");
+}
+var _bkInfo0=bkInfo; bkInfo=function(){ _bkInfo0(); dbStatInfo(); };
 bkInfo();
 
 var CAP=window.Capacitor, FS=(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform())?CAP.Plugins.Filesystem:null;
@@ -2750,131 +3418,96 @@ function fsDelete(name){
   });
 }
 
-var autoTimer = null, lastAutoHash = "", SNAPKEEP = 60;
 function pad(n){ return String(n).padStart(2, "0"); }
-function stampName(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"_"+pad(d.getHours())+"-"+pad(d.getMinutes()); }
 function snapHash(s){ var h=5381; for(var i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))|0; return s.length+":"+h; }
 
-function snapNames(r){
-  return (r.files||[]).map(function(f){ return f.name||f; })
-    .filter(function(x){ return /^telecom-snap-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}\.json$/.test(x); }).sort();
-}
-
-function pruneOldSnaps(){
-  fsList().then(function(r){
-    var n = snapNames(r);
-    n.slice(0, Math.max(0, n.length - SNAPKEEP)).forEach(function(x){ fsDelete(x).catch(function(){}); });
-  }).catch(function(){});
-}
-
-function runAutoBackup(manual){
-  if(!FS) return Promise.resolve(false);
-  var bodyStr = pack(), h = snapHash(bodyStr);
-  if(!manual && lastAutoHash === h) return Promise.resolve(false);
-  var now = new Date(), snapFileName = "telecom-snap-" + stampName(now) + ".json";
-
-  return askPerm().then(function(){
-    return fsWrite("telecom-backup-latest.json", bodyStr);
-  }).then(function(){
-    return fsWrite(snapFileName, bodyStr);
-  }).then(function(){
-    lastAutoHash = h;
-    markBackup();
-    pruneOldSnaps();
-    var timeTxt = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    var st = $("autoStatusTxt");
-    if(st) st.textContent = (currentLang==="en"?"Last auto-save: ":"آخر حفظ تلقائي: ") + timeTxt + " (" + locName() + ")";
-    listSnaps();
-    return true;
-  }).catch(function(e){
-    return false;
-  });
-}
-
-function triggerInstantBackup(){
-  clearTimeout(autoTimer);
-  autoTimer = setTimeout(function(){ runAutoBackup(false); }, 1000);
-}
-
-var _origSave = save;
-save = function(){
-  _origSave();
-  triggerInstantBackup();
-};
-
-function listSnaps(){
-  if(!FS) return;
-  fsList().then(function(r){
-    var n = snapNames(r).reverse().slice(0, 10), L = $("schList");
-    if(!L) return;
-    L.innerHTML = n.length ? "" : '<div class="empty">'+(currentLang==="en"?"No snapshots found":"لا توجد نسخ محفوظة بعد")+'</div>';
-    n.forEach(function(x){
-      var m = x.match(/telecom-snap-(\d{4}-\d{2}-\d{2})_(\d{2})-(\d{2})/);
-      var d = document.createElement("div"); d.className = "item";
-      var dateLabel = m ? (m[1] + " " + m[2] + ":" + m[3]) : x;
-      d.innerHTML = '<b>' + dateLabel + '</b><button class="qb" style="width:auto;padding:0 10px;font-size:13px">'+(currentLang==="en"?"Restore":"استعادة")+'</button>';
-      d.querySelector("button").onclick = function(){ restoreSnap(x); };
-      L.appendChild(d);
-    });
-  }).catch(function(){
-    var L = $("schList"); if(L) L.innerHTML = '<div class="empty">'+(currentLang==="en"?"No snapshots found":"لا توجد نسخ محفوظة بعد")+'</div>';
-  });
-}
-
-function restoreSnap(name){
-  fsRead(name).then(function(r){
-    var o = JSON.parse(r.data);
-    if(!o || o.app !== "telecom-acc" || !Array.isArray(o.data) || !Array.isArray(o.inv)) throw 0;
-    if(!Array.isArray(o.rep)) o.rep=[]; migrate(o);
-    var confirmMsg = (currentLang==="en")
-      ? ("Replace current data with snapshot (" + name.replace("telecom-snap-", "").replace(".json", "").replace("_", " ") + ")?")
-      : ("استبدال بياناتك الحالية بالنسخة (" + name.replace("telecom-snap-", "").replace(".json", "").replace("_", " ") + ")؟");
-    if(!confirm(confirmMsg)) return;
-    data = o.data; inv = o.inv; rep = Array.isArray(o.rep) ? o.rep : []; tomb = o.tomb || {};
-    regArchive = Array.isArray(o.regArchive) ? o.regArchive : [];
-    debts = Array.isArray(o.debts) ? o.debts : [];
-    fresh(); save(); renderAll(); listSnaps();
-    bmsg((currentLang==="en")?"Restored successfully ":"تمت الاستعادة بنجاح ");
-  }).catch(function(){
-    bmsg((currentLang==="en")?"Could not read this snapshot.":"تعذّرت قراءة هذه النسخة.");
-  });
-}
-
-var btnBNow = $("btnBackupNow");
-if(btnBNow){
-  btnBNow.onclick = function(){
-    runAutoBackup(true).then(function(ok){
-      bmsg(ok ? ((currentLang==="en")?"Snapshot saved to device storage ":"تم حفظ نسخة إضافية بنجاح في ذاكرة الهاتف ") : ((currentLang==="en")?"Save failed.":"تعذّر الحفظ."));
-    });
-  };
-}
-
-function forceCopyText(text){ copyToClipboard(text, function(){}, function(){}); }
-
-function saveBackupUniversal(){
-  var dataStr = pack();
-  var fileName = "telecom-backup-" + today() + ".json";
-  forceCopyText(dataStr);
-  $("bkOut").style.display = "";
-  $("bkOut").value = dataStr;
-  markBackup();
-  
-  if(FS){
-    askPerm().then(function(){
-      return fsWrite(fileName, dataStr);
-    }).then(function(){
-      bmsg((currentLang==="en")?("Saved backup to " + locName() + " (" + fileName + ") "):("تم حفظ النسخة بنجاح في مجلد " + locName() + " (" + fileName + ") "));
-      listSnaps();
-    }).catch(function(){
-      bmsg((currentLang==="en")?"Data copied to clipboard ":"تم نسخ كامل بياناتك للحافظة ");
-    });
-    return;
+/* ===== تنبيه النسخ الاحتياطي كل 7 أيام (يظهر بوضعي المالك والعامل) ===== */
+var BK_REMIND_MS = 7 * 864e5, BK_FIRST_KEY = "star_bk_first_ts";
+function getBackupAnchorTs(){
+  var last=null; try{ last=localStorage.getItem(LB); }catch(e){}
+  if(last){
+    var ts=new Date(last).getTime();
+    if(!isNaN(ts)) return ts;
   }
+  var first=0; try{ first=parseInt(localStorage.getItem(BK_FIRST_KEY),10)||0; }catch(e){}
+  if(!first){
+    first=Date.now();
+    if(data.length && data[0] && data[0].id && data[0].id < first) first=data[0].id;
+    try{ localStorage.setItem(BK_FIRST_KEY,String(first)); }catch(e){}
+  }
+  return first;
+}
+function updateBkRemind(){
+  var bar=$("bkRemindBar"); if(!bar) return;
+  var en=(currentLang==="en");
+  var elapsed=Date.now()-getBackupAnchorTs();
+  var due=(elapsed>=BK_REMIND_MS);
+  bar.style.display=due?"flex":"none";
+  if(due){
+    var days=Math.max(7,Math.floor(elapsed/864e5));
+    var txt=$("bkRemindTxt"), act=$("bkRemindAct");
+    if(txt) txt.textContent=en
+      ? ("Backup reminder: "+days+" days since last backup — tap here to back up now")
+      : ("تنبيه: مرّ "+days+" يوماً دون نسخة احتياطية — اضغط هنا لإنشاء نسخة الآن");
+    if(act) act.textContent=en?"Backup Now":"نسخ الآن";
+  }
+}
+var _bkInfo1=bkInfo;
+bkInfo=function(){ _bkInfo1(); updateBkRemind(); };
+updateBkRemind();
+setInterval(updateBkRemind, 3600000);
 
-  fallbackDownloadBlob(dataStr, fileName);
+function bkFeedback(msg, fromBanner){
+  bmsg(msg);
+  if(fromBanner){
+    if($("vSales") && $("vSales").style.display!=="none") saleNote(msg);
+    else alert(msg);
+  }
 }
 
-function fallbackDownloadBlob(dataStr, fileName){
+function saveBackupUniversal(fromBanner){
+  var en=(currentLang==="en");
+  return packEncrypted().then(function(dataStr){
+    var fileName = "starpos-backup-" + today() + ".json";
+    var SH = isAndroidApp() ? plug("Share") : null;
+    if(SH){
+      var cachePath = "backups/" + fileName;
+      return FS.writeFile({path:cachePath, data:dataStr, directory:"CACHE", encoding:"utf8", recursive:true})
+        .then(function(){ return FS.getUri({path:cachePath, directory:"CACHE"}); })
+        .then(function(u){
+          return SH.share({
+            title: fileName,
+            dialogTitle: en ? "Share Encrypted Backup" : "مشاركة النسخة الاحتياطية المشفّرة",
+            url: u.uri
+          });
+        })
+        .then(function(){
+          markBackup();
+          bkFeedback(en ? ("Encrypted backup created (" + fileName + ")") : ("تم إنشاء النسخة الاحتياطية المشفّرة بنجاح (" + fileName + ")"), fromBanner);
+        })
+        .catch(function(e){
+          if(isCancel(e)) return;
+          return askPerm().then(function(){ return fsWrite(fileName, dataStr); }).then(function(){
+            markBackup();
+            bkFeedback(en ? ("Encrypted backup saved to " + locName() + " (" + fileName + ")") : ("تم حفظ النسخة المشفّرة في " + locName() + " (" + fileName + ")"), fromBanner);
+          });
+        });
+    }
+    if(FS){
+      return askPerm().then(function(){ return fsWrite(fileName, dataStr); }).then(function(){
+        markBackup();
+        bkFeedback(en ? ("Encrypted backup saved to " + locName() + " (" + fileName + ")") : ("تم حفظ النسخة المشفّرة في " + locName() + " (" + fileName + ")"), fromBanner);
+      });
+    }
+    fallbackDownloadBlob(dataStr, fileName, fromBanner);
+    markBackup();
+  }).catch(function(){
+    bkFeedback(en ? "Could not create encrypted backup." : "تعذّر إنشاء النسخة الاحتياطية المشفّرة.", fromBanner);
+  });
+}
+
+function fallbackDownloadBlob(dataStr, fileName, fromBanner){
+  var en=(currentLang==="en");
   try {
     var b = new Blob([dataStr], {type: "application/json"});
     var u = URL.createObjectURL(b);
@@ -2885,111 +3518,88 @@ function fallbackDownloadBlob(dataStr, fileName){
     a.click();
     document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(u); }, 2000);
-    bmsg((currentLang==="en")?("Copied to clipboard & Download started (" + fileName + ")."):("تم نسخ البيانات للحافظة وبدء تحميل الملف (" + fileName + ")."));
+    bkFeedback(en ? ("Encrypted backup downloaded (" + fileName + ").") : ("تم تحميل ملف النسخة المشفّرة بنجاح (" + fileName + ")."), fromBanner);
   } catch(e) {
-    bmsg((currentLang==="en")?"Data copied to clipboard ":"تم نسخ كامل بياناتك للحافظة وعرضها في المربع أدناه ");
+    bkFeedback(en ? "Could not download backup file." : "تعذّر تحميل ملف النسخة الاحتياطية.", fromBanner);
   }
 }
 
-async function pasteFromClipboardToBackup(){
-  var pasted = false;
-  try {
-    if(navigator.clipboard && navigator.clipboard.readText){
-      var txt = await navigator.clipboard.readText();
-      if(txt && txt.indexOf("telecom-acc") > -1){
-        $("bkIn").value = txt;
-        bmsg((currentLang==="en")?"Pasted backup data Click Merge or Replace.":"تم لصق بيانات النسخة من الحافظة بنجاح اضغط «دمج» أو «استبدال».");
-        pasted = true;
-      }
-    }
-  } catch(e){}
+if($("bkRemindBar")) $("bkRemindBar").onclick = function(){ saveBackupUniversal(true); };
+if($("bkSave")) $("bkSave").onclick = function(){ saveBackupUniversal(false); };
 
-  if(!pasted){
-    $("bkIn").focus();
-    $("bkIn").select();
-    bmsg((currentLang==="en")?"Paste backup text in the box below then click Merge.":"الصق النص الذي نسخته داخل المربع أدناه ثم اضغط «دمج».");
-  }
+var importedBackupText = "";
+if($("impFile")){
+  $("impFile").onchange = function(){
+    var f = this.files && this.files[0];
+    importedBackupText = "";
+    var st = $("impFileStatus");
+    if(!f){ if(st) st.textContent=""; return; }
+    var r = new FileReader();
+    r.onload = function(){
+      importedBackupText = String(r.result || "");
+      var msg = (currentLang==="en") ? ("File loaded: " + f.name + " — choose Merge or Replace.") : ("تم تحميل الملف: " + f.name + " — اختر دمج أو استبدال.");
+      if(st) st.textContent = msg;
+      bmsg(msg);
+    };
+    r.readAsText(f);
+  };
 }
-
-$("bkSave").onclick = function(){ saveBackupUniversal(); };
-$("bkTxt").onclick = function(){
-  var tVal=pack(), a=$("bkOut"), ok=false; a.style.display=""; a.value=tVal; a.focus(); a.select();
-  try{
-    if(navigator.clipboard&&navigator.clipboard.writeText){
-      ok=true;
-      navigator.clipboard.writeText(tVal).then(function(){
-        bmsg((currentLang==="en")?"Text copied ":"تم نسخ النص الصقه في رسالة لنفسك.");
-      },function(){
-        bmsg((currentLang==="en")?"Select and copy text manually.":"حدّد النص في المربع وانسخه يدوياً.");
-      });
-    }
-  }catch(e){}
-  if(!ok) bmsg((currentLang==="en")?"Select and copy text manually.":"حدّد النص في المربع وانسخه يدوياً.");
-  markBackup();
-};
-$("btnPasteClip").onclick = function(){ pasteFromClipboardToBackup(); };
-
-$("impFile").onchange=function(){
-  var f=this.files&&this.files[0]; if(!f) return;
-  var r=new FileReader();
-  r.onload=function(){ $("bkIn").value=r.result; bmsg((currentLang==="en")?"File loaded. Choose Merge or Replace.":"تم تحميل الملف. اختر دمج أو استبدال."); };
-  r.readAsText(f);
-};
 function readIn(){
-  try{
-    var o=JSON.parse($("bkIn").value.trim());
-    if(!o||o.app!=="telecom-acc"||!Array.isArray(o.data)||!Array.isArray(o.inv)) throw 0;
-    o.tomb=o.tomb||{};
-    o.rep=Array.isArray(o.rep)?o.rep:[];
-    o.regArchive=Array.isArray(o.regArchive)?o.regArchive:[];
-    o.debts=Array.isArray(o.debts)?o.debts:[];
-    migrate(o);
-    return o;
-  } catch(e){
-    bmsg((currentLang==="en")?"Invalid backup data.":"النص أو الملف غير صالح. تأكد أنه نسخة من هذا البرنامج.");
-    return null;
+  if(!importedBackupText || !importedBackupText.trim()){
+    bmsg((currentLang==="en") ? "Please choose a backup file (.json) first." : "يرجى اختيار ملف النسخة الاحتياطية (.json) أولاً.");
+    return Promise.resolve(null);
   }
+  return unpackBackup(importedBackupText).catch(function(){
+    bmsg((currentLang==="en") ? "Invalid or tampered backup file." : "ملف النسخة غير صالح أو تم التلاعب به. تأكد أنه ملف أصلي من هذا البرنامج.");
+    return null;
+  });
 }
 $("impMerge").onclick=function(){
-  var o=readIn(); if(!o) return;
-  var confirmMsg = (currentLang==="en")
-    ? ("Merge " + o.data.length + " transactions and " + o.inv.length + " items with current data?")
-    : ("دمج "+o.data.length+" عملية و"+o.inv.length+" صنف مع بياناتك الحالية؟");
-  if(!confirm(confirmMsg)) return;
-  Object.keys(o.tomb).forEach(function(k){ tomb[k]=Math.max(tomb[k]||0,o.tomb[k]); });
-  var have={}; data.forEach(function(e){ have[e.id]=1; });
-  var add=0; o.data.forEach(function(e){ if(!have[e.id]&&!tomb[e.id]){ data.push(e); add++; } });
-  data=data.filter(function(e){ return !tomb[e.id]; }); data.sort(function(a,b){ return a.id-b.id; });
-  var im={}; inv.forEach(function(i){ im[i.id]=i; });
-  var addi=0, upd=0;
-  o.inv.forEach(function(i){
-    if(tomb[i.id]) return; var l=im[i.id];
-    if(!l){ inv.push(i); addi++; }
-    else if((i.upd||0)>(l.upd||0)){ Object.keys(l).forEach(function(k){ delete l[k]; }); Object.keys(i).forEach(function(k){ l[k]=i[k]; }); upd++; }
+  readIn().then(function(o){
+    if(!o) return;
+    var confirmMsg = (currentLang==="en")
+      ? ("Merge " + o.data.length + " transactions and " + o.inv.length + " items with current data?")
+      : ("دمج "+o.data.length+" عملية و"+o.inv.length+" صنف مع بياناتك الحالية؟");
+    if(!confirm(confirmMsg)) return;
+    Object.keys(o.tomb).forEach(function(k){ tomb[k]=Math.max(tomb[k]||0,o.tomb[k]); });
+    var have={}; data.forEach(function(e){ have[e.id]=1; });
+    var add=0; o.data.forEach(function(e){ if(!have[e.id]&&!tomb[e.id]){ data.push(e); add++; } });
+    data=data.filter(function(e){ return !tomb[e.id]; }); data.sort(function(a,b){ return a.id-b.id; });
+    var im={}; inv.forEach(function(i){ im[i.id]=i; });
+    var addi=0, upd=0;
+    o.inv.forEach(function(i){
+      if(tomb[i.id]) return; var l=im[i.id];
+      if(!l){ inv.push(i); addi++; }
+      else if((i.upd||0)>(l.upd||0)){ Object.keys(l).forEach(function(k){ delete l[k]; }); Object.keys(i).forEach(function(k){ l[k]=i[k]; }); upd++; }
+    });
+    inv=inv.filter(function(i){ return !tomb[i.id]; });
+    var rm={}; rep.forEach(function(tVal){ rm[tVal.id]=tVal; });
+    o.rep.forEach(function(tVal){ if(tomb[tVal.id]) return; var l=rm[tVal.id]; if(!l) rep.push(tVal); else if((tVal.upd||0)>(l.upd||0)){ Object.keys(l).forEach(function(k){ delete l[k]; }); Object.keys(tVal).forEach(function(k){ l[k]=tVal[k]; }); } });
+    rep=rep.filter(function(tVal){ return !tomb[tVal.id]; });
+    var ra={}; regArchive.forEach(function(x){ ra[x.id]=1; });
+    o.regArchive.forEach(function(x){ if(!ra[x.id]) regArchive.push(x); }); regArchive.sort(function(a,b){ return a.id-b.id; });
+    var dm={}; debts.forEach(function(d){ dm[d.id]=d; });
+    o.debts.forEach(function(d){ if(tomb[d.id]) return; var l=dm[d.id]; if(!l) debts.push(d); else if((d.upd||0)>(l.upd||0)){ Object.keys(l).forEach(function(k){ delete l[k]; }); Object.keys(d).forEach(function(k){ l[k]=d[k]; }); } });
+    debts=debts.filter(function(d){ return !tomb[d.id]; });
+    importedBackupText=""; if($("impFile")) $("impFile").value=""; if($("impFileStatus")) $("impFileStatus").textContent="";
+    fresh(); save(); renderAll();
+    bmsg((currentLang==="en")?("Synced! Added "+add+" transactions, "+addi+" items, updated "+upd+" items."):("تمت المزامنة! أُضيفت "+add+" عملية و"+addi+" صنف جديد، وحُدّث "+upd+" صنف."));
   });
-  inv=inv.filter(function(i){ return !tomb[i.id]; });
-  var rm={}; rep.forEach(function(tVal){ rm[tVal.id]=tVal; });
-  o.rep.forEach(function(tVal){ if(tomb[tVal.id]) return; var l=rm[tVal.id]; if(!l) rep.push(tVal); else if((tVal.upd||0)>(l.upd||0)){ Object.keys(l).forEach(function(k){ delete l[k]; }); Object.keys(tVal).forEach(function(k){ l[k]=tVal[k]; }); } });
-  rep=rep.filter(function(tVal){ return !tomb[tVal.id]; });
-  var ra={}; regArchive.forEach(function(x){ ra[x.id]=1; });
-  o.regArchive.forEach(function(x){ if(!ra[x.id]) regArchive.push(x); }); regArchive.sort(function(a,b){ return a.id-b.id; });
-  var dm={}; debts.forEach(function(d){ dm[d.id]=d; });
-  o.debts.forEach(function(d){ if(tomb[d.id]) return; var l=dm[d.id]; if(!l) debts.push(d); else if((d.upd||0)>(l.upd||0)){ Object.keys(l).forEach(function(k){ delete l[k]; }); Object.keys(d).forEach(function(k){ l[k]=d[k]; }); } });
-  debts=debts.filter(function(d){ return !tomb[d.id]; });
-  fresh(); save(); renderAll();
-  bmsg((currentLang==="en")?("Synced Added "+add+" transactions, "+addi+" items, updated "+upd+" items."):("تمت المزامنة أُضيفت "+add+" عملية و"+addi+" صنف جديد، وحُدّث "+upd+" صنف."));
 };
 $("impRep").onclick=function(){
-  var o=readIn(); if(!o) return;
-  var confirmMsg = (currentLang==="en")
-    ? ("All current data will be overwritten with the backup (" + o.data.length + " transactions, " + o.inv.length + " items). Sure?")
-    : ("سيتم حذف كل بياناتك الحالية على هذا الجهاز واستبدالها بالنسخة ("+o.data.length+" عملية، "+o.inv.length+" صنف). متأكد؟");
-  if(!confirm(confirmMsg)) return;
-  data=o.data; inv=o.inv; rep=o.rep; tomb=o.tomb; regArchive=o.regArchive||[]; debts=o.debts||[]; fresh(); save(); renderAll();
-  bmsg((currentLang==="en")?"Data replaced ":"تم استبدال البيانات ");
+  readIn().then(function(o){
+    if(!o) return;
+    var confirmMsg = (currentLang==="en")
+      ? ("All current data will be overwritten with the backup (" + o.data.length + " transactions, " + o.inv.length + " items). Sure?")
+      : ("سيتم حذف كل بياناتك الحالية على هذا الجهاز واستبدالها بالنسخة ("+o.data.length+" عملية، "+o.inv.length+" صنف). متأكد؟");
+    if(!confirm(confirmMsg)) return;
+    try{ archReset(); }catch(e){}
+    data=o.data; inv=o.inv; rep=o.rep; tomb=o.tomb; regArchive=o.regArchive||[]; debts=o.debts||[];
+    importedBackupText=""; if($("impFile")) $("impFile").value=""; if($("impFileStatus")) $("impFileStatus").textContent="";
+    fresh(); save(); renderAll();
+    bmsg((currentLang==="en")?"Data replaced successfully.":"تم استبدال البيانات بنجاح.");
+  });
 };
-
-if(FS){ setTimeout(listSnaps, 1500); }
 
 /* ===================== الديون ===================== */
 function dRound(n){ return Math.round(n*100)/100; }
@@ -3191,6 +3801,7 @@ function partsTotal(r){ return (r.parts||[]).reduce(function(a,p){ return a+p.co
 function undeliver(tItem){
   dRemove("r"+tItem.id);
   if(tItem.sale){ data=data.filter(function(e){ return e.id!==tItem.sale; }); tomb[tItem.sale]=Date.now(); tItem.sale=null; }
+  if(tItem.saleAdj){ data=data.filter(function(e){ return e.id!==tItem.saleAdj; }); tomb[tItem.saleAdj]=Date.now(); tItem.saleAdj=null; }
   tItem.delivered=null; tItem.fprice=null; tItem.pcost=null;
 }
 function repStatus(id,st){
@@ -3235,7 +3846,7 @@ function repDeliver(adj){
   var e={id:Date.now(),date:today(),type:"mnt",name:(en?"Repair":"صيانة")+": "+tItem.dev,cat:REPAIR_CAT,price:fp,cost:pc,qty:1,sid:null,tk:0,rid:tItem.id,
          parts:(tItem.parts||[]).map(function(p){ return {sid:p.sid,name:p.name,qty:p.qty,cost:p.cost}; }),curr:curSymbol};
   data.push(e);
-  if(adj!==0) data.push({id:e.id+5,date:today(),type:"sale",name:(adj<0?(en?"Discount":"حسم"):(en?"Extra received":"زيادة مقبوضة"))+" — "+tItem.dev,cat:adj<0?"حسم":"زيادة مقبوضة",adj:1,price:adj,cost:0,qty:1,sid:null,tk:0,curr:curSymbol,cust:tItem.name,sr:secCfg.rate,ss:secCfg.sym});
+  if(adj!==0){ data.push({id:e.id+5,date:today(),type:"mnt",name:(adj<0?(en?"Discount":"حسم"):(en?"Extra received":"زيادة مقبوضة"))+" — "+tItem.dev,cat:REPAIR_CAT,adj:1,price:adj,cost:0,qty:1,sid:null,tk:0,rid:null,curr:curSymbol,cust:tItem.name,sr:secCfg.rate,ss:secCfg.sym}); tItem.saleAdj=e.id+5; } else { tItem.saleAdj=null; }
   tItem.sale=e.id; tItem.fprice=fp; tItem.pcost=pc; tItem.xcost=xc; tItem.delivered=today(); tItem.status="delivered"; tItem.upd=Date.now();
   if(rem>0) dAdd({id:e.id+1,cust:tItem.name,phone:tItem.phone||"",kind:"mnt",amt:rem,ref:"r"+tItem.id,date:today(),desc:(en?"Repair #":"صيانة #")+tItem.no+" · "+tItem.dev});
   $("mDlg").style.display="none"; mDelId=null; save(); renderAll();
@@ -3432,14 +4043,14 @@ function wkPaint(){
 
 var _sv2=setView;
 setView=function(v){
-  if(WK.on){ var P=WK.perms||{}; if(v==="b"||v==="w"||(v==="r"&&!P.rep)) v="s"; }
+  if(WK.on){ var P=WK.perms||{}; if(v==="b"||v==="w"||((v==="r"||v==="x")&&!P.rep)) v="s"; }
   _sv2(v); $("vWk").style.display=v==="w"?"":"none"; if(v==="w") wkPaint();
 };
-var WKB={del:"del",delInv:"del",dDel:"del",repDel:"del",stk:"stk",delItem:"stk",restoreSnap:"x"};
+var WKB={del:"del",delInv:"del",dDel:"del",repDel:"del",stk:"stk",delItem:"stk"};
 Object.keys(WKB).forEach(function(n){ var f=window[n], need=WKB[n]; if(typeof f!=="function") return;
   window[n]=function(){ if(WK.on&&(need==="x"||!(WK.perms&&WK.perms[need]))){ wkDeny(); return; } return f.apply(this,arguments); }; });
-[["iAdd","stk"],["impMerge","x"],["impRep","x"],["rstYes","x"],["rsBtn","x"]].forEach(function(a){ var f=$(a[0]).onclick, need=a[1];
-  $(a[0]).onclick=function(ev){ if(WK.on&&(need==="x"||!(WK.perms&&WK.perms[need]))){ wkDeny(); return; } return f&&f.call(this,ev); }; });
+[["iAdd","stk"],["impMerge","x"],["impRep","x"],["rstYes","x"]].forEach(function(a){ var el=$(a[0]); if(!el) return; var f=el.onclick, need=a[1];
+  el.onclick=function(ev){ if(WK.on&&(need==="x"||!(WK.perms&&WK.perms[need]))){ wkDeny(); return; } return f&&f.call(this,ev); }; });
 var _ab=$("addBtn").onclick;
 $("addBtn").onclick=function(ev){ var P=WK.perms||{}; if(WK.on&&((mode==="ret"&&!P.ret)||(mode==="exp"&&!P.exp))){ wkDeny(); return; } return _ab.call(this,ev); };
 
@@ -3514,16 +4125,19 @@ $("btnContactWa").onclick=function(){
 $("rstBtn").onclick = function(){ $("rstBox").style.display = ""; $("rstBtn").style.display = "none"; $("rstMsg").textContent = ""; };
 $("rstNo").onclick = function(){ $("rstBox").style.display = "none"; $("rstBtn").style.display = ""; };
 $("rstYes").onclick = function(){
-  [KEY, INV, TOMB, LB, REPK, REG_ARCHIVE_KEY, "star_current_shift_start", "star_inv_no", DEBTK, "star_sec_on", "star_sec_sym", "star_sec_rate", "star_sec_print"].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+  [KEY, INV, TOMB, LB, REPK, REG_ARCHIVE_KEY, "star_current_shift_start", "star_inv_no", DEBTK, "star_sec_on", "star_sec_sym", "star_sec_rate", "star_sec_print"].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} try{ StarDB.removeItem(k); }catch(e){} });
+  StarDB.flush();
+  try{ archReset(); }catch(e){}
   data = []; inv = []; rep = []; regArchive = []; debts = []; tomb = {}; snap = {}; currentShiftStart = 0; cart = [];
-  ["name","price","cost","amt","inote","iname","iwhole","iretail","bkIn","bkOut"].forEach(function(i){ var el=$(i); if(el) el.value=""; });
+  ["name","price","cost","amt","inote","iname","iwhole","iretail"].forEach(function(i){ var el=$(i); if(el) el.value=""; });
+  importedBackupText=""; if($("impFile")) $("impFile").value=""; if($("impFileStatus")) $("impFileStatus").textContent="";
   if($("qty")) $("qty").value = 1; if($("iqty")) $("iqty").value = 1;
   if($("day")) $("day").value = today(); if($("rday")) $("rday").value = today();
+  try{ localStorage.setItem(BK_FIRST_KEY, String(Date.now())); }catch(e){}
   setMode("sale"); setView("s"); bkInfo(); bmsg("");
   $("rstBox").style.display = "none"; $("rstBtn").style.display = "";
   renderAll();
   $("rstMsg").textContent = (currentLang==="en") ? "Factory reset completed " : "تمت استعادة ضبط المصنع بنجاح ";
-  if(typeof runAutoBackup === "function") runAutoBackup(true);
 };
 
 /* ===== إدارة وتنسيق إصدار التطبيق (v1.0 -> v1.9 -> v2.0) ===== */
@@ -3720,7 +4334,7 @@ function shiftBase(){ if(currentShiftStart>0) return currentShiftStart; var d=ne
 /* النقد المتوقع بالصندوق منذ آخر إغلاق: مبيعات + (عربون الصيانة عند الاستلام + المتبقي عند التسليم) - مرتجعات - مصاريف */
 function shiftCash(){
   var base=shiftBase(), L=data.filter(function(e){ return e.id>=base; }), k=calc(L), cm=0, dn=0, dp=0;
-  L.forEach(function(e){ if(e.type==="mnt"){ var r=e.rid?mFind(e.rid):null; cm+=e.price*e.qty-(r?(r.dep||0):0); } });
+  L.forEach(function(e){ if(e.type==="mnt"){ var r=(e.rid&&!e.adj)?mFind(e.rid):null; cm+=e.price*e.qty-(r?(r.dep||0):0); } });
   rep.forEach(function(r){ if(r.id>=base) cm+=(r.dep||0); });
   /* الديون الجديدة المرتبطة ببيع/تسليم لم تُقبض نقداً، والدفعات المحصّلة تدخل الصندوق */
   debts.forEach(function(d){
@@ -4186,6 +4800,13 @@ renderThemeUI();
 checkLicenseStatus(false);
 setInterval(function(){ checkLicenseStatus(false); }, 60000);
 
+</script>
+<script>
+(function(){
+  function run(){ var el=document.getElementById("starMain"); if(!el) return; var s=document.createElement("script"); s.text=el.textContent; document.body.appendChild(s); }
+  function go(){ if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",run); else run(); }
+  StarDB.ready.then(go,go);
+})();
 </script>
 </body>
 </html>
