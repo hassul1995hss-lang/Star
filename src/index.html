@@ -1056,8 +1056,8 @@ body.is-desktop div.desk-only.flex{display:flex!important}
   /* 4) أزرار إغلاق الصندوق ووضع العامل في أسفل العمود الجانبي */
   #bottomActionsBar{
     position:fixed;
-    bottom:0;inset-inline-start:0;inset-inline-end:auto;
-    left:auto;right:auto;transform:translateX(0);
+    left:auto;right:auto;
+    bottom:0;inset-inline-start:0;inset-inline-end:auto;transform:translateX(0);
     width:245px;
     flex-direction:column;
     gap:6px;
@@ -1774,7 +1774,7 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
   <button class="add" id="iAdd" data-i18n="btn_add_stock">إضافة للمخزون</button>
   <p class="hint" data-i18n="hint_stock_add">إذا كانت القطعة موجودة بنفس الاسم والفئة، تُضاف الكمية وتتحدّث الأسعار.</p>
 </div>
-<div class="card"><h2 data-i18n="h2_curr_stock">المخزون الحالي</h2><div id="iList"></div></div>
+<div class="card"><h2 data-i18n="h2_curr_stock">المخزون الحالي</h2><input id="iSearch" type="search" placeholder="🔍 بحث بالاسم أو الباركود… / Search name or barcode" autocomplete="off" style="margin-bottom:8px"><div id="iList"></div></div>
 <div class="card prf"><h2><span><svg class="i"><use href="#i-trash"/></svg><span data-i18n="h2_dmg">التالف (خارج المخزون ورأس المال)</span></span> <span id="dTot" class="bad"></span></h2><div id="dList"></div></div>
 </div>
 
@@ -3553,6 +3553,7 @@ function delItem(id){
   updateItemsForSelectedCategory();
 }
 
+var INV_LIMIT=100, _invT=null;
 function renderInv(){
   var cap=0,val=0,cnt=0;
   inv.forEach(function(i){ cap+=i.qty*i.whole; val+=i.qty*i.retail; cnt+=i.qty; });
@@ -3563,9 +3564,13 @@ function renderInv(){
   $("iKinds").textContent=inv.length;
   
   var L=$("iList");
-  L.innerHTML=inv.length?"":'<div class="empty">'+t("empty_stock")+'</div>';
+  var q=(($("iSearch")||{}).value||"").trim().toLowerCase();
+  var invRows=inv.slice().reverse();
+  if(q) invRows=invRows.filter(function(i){ return String(i.name||"").toLowerCase().indexOf(q)>-1||String(i.barcode||"").toLowerCase().indexOf(q)>-1; });
+  var invTotal=invRows.length; invRows=invRows.slice(0,INV_LIMIT);
+  L.innerHTML=invTotal?"":'<div class="empty">'+t("empty_stock")+'</div>';
   
-  inv.slice().reverse().forEach(function(i){
+  invRows.forEach(function(i){
     var d=document.createElement("div"); d.className="item";
     var bcTag = i.barcode ? ' <span style="background:color-mix(in srgb,var(--pri) 14%,transparent);color:var(--pri);padding:1px 6px;border-radius:4px;font-size:11px;font-family:monospace">#'+esc(i.barcode)+'</span>' : '';
     var wholeTxt = (currentLang==="en") ? "Cost " : "جملة ";
@@ -3577,6 +3582,12 @@ function renderInv(){
     d.querySelector(".del").onclick=function(){ delItem(i.id); };
     L.appendChild(d);
   });
+  if(invTotal>invRows.length){
+    var mb=document.createElement("button"); mb.className="add sec"; mb.type="button";
+    mb.textContent=(isEn()?"Show more (":"عرض المزيد (")+(invTotal-invRows.length)+(isEn()?" remaining)":" متبقٍ)");
+    mb.onclick=function(){ INV_LIMIT+=100; renderInv(); };
+    L.appendChild(mb);
+  }
   
   var dl=data.filter(function(e){return e.type==="ret"&&e.kind==="dmg"}), dt=0, D=$("dList");
   dl.forEach(function(e){ dt+=e.cost*e.qty; });
@@ -3589,6 +3600,7 @@ function renderInv(){
   });
 }
 
+(function(){ var si=$("iSearch"); if(si) si.oninput=function(){ clearTimeout(_invT); _invT=setTimeout(function(){ INV_LIMIT=100; renderInv(); },200); }; })();
 var per="d";
 $("rday").value=today();
 function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
