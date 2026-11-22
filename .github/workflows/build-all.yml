@@ -407,7 +407,7 @@ jobs:
 
           cat << EOF > src-tauri/tauri.conf.json
           {
-            "$schema": "https://schema.tauri.app/config/2",
+            "\$schema": "https://schema.tauri.app/config/2",
             "productName": "Star POS",
             "version": "${VER}",
             "identifier": "com.starpos.app",
