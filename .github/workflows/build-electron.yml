@@ -1,6 +1,8 @@
 name: Build Star POS - Electron (Android APK & Windows Setup)
 
 on:
+  push:
+    branches: [ main, master ]
   workflow_dispatch:
 
 permissions:
