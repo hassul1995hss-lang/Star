@@ -231,12 +231,19 @@ h1{
 }
 .tabs button{
   flex:1;
+  min-width:0;
   display:inline-flex;align-items:center;justify-content:center;gap:6px;
   padding:8px 8px;
   border:0;background:transparent;color:var(--mut);
   border-radius:var(--r-sm);
   font:inherit;font-size:13px;font-weight:700;cursor:pointer;
+  touch-action:manipulation;
+  user-select:none;-webkit-user-select:none;
   transition:all .18s cubic-bezier(.4,0,.2,1);
+}
+.tabs button:focus-visible,.mrow:focus-visible,.sp-back:focus-visible,.add:focus-visible,.qb:focus-visible,.inv-btn:focus-visible{
+  outline:2.5px solid var(--pri);
+  outline-offset:2px;
 }
 .tabs button:hover:not(.on){
   color:var(--text);
@@ -267,9 +274,33 @@ h1{
 #navTabs .i{width:19px;height:19px;transition:transform .18s ease}
 #navTabs button.on .i{transform:scale(1.08)}
 @media (max-width:420px){
-  #navTabs button{font-size:10px;padding:6px 1px}
+  #navTabs{gap:2px;padding:4px}
+  #navTabs button{font-size:10px;padding:6px 1px;min-width:0;overflow:hidden}
   #navTabs .i{width:17px;height:17px}
-  #navTabs button span{white-space:nowrap}
+  #navTabs button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+}
+#navExitToast{
+  position:fixed;
+  bottom:66px;
+  left:50%;
+  transform:translateX(-50%) translateY(16px);
+  background:rgba(15,23,42,.94);
+  color:#fff;
+  padding:9px 18px;
+  border-radius:999px;
+  font-size:13px;
+  font-weight:700;
+  box-shadow:0 10px 28px rgba(0,0,0,.32);
+  border:1px solid rgba(255,255,255,.16);
+  z-index:100001;
+  opacity:0;
+  pointer-events:none;
+  white-space:nowrap;
+  transition:opacity .2s ease, transform .2s ease;
+}
+#navExitToast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
 }
 
 /* ===== البطاقات ===== */
@@ -406,6 +437,7 @@ html[dir="ltr"] .stock-badge{margin-left:auto}
 
 /* ===== الأزرار ===== */
 .add{
+  touch-action:manipulation;
   width:100%;margin-top:10px;
   padding:0 14px;min-height:var(--btn-h);
   border:0;border-radius:var(--r-sm);
@@ -2137,6 +2169,7 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
   <button id="btnOpenCloseRegister" class="add warn" style="margin-top:0"><svg class="i"><use href="#i-cash"/></svg><span data-i18n="btn_register_close">إغلاق وجرد الصندوق</span></button>
   <button id="wkOpen" class="add sec" style="margin-top:0"><svg class="i"><use href="#i-lock"/></svg><span data-i18n="wk_open">وضع العامل</span></button>
 </div>
+<div id="navExitToast" role="status" aria-live="polite"></div>
 
 <script>
 (function(){
@@ -4978,7 +5011,7 @@ $("rstYes").onclick = function(){
 };
 
 /* ===== إدارة وتنسيق إصدار التطبيق (v1.0 -> v1.9 -> v2.0) ===== */
-var APP_VERSION = "v1.0";
+var APP_VERSION = "v3.2";
 function formatAppVersion(raw){
   if(!raw) return APP_VERSION;
   var s = String(raw).trim().replace(/^v/i, "");
@@ -5648,6 +5681,403 @@ renderThemeUI();
 
 checkLicenseStatus(false);
 setInterval(function(){ checkLicenseStatus(false); }, 60000);
+
+/* ===== نظام التنقل التفاعلي وزر الرجوع في الهاتف ولوحة المفاتيح ===== */
+(function initMobileAndHardwareNavigation(){
+  if(window.__starNavInit) return;
+  window.__starNavInit = true;
+
+  var currentTab = "s";
+  var tabHist = ["s"];
+  var navDepth = 0;
+  var ignorePop = 0;
+  var navBusy = false;
+  var lastRootBackTs = 0;
+  var exitToastTimer = null;
+
+  function showExitToast(){
+    var el = $("navExitToast");
+    if(!el) return;
+    el.textContent = (currentLang === "en")
+      ? "Press back again to exit"
+      : "اضغط زر الرجوع مرة أخرى للخروج";
+    el.classList.add("show");
+    clearTimeout(exitToastTimer);
+    exitToastTimer = setTimeout(function(){
+      el.classList.remove("show");
+    }, 2200);
+  }
+
+  function hideExitToast(){
+    var el = $("navExitToast");
+    if(el) el.classList.remove("show");
+    clearTimeout(exitToastTimer);
+  }
+
+  function navPush(tag){
+    if(navBusy) return;
+    try{
+      navDepth++;
+      window.history.pushState({ starNav: navDepth, tag: tag || "step" }, "");
+    }catch(e){}
+  }
+
+  function navPopSilently(){
+    if(navDepth <= 0) return;
+    navDepth--;
+    ignorePop++;
+    try{
+      window.history.back();
+    }catch(e){
+      ignorePop = Math.max(0, ignorePop - 1);
+    }
+  }
+
+  function ensureGuardEntry(){
+    try{
+      if(!window.history.state || !window.history.state.starGuard){
+        window.history.replaceState({ starNav: 0, starGuard: true }, "");
+      }
+      if(navDepth === 0){
+        navDepth = 1;
+        window.history.pushState({ starNav: 1, tag: "root" }, "");
+      }
+    }catch(e){}
+  }
+
+  function isShown(el){
+    if(!el) return false;
+    var d = el.style && el.style.display;
+    if(d === "none") return false;
+    if(d && d !== "none") return true;
+    return el.offsetParent !== null;
+  }
+
+  function updateTabA11y(){
+    document.querySelectorAll(".tabs").forEach(function(bar){
+      bar.setAttribute("role", "tablist");
+      bar.querySelectorAll("button").forEach(function(btn){
+        btn.setAttribute("role", "tab");
+        var active = btn.classList.contains("on");
+        btn.setAttribute("aria-selected", active ? "true" : "false");
+      });
+    });
+    var activeNav = document.querySelector("#navTabs button.on");
+    if(activeNav && activeNav.scrollIntoView){
+      try{ activeNav.scrollIntoView({ block: "nearest", inline: "nearest" }); }catch(e){}
+    }
+  }
+
+  /* ربط setView بالتاريخ والتنقل السلس */
+  var _prevSetView = setView;
+  setView = function(v){
+    var beforeTab = currentTab;
+    _prevSetView(v);
+    var actualTab = "s";
+    [["s","vSales"],["d","vDebt"],["i","vInv"],["m","vMnt"],["r","vRep"],["x","vStat"],["b","vBak"],["w","vWk"]].forEach(function(p){
+      var el = $(p[1]);
+      if(el && el.style.display !== "none") actualTab = p[0];
+    });
+    currentTab = actualTab;
+    updateTabA11y();
+    if(!navBusy && actualTab !== beforeTab){
+      hideExitToast();
+      if(actualTab === "w"){
+        navPush("view:w");
+      } else {
+        if(tabHist[tabHist.length - 1] !== actualTab){
+          tabHist.push(actualTab);
+          if(tabHist.length > 20) tabHist.shift();
+        }
+        if(actualTab !== "s" || tabHist.length > 1){
+          navPush("tab:" + actualTab);
+        }
+      }
+      try{ window.scrollTo(0, 0); }catch(e){}
+    }
+  };
+
+  /* ربط الصفحات الفرعية داخل الإعدادات */
+  var _prevSettingsOpen = settingsOpen;
+  settingsOpen = function(k){
+    var wasSub = !!getOpenSettingsSubpage();
+    _prevSettingsOpen(k);
+    if(!navBusy){
+      hideExitToast();
+      if(!wasSub || k === "sec"){
+        navPush("sp:" + k);
+      }
+    }
+  };
+
+  function getOpenSettingsSubpage(){
+    var vBak = $("vBak");
+    if(!vBak || vBak.style.display === "none") return null;
+    var found = null;
+    vBak.querySelectorAll(".sp").forEach(function(p){
+      if(p.style.display !== "none") found = p;
+    });
+    return found;
+  }
+
+  /* ربط أزرار الرجوع الداخلية في الإعدادات ووضع العامل */
+  document.querySelectorAll("#vBak .sp-back").forEach(function(b){
+    b.onclick = function(){
+      var back = b.getAttribute("data-back");
+      navBusy = true;
+      try{
+        if(back) _prevSettingsOpen(back);
+        else settingsMenu();
+      } finally {
+        navBusy = false;
+      }
+      navPopSilently();
+    };
+  });
+
+  if($("wkBack")){
+    $("wkBack").onclick = function(){
+      goBackOneTab(false);
+    };
+  }
+
+  /* مراقبة النوافذ المنبثقة والنماذج القابلة للطي لمزامنتها مع زر الرجوع */
+  var trackedOverlays = [
+    "payDlg", "mPartsDlg", "mDlg", "dPayDlg", "dNewDlg",
+    "wkDlg", "registerModal", "policyModal", "licLockModal",
+    "mForm", "rstBox"
+  ];
+  var overlayVisibleMap = {};
+  trackedOverlays.forEach(function(id){
+    var el = $(id);
+    if(!el) return;
+    overlayVisibleMap[id] = isShown(el);
+    if(typeof MutationObserver !== "undefined"){
+      var obs = new MutationObserver(function(){
+        var nowVis = isShown(el);
+        var prevVis = !!overlayVisibleMap[id];
+        if(nowVis === prevVis) return;
+        overlayVisibleMap[id] = nowVis;
+        if(navBusy) return;
+        if(nowVis){
+          hideExitToast();
+          navPush("ov:" + id);
+        } else {
+          navPopSilently();
+        }
+      });
+      obs.observe(el, { attributes: true, attributeFilter: ["style"] });
+    }
+  });
+
+  function goBackOneTab(fromNative){
+    var target = "s";
+    if(tabHist.length > 1){
+      tabHist.pop();
+      target = tabHist[tabHist.length - 1] || "s";
+    } else {
+      tabHist = ["s"];
+      target = "s";
+    }
+    navBusy = true;
+    try{
+      setView(target);
+    } finally {
+      navBusy = false;
+    }
+    if(fromNative) navPopSilently();
+  }
+
+  function exitApplication(){
+    hideExitToast();
+    var capApp = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+    if(capApp && typeof capApp.exitApp === "function"){
+      capApp.exitApp();
+      return;
+    }
+    try{ window.close(); }catch(e){}
+  }
+
+  /* المعالج الموحد لزر الرجوع (هاتف / إيماءة السحب / كيبورد / ماوس) */
+  function handleAppBack(fromNative){
+    /* 1. شاشات إجبارية لا يجوز تجاوزها بزر الرجوع */
+    if(isShown($("policyModal")) && polMandatory){
+      if(Date.now() - lastRootBackTs < 2200){ exitApplication(); return true; }
+      lastRootBackTs = Date.now();
+      showExitToast();
+      if(!fromNative) ensureGuardEntry();
+      return true;
+    }
+    if(isShown($("licLockModal")) && !isShown($("btnCloseLicModal"))){
+      if(Date.now() - lastRootBackTs < 2200){ exitApplication(); return true; }
+      lastRootBackTs = Date.now();
+      showExitToast();
+      if(!fromNative) ensureGuardEntry();
+      return true;
+    }
+
+    /* 2. إغلاق النوافذ المنبثقة المفتوحة بالترتيب من الأعلى للأسفل */
+    var modalActions = [
+      ["payDlg", "payX"],
+      ["mPartsDlg", "mPClose"],
+      ["mDlg", "mDNo"],
+      ["dPayDlg", "dPayNo"],
+      ["dNewDlg", "dnNo"],
+      ["wkDlg", "wkNo"],
+      ["registerModal", "btnCloseRegisterModal"],
+      ["policyModal", "btnPolClose"],
+      ["licLockModal", "btnCloseLicModal"],
+      ["rstBox", "rstNo"],
+      ["mForm", "mCancel"]
+    ];
+    for(var i = 0; i < modalActions.length; i++){
+      var mEl = $(modalActions[i][0]);
+      var btnEl = $(modalActions[i][1]);
+      if(isShown(mEl) && btnEl){
+        navBusy = true;
+        try{ btnEl.click(); } finally { navBusy = false; }
+        if(fromNative) navPopSilently();
+        return true;
+      }
+    }
+
+    /* 3. الرجوع من الصفحات الفرعية داخل الإعدادات */
+    var sub = getOpenSettingsSubpage();
+    if(sub){
+      var backAttr = null;
+      var backBtn = sub.querySelector(".sp-back");
+      if(backBtn) backAttr = backBtn.getAttribute("data-back");
+      navBusy = true;
+      try{
+        if(backAttr) _prevSettingsOpen(backAttr);
+        else settingsMenu();
+      } finally {
+        navBusy = false;
+      }
+      if(fromNative) navPopSilently();
+      return true;
+    }
+
+    /* 4. الرجوع من شاشة إعداد وضع العامل أو من التبويبات إلى التبويب السابق / الرئيسية */
+    if(currentTab !== "s"){
+      goBackOneTab(fromNative);
+      return true;
+    }
+
+    /* 5. الشاشة الرئيسية: ضغطتان للخروج لحماية الوردية من الإغلاق بالخطأ */
+    if(Date.now() - lastRootBackTs < 2200){
+      exitApplication();
+      return true;
+    }
+    lastRootBackTs = Date.now();
+    showExitToast();
+    if(!fromNative) ensureGuardEntry();
+    return true;
+  }
+
+  /* ربط زر الرجوع في أندرويد (Capacitor App Plugin) */
+  function bindCapacitorBack(){
+    if(window.__starCapBackBound) return true;
+    var capApp = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+    if(capApp && typeof capApp.addListener === "function"){
+      window.__starCapBackBound = true;
+      capApp.addListener("backButton", function(){
+        handleAppBack(true);
+      });
+      return true;
+    }
+    return false;
+  }
+  if(!bindCapacitorBack()){
+    document.addEventListener("deviceready", bindCapacitorBack, false);
+    [100, 350, 900, 2000].forEach(function(ms){
+      setTimeout(bindCapacitorBack, ms);
+    });
+  }
+
+  /* ربط زر الرجوع وإيماءة السحب في المتصفح و WebView */
+  ensureGuardEntry();
+  window.addEventListener("popstate", function(){
+    if(ignorePop > 0){
+      ignorePop--;
+      return;
+    }
+    navDepth = Math.max(0, navDepth - 1);
+    handleAppBack(false);
+  });
+
+  /* ربط أزرار الماوس الجانبية (الرجوع) وأزرار لوحة المفاتيح للتنقل بين التبويبات */
+  document.addEventListener("mouseup", function(e){
+    if(e.button === 3){
+      e.preventDefault();
+      handleAppBack(true);
+    }
+  });
+
+  document.addEventListener("keydown", function(e){
+    var tg = e.target && e.target.tagName;
+    var inField = (tg === "INPUT" || tg === "TEXTAREA" || tg === "SELECT");
+
+    if(e.key === "Escape"){
+      if(inField && e.target && typeof e.target.blur === "function"){
+        e.target.blur();
+      }
+      e.preventDefault();
+      handleAppBack(true);
+      return;
+    }
+
+    if(e.altKey && !e.ctrlKey && !e.metaKey && (e.key === "ArrowLeft" || e.key === "ArrowRight")){
+      var isRtl = (document.documentElement.dir !== "ltr");
+      var isBackKey = isRtl ? (e.key === "ArrowRight") : (e.key === "ArrowLeft");
+      if(isBackKey){
+        e.preventDefault();
+        handleAppBack(true);
+        return;
+      }
+    }
+
+    /* التنقل بالأسهم بين أزرار التبويبات عند التركيز عليها */
+    if(!inField && (e.key === "ArrowLeft" || e.key === "ArrowRight")){
+      var tabBar = e.target && e.target.closest && e.target.closest(".tabs");
+      if(tabBar){
+        var btns = Array.prototype.filter.call(tabBar.querySelectorAll("button"), function(b){
+          return b.offsetParent !== null;
+        });
+        var idx = btns.indexOf(e.target);
+        if(idx >= 0 && btns.length > 1){
+          e.preventDefault();
+          var rtl = (document.documentElement.dir !== "ltr");
+          var step = (e.key === "ArrowRight") ? (rtl ? -1 : 1) : (rtl ? 1 : -1);
+          var nextIdx = (idx + step + btns.length) % btns.length;
+          btns[nextIdx].focus();
+          btns[nextIdx].click();
+          return;
+        }
+      }
+    }
+
+    /* اختصار الأرقام 1..7 للتبديل السريع بين التبويبات الرئيسية */
+    if(!inField && !e.ctrlKey && !e.altKey && !e.metaKey && /^[1-7]$/.test(e.key)){
+      var navBtns = Array.prototype.filter.call(document.querySelectorAll("#navTabs button"), function(b){
+        return b.offsetParent !== null;
+      });
+      var nIdx = parseInt(e.key, 10) - 1;
+      if(navBtns[nIdx]){
+        e.preventDefault();
+        navBtns[nIdx].click();
+      }
+    }
+  });
+
+  /* تحديث سمات التبويبات بعد كل نقرة على أي شريط تبويبات */
+  document.querySelectorAll(".tabs button").forEach(function(b){
+    b.addEventListener("click", function(){
+      setTimeout(updateTabA11y, 0);
+    });
+  });
+  updateTabA11y();
+})();
 
 </script>
 <script>
