@@ -1141,8 +1141,10 @@ body.is-desktop div.desk-only.flex{display:flex!important}
 /* ===== تخطيط التابلت (768px - 859px) ===== */
 @media (min-width:768px){
   body{max-width:1040px;padding:16px 20px 84px}
-  .main-header-bar{padding:10px 20px;border-radius:18px}
-  h1{font-size:21px}
+  .main-header-bar{padding:10px 18px;border-radius:18px}
+  .header-logo{width:42px;height:42px;border-radius:12px}
+  .hdr-notif-btn{width:42px;height:42px;border-radius:12px}
+  h1{font-size:20px}
   .card{padding:16px 18px;margin-bottom:13px;border-radius:18px}
   #navTabs{gap:6px;padding:6px;margin-bottom:14px;border-radius:18px}
   #navTabs button{flex-direction:row;gap:7px;padding:9px 13px;font-size:13.5px;border-radius:12px}
@@ -3003,18 +3005,25 @@ var WKK="telecom_wk", WK={on:false,perms:{}};
 try{ var _w=JSON.parse(localStorage.getItem(WKK)||"null"); if(_w) WK=_w; }catch(e){}
 
 function wkHidePrf(){ return !!(WK.on&&!(WK.perms&&WK.perms.prf)); }
-var _stateVer=0;
+var _stateVer=0, _serCache={};
+function saveCol(storeKey, arr){
+  try{
+    var s = JSON.stringify(arr);
+    if(_serCache[storeKey] !== s){
+      _serCache[storeKey] = s;
+      StarDB.setItem(storeKey, s);
+    }
+  }catch(e){}
+}
 function save(){
   _stateVer++;
   stamp();
-  try{
-    StarDB.setItem(KEY,JSON.stringify(data));
-    StarDB.setItem(INV,JSON.stringify(inv));
-    StarDB.setItem(TOMB,JSON.stringify(tomb));
-    StarDB.setItem(REPK,JSON.stringify(rep));
-    StarDB.setItem(REG_ARCHIVE_KEY,JSON.stringify(regArchive));
-    StarDB.setItem(DEBTK,JSON.stringify(debts));
-  }catch(e){}
+  saveCol(KEY, data);
+  saveCol(INV, inv);
+  saveCol(TOMB, tomb);
+  saveCol(REPK, rep);
+  saveCol(REG_ARCHIVE_KEY, regArchive);
+  saveCol(DEBTK, debts);
   try{ archQueue(); }catch(e){}
 }
 function today(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
@@ -3785,10 +3794,19 @@ function render(){
   });
   
   var h='<tr><th>'+t("th_day")+'</th><th>'+t("th_sales")+'</th><th>'+t("th_exp")+'</th><th>'+t("th_net")+'</th><th>'+t("th_mnt")+'</th></tr>', d0=new Date();
+  var dayKeys=[], dayBuckets={}, daySet={};
   for(var i=0;i<7;i++){
     var d=new Date(d0.getFullYear(),d0.getMonth(),d0.getDate()-i);
     var k=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-    var r=calc(data.filter(function(e){return e.date===k;}),{lo:k,hi:k});
+    dayKeys.push(k); dayBuckets[k]=[]; daySet[k]=1;
+  }
+  for(var j=0;j<data.length;j++){
+    var ev=data[j];
+    if(ev && ev.date && daySet[ev.date]) dayBuckets[ev.date].push(ev);
+  }
+  for(var i=0;i<dayKeys.length;i++){
+    var k=dayKeys[i];
+    var r=calc(dayBuckets[k],{lo:k,hi:k});
     h+='<tr><td>'+k.slice(5)+'</td><td>'+fmt(r.s-r.rt)+'</td><td>'+fmt(r.x)+'</td><td class="'+(r.n>=0?"ok":"bad")+'">'+fmt(r.n)+'</td><td class="'+(r.mp>=0?"ok":"bad")+'">'+fmt(r.mp)+'</td></tr>';
   }
   $("hist").innerHTML=h;
@@ -4048,15 +4066,28 @@ function archRec(L){
   rec.sig=snapHash(JSON.stringify(rec));
   return rec;
 }
+var _archCache={};
 function archBuild(){
-  var g={}, order=[], out={};
+  var g={}, order=[], out={}, nextCache={};
   data.forEach(function(e){
     if(e.type!=="sale") return;
     var k=e.bid?("b"+e.bid):("s"+e.id);
     if(!g[k]){ g[k]=[]; order.push(k); }
     g[k].push(e);
   });
-  order.forEach(function(k){ out[k]=archRec(g[k]); });
+  order.forEach(function(k){
+    var raw=JSON.stringify(g[k]);
+    var prev=_archCache[k];
+    if(prev && prev.raw===raw && prev.rec){
+      out[k]=prev.rec;
+      nextCache[k]=prev;
+    } else {
+      var rec=archRec(g[k]);
+      out[k]=rec;
+      nextCache[k]={raw:raw,rec:rec};
+    }
+  });
+  _archCache=nextCache;
   return out;
 }
 
@@ -5380,14 +5411,36 @@ function renderShopProfile(){
   }
 }
 
+function compressLogoDataUrl(dataUrl, maxDim, quality, cb){
+  try{
+    var img = new Image();
+    img.onload = function(){
+      var w = img.width || 1, h = img.height || 1;
+      var scale = Math.min(1, (maxDim || 320) / Math.max(w, h));
+      var cw = Math.max(1, Math.round(w * scale));
+      var ch = Math.max(1, Math.round(h * scale));
+      var c = document.createElement("canvas");
+      c.width = cw; c.height = ch;
+      var ctx = c.getContext("2d");
+      ctx.clearRect(0, 0, cw, ch);
+      ctx.drawImage(img, 0, 0, cw, ch);
+      var out = c.toDataURL("image/jpeg", quality || 0.82);
+      cb(out && out.length < dataUrl.length ? out : dataUrl);
+    };
+    img.onerror = function(){ cb(dataUrl); };
+    img.src = dataUrl;
+  }catch(e){ cb(dataUrl); }
+}
 if($("inShopLogoFile")){
   $("inShopLogoFile").onchange = function(){
     var file = this.files && this.files[0];
     if(!file) return;
     var reader = new FileReader();
     reader.onload = function(e){
-      shopProfile.logo = e.target.result;
-      renderShopProfile();
+      compressLogoDataUrl(e.target.result, 320, 0.82, function(compressed){
+        shopProfile.logo = compressed;
+        renderShopProfile();
+      });
     };
     reader.readAsDataURL(file);
   };
