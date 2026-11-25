@@ -888,6 +888,21 @@ body.ro #addBtn,body.ro #iAdd{opacity:.45}
 .wk:not(.wk-stk) #iList .qb,.wk:not(.wk-stk) #iList .del,.wk:not(.wk-stk) #iAddCard{display:none!important}
 .wk:not(.wk-reg) #btnOpenCloseRegister{display:none!important}
 
+.barcode-feat{display:none!important}
+body.barcode-on .barcode-feat{display:block!important}
+.sw-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);margin-bottom:8px;box-shadow:var(--sh-sm)}
+.sw-info{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
+.sw-info .ic{flex:none;width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,color-mix(in srgb,var(--pri) 16%,transparent),color-mix(in srgb,var(--pri2) 10%,transparent));color:var(--pri);display:flex;align-items:center;justify-content:center}
+.sw-info .ic .i{width:19px;height:19px}
+.sw-info .mt{font-weight:800;font-size:14.2px;min-width:0}
+.sw-info .mt small{display:block;color:var(--mut);font-weight:500;font-size:11.8px;margin-top:2px}
+.sw{position:relative;display:inline-block;width:48px;height:27px;flex:none;cursor:pointer;margin:0}
+.sw input{opacity:0;width:0;height:0;min-height:0;position:absolute}
+.sw-track{position:absolute;inset:0;background:var(--line);border-radius:999px;transition:background .22s ease}
+.sw-track::before{content:"";position:absolute;width:21px;height:21px;left:3px;top:3px;background:#fff;border-radius:50%;box-shadow:0 2px 5px rgba(0,0,0,.22);transition:transform .22s cubic-bezier(.4,0,.2,1)}
+.sw input:checked+.sw-track{background:linear-gradient(135deg,var(--pri),var(--pri2))}
+.sw input:checked+.sw-track::before{transform:translateX(21px)}
+
 .desk-only{display:none!important}
 body.is-desktop .desk-only{display:block!important}
 body.is-desktop div.desk-only.row{display:grid!important}
@@ -1602,7 +1617,7 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
     <button id="tRet"><svg class="i"><use href="#i-undo"/></svg><span data-i18n="btn_ret_tab">مرتجع</span></button>
   </div>
 
-  <div class="desk-only" style="background:color-mix(in srgb,var(--pri) 7%,transparent);border:1px dashed var(--pri);border-radius:10px;padding:10px;margin-bottom:12px">
+  <div class="barcode-feat" style="background:color-mix(in srgb,var(--pri) 7%,transparent);border:1px dashed var(--pri);border-radius:10px;padding:10px;margin-bottom:12px">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <label style="margin:0;font-weight:bold;color:var(--pri)"><svg class="i"><use href="#i-scan"/></svg><span data-i18n="lbl_scan_barcode">مسح باركود المنتج (Barcode Scanner)</span></label>
       <small id="barStatus" style="font-weight:600;font-size:12px;color:var(--ok)"></small>
@@ -1767,7 +1782,7 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
     <div><label data-i18n="lbl_whole">سعر الجملة</label><input id="iwhole" type="number" inputmode="decimal" min="0"></div>
     <div><label data-i18n="lbl_retail">سعر المفرق</label><input id="iretail" type="number" inputmode="decimal" min="0"></div>
   </div>
-  <div class="desk-only" style="margin-top:8px">
+  <div class="barcode-feat" style="margin-top:8px">
     <label style="margin-top:0" data-i18n="lbl_barcode">رمز الباركود (امسحه بالماسح أو اكتبه يدوياً)</label>
     <input id="ibarcode" placeholder="مثال: 628100123456" autocomplete="off">
   </div>
@@ -1978,7 +1993,7 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
 <div id="setMenu">
 <button class="mrow" data-sp="shop"><span class="ic"><svg class="i"><use href="#i-store"/></svg></span><span class="mt"><span data-i18n="sg_shop">المحل والفاتورة</span><small data-i18n="sg_shop_d">الاسم واللوغو وبيانات الفاتورة</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
 <button class="mrow" data-sp="pref"><span class="ic"><svg class="i"><use href="#i-sliders"/></svg></span><span class="mt"><span data-i18n="sg_pref">التفضيلات</span><small data-i18n="sg_pref_d">اللغة والعملة</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
-<button class="mrow" data-sp="sec"><span class="ic"><svg class="i"><use href="#i-cash"/></svg></span><span class="mt"><span data-i18n="sg_sec">العملة الثانوية</span><small data-i18n="sg_sec_d">عرض الفاتورة بعملة ثانية وسعر الصرف</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+<button class="mrow" data-sp="adv"><span class="ic"><svg class="i"><use href="#i-bolt"/></svg></span><span class="mt"><span data-i18n="sg_adv">ميزات متقدمة</span><small data-i18n="sg_adv_d">العملة الثانوية وتفعيل الباركود</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
 <button class="mrow" data-sp="sync"><span class="ic"><svg class="i"><use href="#i-save"/></svg></span><span class="mt"><span data-i18n="sg_sync">النسخ الاحتياطي والمزامنة</span><small data-i18n="sg_sync_d">تصدير واستيراد ملف نسخة مشفّرة بين الأجهزة</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
 <button class="mrow" data-sp="app"><span class="ic"><svg class="i"><use href="#i-info"/></svg></span><span class="mt"><span data-i18n="sg_app">التطبيق والترخيص</span><small data-i18n="sg_app_d">الإصدار وتفعيل الاشتراك</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
 <button class="mrow" data-sp="about"><span class="ic"><svg class="i"><use href="#i-user"/></svg></span><span class="mt"><span data-i18n="sg_about">حقوق الملكية والتواصل</span><small data-i18n="sg_about_d">المطوّر والدعم الفني</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
@@ -2008,7 +2023,18 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
       <button class="qb" id="btnRemoveLogo" style="width:auto;padding:0 8px;font-size:12px;color:var(--bad)">حذف اللوغو <svg class="i"><use href="#i-x"/></svg></button>
     </div>
     <button class="add" id="btnSaveShopProfile" style="margin-top:14px" data-i18n="btn_save_shop_profile">حفظ بيانات المحل </button></div></div>
-<div class="sp" id="sp-sec" style="display:none"><div class="sp-head"><button class="sp-back" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2><span data-i18n="sg_sec">العملة الثانوية</span></h2></div><div class="card">
+<div class="sp" id="sp-adv" style="display:none">
+  <div class="sp-head"><button class="sp-back" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2><span data-i18n="sg_adv">ميزات متقدمة</span></h2></div>
+  <button class="mrow" data-sp="sec"><span class="ic"><svg class="i"><use href="#i-cash"/></svg></span><span class="mt"><span data-i18n="sg_sec">العملة الثانوية</span><small data-i18n="sg_sec_d">عرض الفاتورة بعملة ثانية وسعر الصرف</small></span><svg class="i chev"><use href="#i-chev"/></svg></button>
+  <div class="sw-row">
+    <div class="sw-info">
+      <span class="ic"><svg class="i"><use href="#i-scan"/></svg></span>
+      <span class="mt"><span data-i18n="lbl_barcode_toggle">تفعيل الباركود</span><small data-i18n="lbl_barcode_toggle_d">إظهار أو إخفاء ميزة مسح الباركود في المبيعات والمخزون</small></span>
+    </div>
+    <label class="sw" aria-label="Toggle Barcode"><input type="checkbox" id="chkBarcodeOn"><span class="sw-track"></span></label>
+  </div>
+</div>
+<div class="sp" id="sp-sec" style="display:none"><div class="sp-head"><button class="sp-back" data-back="adv" aria-label="Back"><svg class="i"><use href="#i-arrow"/></svg></button><h2><span data-i18n="sg_sec">العملة الثانوية</span></h2></div><div class="card">
     <label class="chk" style="margin-top:0"><input type="checkbox" id="secOn"><span data-i18n="lbl_sec_on">تفعيل العملة الثانوية</span></label>
     <label data-i18n="lbl_sec_sym">العملة الثانوية:</label>
     <select id="secSym">
@@ -2139,6 +2165,7 @@ var I18N = {
     tab_rep: "الجرد",
     tab_stat: "الإحصائيات", h2_inv_arch: "أرشيف الفواتير", h2_stat_mon: "الأرباح الشهرية", h2_stat_yr: "الأرباح السنوية", h2_stat_top: "أكثر القطع مبيعاً", lbl_stat_year: "السنة", st_top_m: "هذا الشهر", st_top_y: "السنة المختارة", st_top_a: "كل الفترات",
     tab_set: "الإعدادات",
+    sg_adv: "ميزات متقدمة", sg_adv_d: "العملة الثانوية وتفعيل الباركود", lbl_barcode_toggle: "تفعيل الباركود", lbl_barcode_toggle_d: "إظهار أو إخفاء ميزة مسح الباركود في المبيعات والمخزون",
     sg_sec: "العملة الثانوية", sg_sec_d: "عرض الفاتورة بعملة ثانية وسعر الصرف",
     lbl_cart_sec: "بالعملة الثانوية",
     lbl_sec_on: "تفعيل العملة الثانوية", lbl_sec_sym: "العملة الثانوية:", lbl_sec_rate: "سعر الصرف: 1 من العملة الرئيسية =",
@@ -2399,6 +2426,7 @@ var I18N = {
     tab_rep: "Reports",
     tab_stat: "Stats", h2_inv_arch: "Invoice Archive", h2_stat_mon: "Monthly Profit", h2_stat_yr: "Yearly Profit", h2_stat_top: "Top Selling Items", lbl_stat_year: "Year", st_top_m: "This month", st_top_y: "Selected year", st_top_a: "All time",
     tab_set: "Settings",
+    sg_adv: "Advanced Features", sg_adv_d: "Secondary currency & barcode scanner", lbl_barcode_toggle: "Enable Barcode", lbl_barcode_toggle_d: "Show or hide barcode scanning in Sales and Inventory",
     sg_sec: "Secondary Currency", sg_sec_d: "Show invoices in a second currency with exchange rate",
     lbl_cart_sec: "In secondary currency",
     lbl_sec_on: "Enable secondary currency", lbl_sec_sym: "Secondary currency:", lbl_sec_rate: "Exchange rate: 1 of main currency =",
@@ -2712,7 +2740,9 @@ var WKK="telecom_wk", WK={on:false,perms:{}};
 try{ var _w=JSON.parse(localStorage.getItem(WKK)||"null"); if(_w) WK=_w; }catch(e){}
 
 function wkHidePrf(){ return !!(WK.on&&!(WK.perms&&WK.perms.prf)); }
+var _stateVer=0;
 function save(){
+  _stateVer++;
   stamp();
   try{
     StarDB.setItem(KEY,JSON.stringify(data));
@@ -2756,19 +2786,36 @@ function getActiveShiftData(day){
 /* ===== الربح حسب التحصيل (استرداد رأس المال أولاً) =====
    لكل بيع/صيانة بالدين: لا يُحتسب ربح حتى يتجاوز المحصَّل تكلفة البضاعة، ثم يُحتسب الفائض فقط.
    عند البيع يُخصم الربح المؤجل، وعند كل دفعة يُضاف الجزء الذي صار ربحاً فعلياً في يوم القبض. */
+var _refCache={ver:-1,dLen:-1,dbLen:-1,mnt:{},sale:{},byRef:{}};
+function _ensureRefIdx(){
+  if(_refCache.ver===_stateVer && _refCache.dLen===data.length && _refCache.dbLen===debts.length) return _refCache;
+  var mnt={}, sale={}, byRef={}, i, x, k, rec, d;
+  for(i=0;i<data.length;i++){
+    x=data[i];
+    if(x.type==="mnt" && !x.adj && x.rid!=null){
+      k="r"+x.rid;
+      if(!mnt[k]){
+        var T=x.price*x.qty, C=x.cost*x.qty;
+        mnt[k]={T:T,C:C,PT:T-C,eid:x.id};
+      }
+    } else if(x.type==="sale"){
+      k=x.bid!=null?("b"+x.bid):("s"+x.id);
+      rec=sale[k];
+      if(!rec){ rec=sale[k]={T:0,C:0,PT:0,eid:x.id}; }
+      if(!x.adj){ rec.T+=x.price*x.qty; rec.C+=x.cost*x.qty; rec.PT=rec.T-rec.C; }
+    }
+  }
+  for(i=0;i<debts.length;i++){
+    d=debts[i]; if(!d.ref) continue;
+    (byRef[d.ref]=byRef[d.ref]||[]).push(d);
+  }
+  _refCache={ver:_stateVer,dLen:data.length,dbLen:debts.length,mnt:mnt,sale:sale,byRef:byRef};
+  return _refCache;
+}
 function dCalc(d){
   if(!d.ref) return null;
-  var T=0, C=0, eid=0;
-  if(d.kind==="mnt"){
-    var e=data.filter(function(x){ return x.type==="mnt" && !x.adj && ("r"+x.rid)===d.ref; })[0];
-    if(!e) return null; T=e.price*e.qty; C=e.cost*e.qty; eid=e.id;
-  } else {
-    var n=Number(d.ref.slice(1)), isB=d.ref.charAt(0)==="b";
-    var L=data.filter(function(x){ return x.type==="sale" && (isB?x.bid===n:x.id===n); });
-    if(!L.length) return null;
-    L.forEach(function(l){ if(l.adj) return; T+=l.price*l.qty; C+=l.cost*l.qty; }); eid=L[0].id;
-  }
-  return {T:T,C:C,PT:T-C,eid:eid};
+  var idx=_ensureRefIdx();
+  return d.kind==="mnt"?(idx.mnt[d.ref]||null):(idx.sale[d.ref]||null);
 }
 function dRec(f,K){ return f.PT<=0 ? f.PT : Math.min(f.PT,Math.max(0,K-f.C)); }
 function profitNow(ref,def){
@@ -2977,7 +3024,7 @@ $("addBtn").onclick=function(){
     ["name","price","cost"].forEach(function(i){$(i).value=""});
     $("qty").value=1;
     updateStockDisplay(); renderCart();
-    if($("saleBarcode") && document.body.classList.contains("is-desktop")) $("saleBarcode").focus();
+    if($("saleBarcode") && isBarcodeEnabled() && document.body.classList.contains("is-desktop")) $("saleBarcode").focus();
     return;
   } else {
     var a=parseFloat($("amt").value);
@@ -3098,7 +3145,7 @@ function cartCheckoutDo(adj){
   if(adj!==0) data.push({id:base+cart.length+5,date:day,type:"sale",name:adj<0?(en?"Discount":"حسم"):(en?"Extra received":"زيادة مقبوضة"),cat:adj<0?"حسم":"زيادة مقبوضة",adj:1,price:adj,cost:0,qty:1,sid:null,tk:0,curr:curSymbol,bid:base,ino:no,cust:cust,sr:secOn()?secCfg.rate:0,ss:secOn()?secCfg.sym:""});
   if(rem>0) dAdd({id:base+cart.length+1,cust:cust,phone:phone,kind:"sale",amt:rem,ref:"b"+base,date:day,desc:(en?"Invoice #":"فاتورة #")+no});
   cart=[]; $("cartCust").value=""; cartResetDebt();
-  save(); renderAll(); renderCart();
+  save(); renderAll(); renderCart(); focusSaleBarcode();
   saleNote(en?("Invoice #"+no+" recorded — Total "+secBoth(total)+(rem>0?(" — Debt "+fmt(rem)):"")):("تم تسجيل الفاتورة #"+no+" — الإجمالي "+secBoth(total)+(rem>0?(" — دين "+fmt(rem)):"")));
 }
 $("cartDone").onclick=cartCheckout;
@@ -3510,9 +3557,21 @@ function setView(v){
   else if(v==="r") renderRep();
   else if(v==="x"){ try{ renderStats(); }catch(e){} }
 }
+function isBarcodeEnabled(){
+  var v=null; try{ v=localStorage.getItem("star_barcode_on"); }catch(e){}
+  if(v==="1") return true;
+  if(v==="0") return false;
+  return !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+}
+function applyBarcodeToggle(){
+  var on=isBarcodeEnabled();
+  document.body.classList.toggle("barcode-on",on);
+  var chk=$("chkBarcodeOn");
+  if(chk) chk.checked=on;
+}
 function focusSaleBarcode(){
   var b=$("saleBarcode");
-  if(!b||!document.body.classList.contains("is-desktop")) return;
+  if(!b||!isBarcodeEnabled()||!document.body.classList.contains("is-desktop")) return;
   setTimeout(function(){ try{ b.focus(); }catch(e){} },30);
 }
 $("nS").onclick=function(){setView("s"); focusSaleBarcode();};
@@ -4357,7 +4416,7 @@ $("impRep").onclick=function(){
 function dRound(n){ return Math.round(n*100)/100; }
 function dPaid(d){ return (d.pays||[]).reduce(function(a,p){ return a+p.amt; },0); }
 function dRem(d){ var r=Math.round((d.amt-dPaid(d))*10000)/10000; return r<0.00005?0:r; }
-function dFor(ref){ return ref?debts.filter(function(d){ return d.ref===ref; }):[]; }
+function dFor(ref){ return ref?(_ensureRefIdx().byRef[ref]||[]):[]; }
 function dRemFor(ref){ return dFor(ref).reduce(function(a,d){ return a+dRem(d); },0); }
 function dAdd(o){
   var d={id:o.id||Date.now(),cust:o.cust,phone:o.phone||"",kind:o.kind,amt:o.amt,date:o.date||today(),note:o.note||"",ref:o.ref||"",desc:o.desc||"",pays:[],upd:Date.now()};
@@ -4476,7 +4535,7 @@ $("dPayOk").onclick=function(){
       d.pays=d.pays||[]; d.pays.push({id:now+(k++),amt:r4(take),adj:1}); d.upd=Date.now(); al=r4(al-take); lastD=d;
     });
     var bn=(lastD&&lastD.ref&&lastD.ref.charAt(0)==="b")?Number(lastD.ref.slice(1)):null, src=bn?data.filter(function(x){ return x.type==="sale"&&x.bid===bn; })[0]:null;
-    data.push({id:now+500,date:today(),type:"sale",name:en?"Discount":"حسم",cat:"حسم",adj:1,price:-adj,cost:0,qty:1,sid:null,tk:0,curr:curSymbol,bid:bn||undefined,ino:src?src.ino:undefined,cust:name,sr:secCfg.rate,ss:secCfg.sym});
+    data.push({id:now+500,date:today(),type:"sale",name:en?"Discount":"حسم",cat:"حسم",adj:1,note:"debt_adj",price:-adj,cost:0,qty:1,sid:null,tk:0,curr:curSymbol,bid:bn||undefined,ino:src?src.ino:undefined,cust:name,sr:secCfg.rate,ss:secCfg.sym});
   }
   save(); $("dPayDlg").style.display="none"; dSel=null; renderAll();
   var m=$("dMsg"); m.className="saleok"; m.textContent=en?("Payment of "+(so?secBoth(applied):fmt(applied))+" recorded for "+name+(adj>0?(" — discount "+fmt(adj)):"")):("تم تسجيل دفعة "+(so?secBoth(applied):fmt(applied))+" من "+name+(adj>0?(" — حسم "+fmt(adj)):"")+(left>0?(" (الزائد "+fmt(left)+" لم يُحتسب)"):""));
@@ -4887,8 +4946,13 @@ function settingsOpen(k){
   document.querySelectorAll("#vBak .sp").forEach(function(p){ p.style.display=(p.id==="sp-"+k)?"":"none"; });
   window.scrollTo(0,0);
 }
-document.querySelectorAll("#setMenu .mrow").forEach(function(b){ b.onclick=function(){ settingsOpen(b.getAttribute("data-sp")); }; });
-document.querySelectorAll("#vBak .sp-back").forEach(function(b){ b.onclick=settingsMenu; });
+document.querySelectorAll("#vBak .mrow[data-sp]").forEach(function(b){ b.onclick=function(){ settingsOpen(b.getAttribute("data-sp")); }; });
+document.querySelectorAll("#vBak .sp-back").forEach(function(b){
+  b.onclick=function(){
+    var back=b.getAttribute("data-back");
+    if(back) settingsOpen(back); else settingsMenu();
+  };
+});
 $("btnContactWa").onclick=function(){
   var msg=isEn()?"Hello, I'm contacting you about the Star POS app.":"مرحباً، أتواصل معك بخصوص تطبيق Star POS.";
   window.open("https://wa.me/963931498598?text="+encodeURIComponent(msg),"_blank");
@@ -5106,7 +5170,7 @@ var _oldSettingsOpen=settingsOpen; settingsOpen=function(k){ if(k==="sec") secUi
 function shiftBase(){ if(currentShiftStart>0) return currentShiftStart; var d=new Date(); return new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime(); }
 /* النقد المتوقع بالصندوق منذ آخر إغلاق: مبيعات + (عربون الصيانة عند الاستلام + المتبقي عند التسليم) - مرتجعات - مصاريف */
 function shiftCash(){
-  var base=shiftBase(), L=data.filter(function(e){ return e.id>=base; }), k=calc(L), cm=0, dn=0, dp=0;
+  var base=shiftBase(), L=data.filter(function(e){ return e.id>=base && !(e.type==="sale" && e.adj && (e.note==="debt_adj" || (e.price<0 && (!e.bid || (e.id-e.bid)>5000)))); }), k=calc(L), cm=0, dn=0, dp=0;
   L.forEach(function(e){ if(e.type==="mnt"){ var r=(e.rid&&!e.adj)?mFind(e.rid):null; cm+=e.price*e.qty-(r?(r.dep||0):0); } });
   rep.forEach(function(r){ if(r.id>=base) cm+=(r.dep||0); });
   /* الديون الجديدة المرتبطة ببيع/تسليم لم تُقبض نقداً، والدفعات المحصّلة تدخل الصندوق */
@@ -5165,6 +5229,14 @@ $("btnSaveRegisterClose").onclick = function(){
   if(!isNativeApp){
     document.body.classList.add("is-desktop");
   }
+  applyBarcodeToggle();
+  var chkBar = $("chkBarcodeOn");
+  if(chkBar){
+    chkBar.onchange = function(){
+      try{ localStorage.setItem("star_barcode_on", this.checked ? "1" : "0"); }catch(e){}
+      applyBarcodeToggle();
+    };
+  }
 
   var barInput = $("saleBarcode");
   if(!barInput) return;
@@ -5197,11 +5269,15 @@ $("btnSaveRegisterClose").onclick = function(){
         statusEl.textContent = "" + (currentLang==="en"?"Barcode not found: ":"هذا الباركود غير مسجل بالمخزون: ") + code;
         statusEl.style.color = "var(--bad)";
       }
+      if(document.body.classList.contains("is-desktop")) barInput.focus();
     }
   }
 
   barInput.addEventListener("keydown", function(e){
-    if(e.key === "Enter" || e.keyCode === 13){
+    var isTab = (e.key === "Tab" || e.keyCode === 9);
+    var isEnter = (e.key === "Enter" || e.keyCode === 13);
+    if(isEnter || isTab){
+      if(isTab && !String(this.value || "").trim()) return;
       e.preventDefault();
       handleBarcode(this.value);
       this.value = "";
