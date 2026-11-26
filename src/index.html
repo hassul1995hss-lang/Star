@@ -2194,6 +2194,10 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
 <div id="vInv" style="display:none">
 <div class="grid" style="margin-bottom:12px">
   <div class="stat net prf"><small data-i18n="st_cap">إجمالي رأس المال (سعر الجملة × الكمية)</small><b id="iCap">0</b></div>
+  <div class="stat prf"><small data-i18n="st_cap_parts">رأس مال قطع الغيار (الصيانة)</small><b id="iCapP">0</b></div>
+  <div class="stat prf"><small data-i18n="st_cap_rest">رأس مال باقي المخزون</small><b id="iCapR">0</b></div>
+  <div class="stat prf"><small data-i18n="st_cash_cap">رأس المال النقدي (المبيعات والصيانة)</small><b id="iCashCap" class="ok">0</b><small id="iCashCapSub" style="margin-top:3px;margin-bottom:0;font-size:10.5px"></small></div>
+  <div class="stat prf"><small data-i18n="st_stuck_cap">رأس مال عالق بالديون</small><b id="iStuckCap">0</b><small id="iStuckCapSub" style="margin-top:3px;margin-bottom:0;font-size:10.5px"></small></div>
   <div class="stat prf"><small data-i18n="st_val">قيمة البيع المتوقعة (مفرق)</small><b id="iVal">0</b></div>
   <div class="stat prf"><small data-i18n="st_prof">الربح المتوقع</small><b id="iProf" class="ok">0</b></div>
   <div class="stat"><small data-i18n="st_cnt">عدد القطع</small><b id="iCnt">0</b></div>
@@ -2653,6 +2657,10 @@ var I18N = {
     th_profit: "ربح",
     th_month: "الشهر",
     st_cap: "إجمالي رأس المال (سعر الجملة × الكمية)",
+    st_cap_parts: "رأس مال قطع الغيار (الصيانة)",
+    st_cap_rest: "رأس مال باقي المخزون",
+    st_cash_cap: "رأس المال النقدي (المبيعات والصيانة)",
+    st_stuck_cap: "رأس مال عالق بالديون",
     st_val: "قيمة البيع المتوقعة (مفرق)",
     st_prof: "الربح المتوقع",
     st_cnt: "عدد القطع",
@@ -2915,6 +2923,10 @@ var I18N = {
     th_profit: "Profit",
     th_month: "Month",
     st_cap: "Total Capital (Cost × Qty)",
+    st_cap_parts: "Spare Parts Capital (Repairs)",
+    st_cap_rest: "Other Inventory Capital",
+    st_cash_cap: "Cash Capital (Sales & Repairs)",
+    st_stuck_cap: "Capital Stuck in Debts",
     st_val: "Expected Retail Value",
     st_prof: "Expected Profit",
     st_cnt: "Total Units",
@@ -3320,6 +3332,36 @@ function debtDeferred(){
     r[d.kind==="mnt"?"m":"s"]+=f.PT-dRec(f,f.T-dRem(d));
   });
   return r;
+}
+/* حساب رأس المال النقدي المسترد من المبيعات والصيانة ورأس المال العالق بالديون */
+function calcCashAndStuckCapital(){
+  var grossSaleCost=0, retCost=0, grossMntCost=0;
+  data.forEach(function(e){
+    if(e.type==="sale") grossSaleCost+=(e.cost||0)*(e.qty||0);
+    else if(e.type==="mnt") grossMntCost+=(e.cost||0)*(e.qty||0);
+    else if(e.type==="ret") retCost+=(e.cost||0)*(e.qty||0);
+  });
+  var netSaleCost=Math.max(0,grossSaleCost-retCost);
+  var stuckSale=0, stuckMnt=0, seenRef={};
+  debts.forEach(function(d){
+    if(!d.ref||seenRef[d.ref]) return;
+    seenRef[d.ref]=1;
+    var f=dCalc(d); if(!f||f.C<=0) return;
+    var R=dRemFor(d.ref); if(R<=0) return;
+    var K=Math.max(0,f.T-R);
+    var stuck=Math.min(R,Math.max(0,f.C-K));
+    if(d.kind==="mnt") stuckMnt+=stuck; else stuckSale+=stuck;
+  });
+  var cashSale=Math.max(0,netSaleCost-stuckSale);
+  var cashMnt=Math.max(0,grossMntCost-stuckMnt);
+  return {
+    cashSale:cashSale,
+    cashMnt:cashMnt,
+    cashTotal:cashSale+cashMnt,
+    stuckSale:stuckSale,
+    stuckMnt:stuckMnt,
+    stuckTotal:stuckSale+stuckMnt
+  };
 }
 function calc(list,o){
   var s=0,c=0,x=0,rt=0,dm=0,ms=0,mc=0;
@@ -4173,9 +4215,26 @@ function delItem(id){
 
 var INV_LIMIT=PG.inv, _invT=null;
 function renderInv(){
-  var cap=0,val=0,cnt=0;
-  inv.forEach(function(i){ cap+=i.qty*i.whole; val+=i.qty*i.retail; cnt+=i.qty; });
+  var cap=0,val=0,cnt=0,capP=0;
+  inv.forEach(function(i){ var c=i.qty*i.whole; cap+=c; if(isPart(i)) capP+=c; val+=i.qty*i.retail; cnt+=i.qty; });
+  var cs=calcCashAndStuckCapital(), en=isEn();
   $("iCap").textContent=fmt(cap);
+  $("iCapP").textContent=fmt(capP);
+  $("iCapR").textContent=fmt(cap-capP);
+  $("iCashCap").textContent=fmt(cs.cashTotal);
+  $("iCashCap").className=cs.cashTotal>0?"ok":"";
+  if($("iCashCapSub")){
+    $("iCashCapSub").textContent=(cs.cashSale>0||cs.cashMnt>0)
+      ? ((en?"Sales: ":"مبيعات: ")+fmt(cs.cashSale)+" · "+(en?"Repairs: ":"صيانة: ")+fmt(cs.cashMnt))
+      : "";
+  }
+  $("iStuckCap").textContent=fmt(cs.stuckTotal);
+  $("iStuckCap").className=cs.stuckTotal>0?"bad":"";
+  if($("iStuckCapSub")){
+    $("iStuckCapSub").textContent=cs.stuckTotal>0
+      ? ((en?"Sales: ":"مبيعات: ")+fmt(cs.stuckSale)+" · "+(en?"Repairs: ":"صيانة: ")+fmt(cs.stuckMnt))
+      : (en?"No stuck capital":"لا يوجد رأس مال عالق");
+  }
   $("iVal").textContent=fmt(val);
   $("iProf").textContent=fmt(val-cap);
   $("iCnt").textContent=num(cnt);
@@ -4848,10 +4907,65 @@ function bkFeedback(msg, fromBanner){
   }
 }
 
+/* ويندوز / سطح المكتب: نافذة "حفظ باسم" لاختيار مكان الحفظ (أندرويد يبقى على المشاركة كما هو) */
+function saveBackupDesktop(dataStr, fileName, pickP, fromBanner){
+  var en=(currentLang==="en");
+  function done(where){ markBackup(); bkFeedback(en ? ("Backup saved: "+where) : ("تم حفظ النسخة الاحتياطية: "+where), fromBanner); }
+  function viaTauri(){
+    var T=window.__TAURI__;
+    if(T && T.dialog && T.dialog.save && T.fs && T.fs.writeTextFile){
+      return T.dialog.save({defaultPath:fileName, filters:[{name:"JSON", extensions:["json"]}]}).then(function(path){
+        if(!path) return "cancel";
+        return T.fs.writeTextFile(path, dataStr).then(function(){ done(path); return "ok"; });
+      });
+    }
+    return Promise.resolve("none");
+  }
+  function viaElectron(){
+    var A=window.electronAPI;
+    if(A && A.saveBackup){
+      return Promise.resolve(A.saveBackup(fileName, dataStr)).then(function(path){
+        if(!path) return "cancel";
+        done(typeof path==="string"?path:fileName); return "ok";
+      });
+    }
+    return Promise.resolve("none");
+  }
+  function lastResort(){
+    fallbackDownloadBlob(dataStr, fileName, fromBanner); markBackup();
+  }
+  function others(){
+    return viaTauri().then(function(r){ return r!=="none" ? r : viaElectron(); })
+      .then(function(r){ if(r==="none") lastResort(); })
+      .catch(function(){ lastResort(); });
+  }
+  if(pickP){
+    return pickP.then(function(h){
+      return h.createWritable().then(function(w){
+        return w.write(dataStr).then(function(){ return w.close(); });
+      }).then(function(){ done(h.name); });
+    }).catch(function(e){
+      if(isCancel(e)) return;               /* ألغى المستخدم نافذة الحفظ: لا شيء يُحفظ */
+      return others();
+    });
+  }
+  return others();
+}
+
 function saveBackupUniversal(fromBanner){
   var en=(currentLang==="en");
+  var fileName = "starpos-backup-" + today() + ".json";
+  var desk = !isAndroidApp() && (isElectron() || !FS);
+  var pickP = null;
+  if(desk && typeof window.showSaveFilePicker==="function"){
+    /* تُستدعى مباشرة عند الضغط (قبل التشفير) كي لا تنتهي صلاحية تفاعل المستخدم */
+    try{
+      pickP = window.showSaveFilePicker({suggestedName:fileName, types:[{description: en?"Star POS backup":"نسخة Star POS الاحتياطية", accept:{"application/json":[".json"]}}]});
+      pickP.catch(function(){});
+    }catch(e){ pickP=null; }
+  }
   return packEncrypted().then(function(dataStr){
-    var fileName = "starpos-backup-" + today() + ".json";
+    if(desk) return saveBackupDesktop(dataStr, fileName, pickP, fromBanner);
     var SH = isAndroidApp() ? plug("Share") : null;
     if(SH){
       var cachePath = "backups/" + fileName;
@@ -4901,7 +5015,7 @@ function fallbackDownloadBlob(dataStr, fileName, fromBanner){
     a.click();
     document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(u); }, 2000);
-    bkFeedback(en ? ("Encrypted backup downloaded (" + fileName + ").") : ("تم تحميل ملف النسخة المشفّرة بنجاح (" + fileName + ")."), fromBanner);
+    bkFeedback(en ? ("Backup downloaded to your Downloads folder (" + fileName + ").") : ("تم تحميل ملف النسخة إلى مجلد التنزيلات Downloads (" + fileName + ")"), fromBanner);
   } catch(e) {
     bkFeedback(en ? "Could not download backup file." : "تعذّر تحميل ملف النسخة الاحتياطية.", fromBanner);
   }
