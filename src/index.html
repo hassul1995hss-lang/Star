@@ -1416,6 +1416,33 @@ body.is-desktop div.desk-only.flex{display:flex!important}
 
 /* حماية iOS من التكبير التلقائي عند التركيز على الحقول */
 @supports (-webkit-touch-callout:none){input,select,textarea{font-size:16px}}
+
+/* ===== تحسين الأداء على الأجهزة الضعيفة (المرحلة 2) ===== */
+.item,.invc,.dcard{content-visibility:auto;contain-intrinsic-size:auto 96px}
+@media (max-width:900px),(pointer:coarse){
+  *,*::before,*::after{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  #navTabs,#bottomActionsBar,.main-header-bar{background:var(--card)}
+  .card,.invc,.item,.stat{box-shadow:none!important}
+  .card,.invc,.dcard{will-change:auto}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+
+/* ===== أزرار صف المخزون ===== */
+.ib-ctl{gap:6px;flex-shrink:0}
+.ib-qty{min-width:36px;height:32px;padding:0 8px;display:inline-flex;align-items:center;justify-content:center;border-radius:11px;
+  background:color-mix(in srgb,var(--pri) 10%,var(--card));color:var(--pri);font-weight:800;font-size:15px;font-variant-numeric:tabular-nums}
+.ib-qty.low{background:color-mix(in srgb,var(--bad) 12%,var(--card));color:var(--bad)}
+.ib-edit{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;padding:0;border-radius:10px;
+  border:1.5px solid var(--line);background:var(--card2);color:var(--text);font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:all .14s ease}
+.ib-edit .i{width:16px;height:16px;margin:0}
+.ib-edit:hover{border-color:var(--pri);color:var(--pri);background:color-mix(in srgb,var(--pri) 8%,var(--card))}
+.ib-edit:active{transform:scale(.95)}
+.ib-del.del{width:32px;height:32px;padding:0;border-radius:10px;border:1.5px solid color-mix(in srgb,var(--bad) 28%,var(--line));
+  background:color-mix(in srgb,var(--bad) 8%,var(--card));color:var(--bad)}
+.ib-del.del .i{width:16px;height:16px}
+.ib-del.del:hover{background:color-mix(in srgb,var(--bad) 16%,var(--card))}
 </style>
 <script>
 /* ===== StarDB: طبقة تخزين IndexedDB (المرحلة 1) =====
@@ -1425,7 +1452,7 @@ body.is-desktop div.desk-only.flex{display:flex!important}
    - إن تعذّر IndexedDB يعمل التطبيق على localStorage كما كان سابقاً. */
 (function(){
   "use strict";
-  var DB_NAME="star_pos_db", DB_VER=2, STORE="kv", META="meta", INVS="inv_arch", REGS="reg_arch";
+  var DB_NAME="star_pos_db", DB_VER=3, STORE="kv", META="meta", INVS="inv_arch", REGS="reg_arch", RECS="recs";
   var COLL=["telecom_acc_v1","telecom_inv_v1","telecom_tomb_v1","telecom_rep_v1","telecom_reg_closes_v1","star_debts_v1"];
   var CLEAN_AFTER_MS=3*864e5;          /* حذف النسخ القديمة من localStorage بعد 3 أيام من ترحيل ناجح */
   var OK_FLAG="star_idb_ok";           /* علامة: سبق أن عمل IndexedDB بنجاح على هذا الجهاز */
@@ -1472,6 +1499,8 @@ body.is-desktop div.desk-only.flex{display:flex!important}
           st=d.createObjectStore(REGS,{keyPath:"id"});
           st.createIndex("date","date");
         }
+        /* المرحلة 3: تخزين لكل سجل (إضافة فقط) */
+        if(!d.objectStoreNames.contains(RECS)) d.createObjectStore(RECS,{keyPath:"k"});
       };
       rq.onsuccess=function(){
         clearTimeout(tm);
@@ -1539,7 +1568,7 @@ body.is-desktop div.desk-only.flex{display:flex!important}
     writeTx(META,meta).catch(function(){});
   }
 
-  function flush(){
+  function flushKV(){
     if(mode!=="idb") return Promise.resolve();
     timer=null;
     var ops=dirty, keys=Object.keys(ops);
@@ -1552,6 +1581,147 @@ body.is-desktop div.desk-only.flex{display:flex!important}
       if(retries<5){ retries++; setTimeout(flush,2000); }
     });
   }
+
+  /* ===== المرحلة 3: تخزين لكل سجل =====
+     بدل كتابة المصفوفة كاملة (JSON واحد ضخم) عند كل عملية، يُحفظ كل سجل بمفتاحه في مخزن "recs"،
+     ويُكتب فقط السجل الجديد/المتغيّر/المحذوف. العدّاد يُكتب في نفس المعاملة (ذرّي) ويُتحقق منه عند التحميل.
+     الترحيل أول مرة: يُنسخ المحتوى القديم (kv) ثم يُتحقق من العدد؛ النسخة القديمة تبقى 3 أيام كشبكة أمان. */
+  var RECCOLL=["telecom_acc_v1","telecom_inv_v1","telecom_rep_v1","telecom_reg_closes_v1","star_debts_v1"];
+  var recOnMap={}, recCache={}, recLoaded={}, recCount={}, recAt={}, recDirty={}, recRetries=0;
+  function recRange(nm){ return IDBKeyRange.bound(nm+"|", nm+"|\uffff"); }
+  function recMetaKey(nm){ return "__meta|"+nm; }
+  function recBuild(arr){
+    var m=new Map(), cnt=Object.create(null), i, r, s, id, c, k;
+    for(i=0;i<arr.length;i++){
+      r=arr[i]; s=JSON.stringify(r); if(s===undefined) s="null";
+      id=(r&&typeof r==="object"&&r.id!=null)?String(r.id):"@"+i;
+      c=cnt[id]=(cnt[id]||0)+1; k=c>1?id+"~"+c:id;
+      m.set(k,{i:i,s:s});
+    }
+    return m;
+  }
+  function recReq(fn,mode2){
+    return new Promise(function(res,rej){
+      var tx=db.transaction(RECS,mode2||"readonly"), os=tx.objectStore(RECS), out;
+      out=fn(os);
+      tx.oncomplete=function(){ res(out&&out.__res!==undefined?out.__res:(out&&out.result!==undefined?out.result:out)); };
+      tx.onerror=tx.onabort=function(){ rej(tx.error||new Error("rec-tx")); };
+    });
+  }
+  function recReadAll(nm){
+    return new Promise(function(res,rej){
+      var rows=[], tx=db.transaction(RECS,"readonly"), rq=tx.objectStore(RECS).openCursor(recRange(nm));
+      rq.onsuccess=function(){ var c=rq.result; if(c){ rows.push(c.value); c.continue(); } };
+      tx.oncomplete=function(){ res(rows); };
+      tx.onerror=tx.onabort=function(){ rej(tx.error||new Error("rec-read")); };
+    });
+  }
+  function recWipe(nm){
+    return recReq(function(os){ os.delete(recRange(nm)); os.delete(recMetaKey(nm)); },"readwrite");
+  }
+  function recEnable(nm,arr,cm,at){
+    recCache[nm]=cm; recLoaded[nm]=arr; recCount[nm]=arr.length; recAt[nm]=at; recOnMap[nm]=true;
+  }
+  function recMigrate(nm){
+    var raw=cache[nm], arr;
+    if(raw==null) arr=[];
+    else { try{ arr=JSON.parse(raw); }catch(e){ return Promise.resolve(); } if(!Array.isArray(arr)) return Promise.resolve(); }
+    var m=recBuild(arr), at=Date.now();
+    return recReq(function(os){
+      m.forEach(function(v,k){ os.put({k:nm+"|"+k,i:v.i,s:v.s}); });
+      os.put({k:recMetaKey(nm),n:arr.length,at:at});
+    },"readwrite").then(function(){
+      return new Promise(function(res,rej){
+        var tx=db.transaction(RECS,"readonly"), rq=tx.objectStore(RECS).count(recRange(nm));
+        tx.oncomplete=function(){ res(rq.result); };
+        tx.onerror=tx.onabort=function(){ rej(tx.error||new Error("rec-count")); };
+      });
+    }).then(function(c){
+      if(c!==arr.length){ return recWipe(nm); }        /* فشل التحقق: نبقى على التخزين القديم دون أي خسارة */
+      recEnable(nm,arr,m,at);
+    });
+  }
+  function recInitOne(nm){
+    return new Promise(function(res,rej){
+      var tx=db.transaction(RECS,"readonly"), rq=tx.objectStore(RECS).get(recMetaKey(nm));
+      tx.oncomplete=function(){ res(rq.result||null); };
+      tx.onerror=tx.onabort=function(){ rej(tx.error||new Error("rec-meta")); };
+    }).then(function(m){
+      if(!m) return recMigrate(nm);
+      return recReadAll(nm).then(function(rows){
+        if(rows.length!==m.n) throw new Error("rec-count:"+nm+":"+rows.length+"/"+m.n);
+        rows.sort(function(a,b){ return a.i-b.i; });
+        var arr=[], cm=new Map(), j, pre=nm.length+1;
+        for(j=0;j<rows.length;j++){ arr.push(JSON.parse(rows[j].s)); cm.set(rows[j].k.slice(pre),{i:rows[j].i,s:rows[j].s}); }
+        recEnable(nm,arr,cm,m.at||Date.now());
+      });
+    }).then(function(){
+      /* النسخة النصية القديمة: تُحرَّر من الذاكرة دائماً وتُحذف من القرص بعد 3 أيام */
+      if(recOnMap[nm] && cache[nm]!=null){
+        delete cache[nm];
+        if(Date.now()-recAt[nm]>CLEAN_AFTER_MS){ dirty[nm]=null; sched(); }
+      }
+    });
+  }
+  function recInit(){
+    return RECCOLL.reduce(function(p,nm){ return p.then(function(){ return recInitOne(nm); }); },Promise.resolve());
+  }
+  function recOn(nm){ return mode==="idb" && recOnMap[nm]===true; }
+  /* حلقة المقارنة: تعدّل الخريطة القديمة في مكانها (بدون إنشاء خريطة/كائنات جديدة للسجلات غير المتغيّرة) */
+  var recGen=0;
+  function recSave(nm,arr){
+    var cm=recCache[nm]; if(!cm){ cm=recCache[nm]=new Map(); }
+    var ops=recDirty[nm]||(recDirty[nm]={}), ch=(arr.length!==recCount[nm]), gen=++recGen, n=arr.length, i, r, st, k, o, c;
+    for(i=0;i<n;i++){
+      r=arr[i]; st=JSON.stringify(r); if(st===undefined) st="null";
+      k=(r&&typeof r==="object"&&r.id!=null)?String(r.id):"@"+i;
+      o=cm.get(k);
+      if(o&&o.g===gen){ c=2; do{ k=k.split("~")[0]+"~"+c; c++; o=cm.get(k); }while(o&&o.g===gen); }
+      if(!o){ o={i:i,s:st,g:gen}; cm.set(k,o); ops[k]={k:nm+"|"+k,i:i,s:st}; ch=true; }
+      else {
+        if(o.s!==st||o.i!==i){ o.s=st; o.i=i; ops[k]={k:nm+"|"+k,i:i,s:st}; ch=true; }
+        o.g=gen;
+      }
+    }
+    cm.forEach(function(v,key){ if(v.g!==gen){ cm.delete(key); ops[key]=null; ch=true; } });
+    recCount[nm]=n;
+    if(ch) sched();
+    return ch;
+  }
+  function recClear(nm){
+    var ops=recDirty[nm]||(recDirty[nm]={});
+    (recCache[nm]||new Map()).forEach(function(v,k){ ops[k]=null; });
+    recCache[nm]=new Map(); recCount[nm]=0; sched();
+  }
+  function flushRec(){
+    if(mode!=="idb"||!db) return Promise.resolve();
+    var names=Object.keys(recDirty), batch=recDirty;
+    if(!names.length) return Promise.resolve();
+    recDirty={};
+    return new Promise(function(res,rej){
+      var tx=db.transaction(RECS,"readwrite"), os=tx.objectStore(RECS);
+      names.forEach(function(nm){
+        var ops=batch[nm];
+        Object.keys(ops).forEach(function(k){ if(ops[k]===null) os.delete(nm+"|"+k); else os.put(ops[k]); });
+        os.put({k:recMetaKey(nm),n:recCount[nm],at:recAt[nm]});
+      });
+      tx.oncomplete=function(){ res(); };
+      tx.onerror=function(){ rej(tx.error||new Error("rec-write-failed")); };
+      tx.onabort=function(){ rej(tx.error||new Error("rec-write-aborted")); };
+    }).then(function(){ recRetries=0; },function(e){
+      /* أعد جدولة أحدث قيمة لكل مفتاح */
+      names.forEach(function(nm){
+        var ops=recDirty[nm]||(recDirty[nm]={}), cm=recCache[nm]||new Map();
+        Object.keys(batch[nm]).forEach(function(k){
+          if(k in ops) return;
+          var v=cm.get(k); ops[k]=v?{k:nm+"|"+k,i:v.i,s:v.s}:null;
+        });
+      });
+      fail(e);
+      if(recRetries<5){ recRetries++; setTimeout(flush,2000); }
+    });
+  }
+  function flush(){ return Promise.all([flushKV(),flushRec()]).then(function(){}); }
   /* تجميع بالـ microtask: تبدأ معاملة الكتابة فوراً بعد انتهاء save() نفسها فلا نافذة زمنية لفقدان البيانات */
   function sched(){ if(timer) return; timer=true; Promise.resolve().then(function(){ timer=null; flush(); }); }
 
@@ -1639,9 +1809,15 @@ body.is-desktop div.desk-only.flex{display:flex!important}
     removeItem:function(k){
       lsDel(k);
       if(mode==="ls") return;
+      if(recOnMap[k]===true) recClear(k);
       delete cache[k]; dirty[k]=null; sched();
     },
     flush:flush,
+    recOn:recOn, recSave:recSave,
+    loadArr:function(nm){
+      if(recOn(nm) && recLoaded[nm]) return recLoaded[nm];
+      try{ var a=JSON.parse(api.getItem(nm)||"[]"); return Array.isArray(a)?a:[]; }catch(e){ return []; }
+    },
     status:function(){ return {mode:status.mode,migratedAt:status.migratedAt,migratedKeys:status.migratedKeys,error:status.error,degraded:status.degraded,cleaned:!!meta.cleaned}; },
     ready:null
   };
@@ -1658,7 +1834,7 @@ body.is-desktop div.desk-only.flex{display:flex!important}
     lsSet(OK_FLAG,"1");
     cleanLegacy();
     try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(); }catch(e){}
-  }).catch(function(e){
+  }).then(recInit).catch(function(e){
     mode="ls"; status.mode="ls"; status.error=String((e&&e.message)||e);
     if(lsGet(OK_FLAG)==="1"){
       status.degraded=true;
@@ -1731,7 +1907,7 @@ if(window.matchMedia){ try{ matchMedia("(prefers-color-scheme: dark)").addEventL
 </script>
 </head>
 <body>
-<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol><symbol id="i-unlock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></symbol><symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol><symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l3-2 2.5 2L12 20l2.5 2L17 20l3 2V2l-3 2-2.5-2L12 4 9.5 2 7 4z"/><path d="M8 9h8M8 13h8"/></symbol><symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol><symbol id="i-cash" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></symbol><symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.7 2.7-2.3-.7-.7-2.3z"/></symbol><symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/></symbol><symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></symbol><symbol id="i-chip" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></symbol><symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol><symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></symbol><symbol id="i-package" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.5L12 12l8.7-4.5M12 22V12"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16v-5M12 16V7M17 16v-8"/></symbol><symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol><symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol><symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8M11 8v8M15 8v8M18 8v8"/></symbol><symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></symbol><symbol id="i-archive" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/></symbol><symbol id="i-store" viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v9h14v-9M10 21v-5h4v5"/></symbol><symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></symbol><symbol id="i-dollar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.5-1.5-3-1.5-1.8 0-3 .9-3 2.2s1.2 1.9 3 2.3 3 1 3 2.3-1.2 2.2-3 2.2c-1.5 0-2.6-.6-3-1.7M12 6v2M12 16v2"/></symbol><symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></symbol><symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></symbol><symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></symbol><symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></symbol><symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></symbol><symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2M16 7l3 3M14 9l2 2"/></symbol><symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol><symbol id="i-message" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol><symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol><symbol id="i-chev" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.7-4 3-9 3s-9-1.3-9-3M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></symbol><symbol id="i-wallet" viewBox="0 0 24 24"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></symbol><symbol id="i-wa" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></symbol></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol><symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol><symbol id="i-unlock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></symbol><symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol><symbol id="i-receipt" viewBox="0 0 24 24"><path d="M4 2v20l3-2 2.5 2L12 20l2.5 2L17 20l3 2V2l-3 2-2.5-2L12 4 9.5 2 7 4z"/><path d="M8 9h8M8 13h8"/></symbol><symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol><symbol id="i-cash" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01M18 12h.01"/></symbol><symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.7 2.7-2.3-.7-.7-2.3z"/></symbol><symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/></symbol><symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></symbol><symbol id="i-chip" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></symbol><symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol><symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></symbol><symbol id="i-package" viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.5L12 12l8.7-4.5M12 22V12"/></symbol><symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16v-5M12 16V7M17 16v-8"/></symbol><symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol><symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol><symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8M11 8v8M15 8v8M18 8v8"/></symbol><symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></symbol><symbol id="i-archive" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/></symbol><symbol id="i-store" viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/><path d="M5 12v9h14v-9M10 21v-5h4v5"/></symbol><symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></symbol><symbol id="i-dollar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9.5c-.5-1-1.5-1.5-3-1.5-1.8 0-3 .9-3 2.2s1.2 1.9 3 2.3 3 1 3 2.3-1.2 2.2-3 2.2c-1.5 0-2.6-.6-3-1.7M12 6v2M12 16v2"/></symbol><symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></symbol><symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></symbol><symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></symbol><symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></symbol><symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></symbol><symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2M16 7l3 3M14 9l2 2"/></symbol><symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol><symbol id="i-message" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol><symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol><symbol id="i-chev" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.7-4 3-9 3s-9-1.3-9-3M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/></symbol><symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></symbol><symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></symbol><symbol id="i-wallet" viewBox="0 0 24 24"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4"/><path d="M4 6v12a2 2 0 0 0 2 2h14v-4"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></symbol><symbol id="i-wa" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></symbol></svg>
 <!-- سياسة الخصوصية والاستخدام -->
 <div id="policyModal" class="pol-screen">
   <div class="pol-wrap">
@@ -2968,17 +3144,25 @@ var shopProfile = {
 // عملة البرنامج المحددة فقط
 var curSymbol = localStorage.getItem("star_curr_sym") || "$";
 
+var PG={day:20,debt:15,mnt:15,inv:30,reg:15,arch:15,dmg:10}; /* حجم الصفحة الأولى = حجم الزيادة */
+var DAY_LIMIT=PG.day, DEBT_LIMIT=PG.debt, MNT_LIMIT=PG.mnt, REG_LIMIT=PG.reg, INVA_LIMIT=PG.arch, DMG_LIMIT=PG.dmg;
+function _deb(fn,ms){ var t0=null; return function(){ var a=arguments, th=this; clearTimeout(t0); t0=setTimeout(function(){ fn.apply(th,a); },ms); }; }
+function _moreBtn(rest,onclick){
+  var mb=document.createElement("button"); mb.className="add sec"; mb.type="button";
+  mb.textContent=(isEn()?"Show more (":"عرض المزيد (")+rest+(isEn()?" remaining)":" متبقٍ)");
+  mb.onclick=onclick; return mb;
+}
 var KEY="telecom_acc_v1", data=[], mode="sale", cart=[];
 var INV="telecom_inv_v1", inv=[];
-try{ data=JSON.parse(StarDB.getItem(KEY)||"[]"); }catch(e){ data=[]; }
-try{ inv=JSON.parse(StarDB.getItem(INV)||"[]"); }catch(e){ inv=[]; }
+try{ data=StarDB.loadArr(KEY); }catch(e){ data=[]; }
+try{ inv=StarDB.loadArr(INV); }catch(e){ inv=[]; }
 var REPK="telecom_rep_v1", rep=[];
-try{ rep=JSON.parse(StarDB.getItem(REPK)||"[]"); }catch(e){ rep=[]; }
+try{ rep=StarDB.loadArr(REPK); }catch(e){ rep=[]; }
 var REG_ARCHIVE_KEY = "telecom_reg_closes_v1", regArchive = [];
-try{ regArchive=JSON.parse(StarDB.getItem(REG_ARCHIVE_KEY)||"[]"); }catch(e){ regArchive=[]; }
+try{ regArchive=StarDB.loadArr(REG_ARCHIVE_KEY); }catch(e){ regArchive=[]; }
 if(!Array.isArray(data)) data=[]; if(!Array.isArray(inv)) inv=[]; if(!Array.isArray(rep)) rep=[]; if(!Array.isArray(regArchive)) regArchive=[];
 var DEBTK="star_debts_v1", debts=[];
-try{ debts=JSON.parse(StarDB.getItem(DEBTK)||"[]"); }catch(e){ debts=[]; } if(!Array.isArray(debts)) debts=[];
+try{ debts=StarDB.loadArr(DEBTK); }catch(e){ debts=[]; } if(!Array.isArray(debts)) debts=[];
 
 /* الفئات تُخزَّن دائماً بقيمتها العربية (مستقلة عن لغة الواجهة) ويُترجم العرض فقط */
 var PARTS = "قطع غيار", REPAIR_CAT = "صيانة";
@@ -3005,12 +3189,14 @@ var WKK="telecom_wk", WK={on:false,perms:{}};
 try{ var _w=JSON.parse(localStorage.getItem(WKK)||"null"); if(_w) WK=_w; }catch(e){}
 
 function wkHidePrf(){ return !!(WK.on&&!(WK.perms&&WK.perms.prf)); }
-var _stateVer=0, _serCache={};
+var _stateVer=0, _serCache={}, _dataVer=0;
 function saveCol(storeKey, arr){
   try{
+    if(StarDB.recOn(storeKey)){ if(StarDB.recSave(storeKey, arr) && storeKey===KEY) _dataVer++; return; }
     var s = JSON.stringify(arr);
     if(_serCache[storeKey] !== s){
       _serCache[storeKey] = s;
+      if(storeKey===KEY) _dataVer++;
       StarDB.setItem(storeKey, s);
     }
   }catch(e){}
@@ -3037,6 +3223,7 @@ function secLine(n,rate){ return secOn()?secFmt(n,rate):""; }
 function secBoth(n){ return secOn()?(fmt(n)+" = "+secFmt(n)):fmt(n); }
 $("day").value=today();
 $("day").onchange=function(){
+  DAY_LIMIT=PG.day;
   if(WK&&WK.on){ var td=today(); if($("day").value!==td) $("day").value=td; }
   renderAll();
 };
@@ -3048,12 +3235,18 @@ setInterval(function(){
 },60000);
 
 // تصفية عمليات اليوم: التصفير بعد إغلاق الصندوق يخص "اليوم الحالي" فقط ولا يخفي الأيام السابقة
+/* فهرس حسب التاريخ: يُبنى مرة واحدة ويُعاد بناؤه فقط عند تغيّر البيانات (بدل فلترة كل السجلات في كل رسم) */
+var _dIdx={ver:-1,len:-1,arr:null,map:null};
+function dateIdx(){
+  if(_dIdx.map && _dIdx.ver===_stateVer && _dIdx.len===data.length && _dIdx.arr===data) return _dIdx.map;
+  var m={}, i, e;
+  for(i=0;i<data.length;i++){ e=data[i]; if(!e) continue; (m[e.date]||(m[e.date]=[])).push(e); }
+  _dIdx={ver:_stateVer,len:data.length,arr:data,map:m};
+  return m;
+}
 function getActiveShiftData(day){
-  return data.filter(function(e){
-    if(e.date !== day) return false;
-    if(day === today() && currentShiftStart > 0 && e.id < currentShiftStart) return false;
-    return true;
-  });
+  var L=dateIdx()[day]||[], cut=(day===today() && currentShiftStart>0)?currentShiftStart:0;
+  return cut ? L.filter(function(e){ return !(e.id < cut); }) : L.slice();
 }
 /* ===== الربح حسب التحصيل (استرداد رأس المال أولاً) =====
    لكل بيع/صيانة بالدين: لا يُحتسب ربح حتى يتجاوز المحصَّل تكلفة البضاعة، ثم يُحتسب الفائض فقط.
@@ -3145,7 +3338,13 @@ function calc(list,o){
   var g=s-rt-c+aS, n=g-x, mp=ms-mc+aM;
   return {s:s,rt:rt,c:c,x:x,dm:dm,ms:ms,mc:mc,mp:mp,g:g,n:n,tn:n+mp,adjS:aS,adjM:aM};
 }
-function sums(day){ return calc(getActiveShiftData(day),{lo:day,hi:day,shift:true}); }
+var _sumC={};
+function sums(day){
+  var key=_stateVer+"|"+data.length+"|"+debts.length+"|"+currentShiftStart+"|"+today(), c=_sumC[day];
+  if(c && c.k===key) return c.v;
+  var v=calc(getActiveShiftData(day),{lo:day,hi:day,shift:true});
+  _sumC[day]={k:key,v:v}; return v;
+}
 
 /* بحث ذكي: تطبيع الحروف العربية + مطابقة بداية الاسم أو بداية أي كلمة فيه */
 function normAr(x){
@@ -3177,9 +3376,17 @@ function updateItemsForSelectedCategory(){
   });
 
   var h = '<option value="">' + t("opt_no_stock") + '</option>';
-  filteredItems.forEach(function(i){
+  var shownItems = filteredItems, extraN = 0;
+  if(!findQ && filteredItems.length > 120){
+    shownItems = filteredItems.slice(0,120);
+    var curIt = filteredItems.filter(function(i){ return String(i.id) === currentVal; })[0];
+    if(curIt && shownItems.indexOf(curIt) < 0) shownItems.push(curIt);
+    extraN = filteredItems.length - shownItems.length;
+  }
+  shownItems.forEach(function(i){
     h += '<option value="' + i.id + '">' + esc(i.name) + ' [' + t("txt_available") + ' ' + i.qty + ']</option>';
   });
+  if(extraN > 0) h += '<option value="" disabled>' + (isEn() ? ('… +' + extraN + ' more — type in the search box') : ('… +' + extraN + ' صنف آخر — اكتب في خانة البحث')) + '</option>';
 
   stockSel.innerHTML = h;
   /* أثناء البحث تظهر النتائج مباشرة كقائمة مفتوحة */
@@ -3199,7 +3406,7 @@ function updateItemsForSelectedCategory(){
   }
   updateStockDisplay();
 }
-if($("itemFind")) $("itemFind").oninput = function(){ updateItemsForSelectedCategory(); };
+if($("itemFind")) $("itemFind").oninput = _deb(function(){ updateItemsForSelectedCategory(); },120);
 
 function updateStockDisplay(){
   var sid=$("stockSel").value;
@@ -3761,13 +3968,15 @@ function render(){
   var items=getActiveShiftData(day).filter(function(e){return e.type!=="mnt";}).reverse();
   $("list").innerHTML=items.length?"":'<div class="empty">'+t("empty_today")+'</div>';
   
-  var shownInv={};
+  var shownInv={}, byBid={}, rendered=0, restN=0;
+  items.forEach(function(x){ if(x.type==="sale" && x.bid){ (byBid[x.bid]||(byBid[x.bid]=[])).push(x); } });
   items.forEach(function(e){
     var d=document.createElement("div"), cur=e.curr||curSymbol;
     if(e.type==="sale"){
       var key=e.bid?("b"+e.bid):("s"+e.id);
       if(shownInv[key]) return; shownInv[key]=1;
-      var lines=e.bid?items.filter(function(x){ return x.type==="sale" && x.bid===e.bid; }).reverse():[e];
+      if(rendered>=DAY_LIMIT){ restN++; return; } rendered++;
+      var lines=e.bid?byBid[e.bid].slice().reverse():[e];
       var tot=0, prof=0, h="";
       lines.forEach(function(l){
         tot+=l.price*l.qty; prof+=(l.price-l.cost)*l.qty;
@@ -3784,6 +3993,7 @@ function render(){
       d.querySelector('[data-act="print"]').onclick=function(){ printInvoice(invData(lines)); };
       $("list").appendChild(d); return;
     }
+    if(rendered>=DAY_LIMIT){ restN++; return; } rendered++;
     d.className="item";
     var left=e.type==="ret"
       ? '<div><b>'+ic("undo")+' '+esc(e.name)+'</b><small>'+(e.kind==="back"?t("txt_ret_back"):t("txt_ret_dmg"))+' · '+e.qty+' × '+fmt(e.price)+(e.note?' · '+esc(e.note):'')+'</small></div><b class="bad">-'+fmt(e.price*e.qty)+'</b>'
@@ -3793,6 +4003,7 @@ function render(){
     $("list").appendChild(d);
   });
   
+  if(restN>0) $("list").appendChild(_moreBtn(restN,function(){ DAY_LIMIT+=PG.day; render(); }));
   var h='<tr><th>'+t("th_day")+'</th><th>'+t("th_sales")+'</th><th>'+t("th_exp")+'</th><th>'+t("th_net")+'</th><th>'+t("th_mnt")+'</th></tr>', d0=new Date();
   var dayKeys=[], dayBuckets={}, daySet={};
   for(var i=0;i<7;i++){
@@ -3800,10 +4011,8 @@ function render(){
     var k=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
     dayKeys.push(k); dayBuckets[k]=[]; daySet[k]=1;
   }
-  for(var j=0;j<data.length;j++){
-    var ev=data[j];
-    if(ev && ev.date && daySet[ev.date]) dayBuckets[ev.date].push(ev);
-  }
+  var _di=dateIdx();
+  for(var j=0;j<dayKeys.length;j++){ dayBuckets[dayKeys[j]]=_di[dayKeys[j]]||[]; }
   for(var i=0;i<dayKeys.length;i++){
     var k=dayKeys[i];
     var r=calc(dayBuckets[k],{lo:k,hi:k});
@@ -3887,6 +4096,71 @@ $("iAdd").onclick=function(){
 };
 
 function stk(id,d){ var it=inv.filter(function(i){return i.id===id})[0]; if(!it) return; it.qty=Math.max(0,it.qty+d); save(); renderAll(); }
+
+/* ===== تعديل صنف في المخزون ===== */
+var _invEditId=null;
+function invEditBuild(){
+  if($("invEditDlg")) return;
+  var d=document.createElement("div"); d.id="invEditDlg";
+  d.style.cssText="display:none;position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.5);z-index:56;align-items:center;justify-content:center;padding:16px";
+  d.innerHTML='<div class="card" style="width:100%;max-width:420px;margin:0;max-height:90vh;overflow:auto">'
+    +'<h2 id="ieT"></h2>'
+    +'<label id="ieLn" style="margin-top:0"></label><input id="ieName" autocomplete="off">'
+    +'<label id="ieLc"></label><select id="ieCat"></select>'
+    +'<div class="row"><div><label id="ieLq"></label><input id="ieQty" type="number" inputmode="numeric" min="0"></div>'
+    +'<div id="ieWBox"><label id="ieLw"></label><input id="ieWhole" type="number" inputmode="decimal" min="0"></div>'
+    +'<div><label id="ieLr"></label><input id="ieRetail" type="number" inputmode="decimal" min="0"></div></div>'
+    +'<label id="ieLb"></label><input id="ieBc" autocomplete="off">'
+    +'<p class="hint" id="ieErr" style="color:var(--bad);display:none"></p>'
+    +'<button class="add" id="ieSave"></button>'
+    +'<button class="add sec" id="ieCancel"></button></div>';
+  document.body.appendChild(d);
+  $("ieCancel").onclick=function(){ d.style.display="none"; _invEditId=null; };
+  d.addEventListener("click",function(e){ if(e.target===d){ d.style.display="none"; _invEditId=null; } });
+  $("ieSave").onclick=invEditSave;
+}
+function invEdit(id){
+  var it=inv.filter(function(i){ return i.id===id; })[0]; if(!it) return;
+  invEditBuild(); _invEditId=id;
+  var en=isEn();
+  $("ieT").textContent=en?"Edit item":"تعديل الصنف";
+  $("ieLn").textContent=en?"Item name":"اسم الصنف";
+  $("ieLc").textContent=en?"Category":"الفئة";
+  $("ieLq").textContent=en?"Quantity":"الكمية";
+  $("ieLw").textContent=en?"Cost price":"سعر الجملة";
+  $("ieLr").textContent=en?"Retail price":"سعر المفرق";
+  $("ieLb").textContent=en?"Barcode (optional)":"الباركود (اختياري)";
+  $("ieSave").textContent=en?"Save changes":"حفظ التعديلات";
+  $("ieCancel").textContent=en?"Cancel":"إلغاء";
+  var cs=$("ieCat"); cs.innerHTML=$("icat").innerHTML;
+  if(!Array.prototype.some.call(cs.options,function(o){ return o.value===it.cat; })){
+    var o=document.createElement("option"); o.value=it.cat; o.textContent=catName(it.cat); cs.appendChild(o);
+  }
+  cs.value=it.cat;
+  $("ieName").value=it.name||""; $("ieQty").value=it.qty; $("ieWhole").value=it.whole; $("ieRetail").value=it.retail; $("ieBc").value=it.barcode||"";
+  $("ieWBox").style.display=wkHidePrf()?"none":"";
+  $("ieErr").style.display="none";
+  $("invEditDlg").style.display="flex";
+  setTimeout(function(){ try{ $("ieName").focus(); }catch(e){} },30);
+}
+function invEditSave(){
+  var it=inv.filter(function(i){ return i.id===_invEditId; })[0]; if(!it){ $("invEditDlg").style.display="none"; return; }
+  var en=isEn(), err=$("ieErr");
+  function bad(msg,el){ err.textContent=msg; err.style.display=""; try{ el.focus(); }catch(e){} }
+  var n=$("ieName").value.trim(), q=parseInt($("ieQty").value), r=parseFloat($("ieRetail").value);
+  var hideW=wkHidePrf(), w=hideW?it.whole:parseFloat($("ieWhole").value);
+  var c=$("ieCat").value, bc=$("ieBc").value.trim();
+  if(!n) return bad(en?"Enter the item name":"أدخل اسم الصنف",$("ieName"));
+  if(isNaN(q)||q<0) return bad(en?"Invalid quantity":"كمية غير صالحة",$("ieQty"));
+  if(isNaN(w)||w<0) return bad(en?"Invalid cost price":"سعر الجملة غير صالح",$("ieWhole"));
+  if(isNaN(r)||r<0) return bad(en?"Invalid retail price":"سعر المفرق غير صالح",$("ieRetail"));
+  var dup=inv.filter(function(i){ return i.id!==it.id && ((bc&&i.barcode===bc)||(i.name===n&&i.cat===c)); })[0];
+  if(dup) return bad(bc&&dup.barcode===bc?(en?"This barcode belongs to another item":"هذا الباركود مستخدم لصنف آخر"):(en?"Another item has the same name and category":"يوجد صنف آخر بنفس الاسم والفئة"),$("ieName"));
+  it.name=n; it.cat=c; it.qty=q; it.whole=w; it.retail=r; it.barcode=bc;
+  save();
+  $("invEditDlg").style.display="none"; _invEditId=null;
+  renderAll(); updateItemsForSelectedCategory();
+}
 function delItem(id){
   var confirmMsg = (currentLang==="en") ? "Delete this item from inventory?" : "حذف هذه القطعة من المخزون؟";
   if(!confirm(confirmMsg)) return;
@@ -3897,7 +4171,7 @@ function delItem(id){
   updateItemsForSelectedCategory();
 }
 
-var INV_LIMIT=100, _invT=null;
+var INV_LIMIT=PG.inv, _invT=null;
 function renderInv(){
   var cap=0,val=0,cnt=0;
   inv.forEach(function(i){ cap+=i.qty*i.whole; val+=i.qty*i.retail; cnt+=i.qty; });
@@ -3921,15 +4195,15 @@ function renderInv(){
     var retailTxt = (currentLang==="en") ? "Retail " : "مفرق ";
     var dmgTxt = (currentLang==="en") ? "Scrap " : "تالف ";
     d.innerHTML='<div><b>'+esc(i.name)+bcTag+'</b><small>'+esc(catName(i.cat))+(wkHidePrf()?'':' · '+wholeTxt+fmt(i.whole))+' · '+retailTxt+fmt(i.retail)+(i.dmg?' · '+dmgTxt+i.dmg:'')+'</small></div>'
-      +'<div class="ctl"><button class="qb" data-d="-1">−</button><b class="'+(i.qty<=2?"low":"")+'">'+i.qty+'</b><button class="qb" data-d="1">+</button><button class="del" aria-label="Delete">'+ic("x")+'</button></div>';
-    d.querySelectorAll(".qb").forEach(function(b){ b.onclick=function(){ stk(i.id,parseInt(b.getAttribute("data-d"))); }; });
+      +'<div class="ctl ib-ctl"><span class="ib-qty'+(i.qty<=2?" low":"")+'" title="'+(isEn()?"Quantity":"الكمية")+'">'+i.qty+'</span><button type="button" class="ib-edit" data-edit="1" aria-label="'+(isEn()?"Edit":"تعديل")+'">'+ic("edit")+'</button><button type="button" class="del ib-del" aria-label="Delete">'+ic("trash")+'</button></div>';
+    d.querySelector("[data-edit]").onclick=function(){ invEdit(i.id); };
     d.querySelector(".del").onclick=function(){ delItem(i.id); };
     L.appendChild(d);
   });
   if(invTotal>invRows.length){
     var mb=document.createElement("button"); mb.className="add sec"; mb.type="button";
     mb.textContent=(isEn()?"Show more (":"عرض المزيد (")+(invTotal-invRows.length)+(isEn()?" remaining)":" متبقٍ)");
-    mb.onclick=function(){ INV_LIMIT+=100; renderInv(); };
+    mb.onclick=function(){ INV_LIMIT+=PG.inv; renderInv(); };
     L.appendChild(mb);
   }
   
@@ -3937,14 +4211,16 @@ function renderInv(){
   dl.forEach(function(e){ dt+=e.cost*e.qty; });
   $("dTot").textContent=dl.length?"— "+fmt(dt):"";
   D.innerHTML=dl.length?"":'<div class="empty">'+t("empty_dmg")+'</div>';
-  dl.slice().reverse().forEach(function(e){
+  var dlAll=dl.slice().reverse(), dlRest=Math.max(0,dlAll.length-DMG_LIMIT);
+  dlAll.slice(0,DMG_LIMIT).forEach(function(e){
     var r=document.createElement("div"); r.className="item";
     r.innerHTML='<div><b>'+esc(e.name)+'</b><small>'+e.date+' · '+e.qty+(e.note?' · '+esc(e.note):'')+'</small></div><b class="bad">'+fmt(e.cost*e.qty)+'</b>';
     D.appendChild(r);
   });
+  if(dlRest>0) D.appendChild(_moreBtn(dlRest,function(){ DMG_LIMIT+=PG.dmg; renderInv(); }));
 }
 
-(function(){ var si=$("iSearch"); if(si) si.oninput=function(){ clearTimeout(_invT); _invT=setTimeout(function(){ INV_LIMIT=100; renderInv(); },200); }; })();
+(function(){ var si=$("iSearch"); if(si) si.oninput=function(){ clearTimeout(_invT); _invT=setTimeout(function(){ INV_LIMIT=PG.inv; renderInv(); },200); }; })();
 var per="d";
 $("rday").value=today();
 function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
@@ -4066,7 +4342,7 @@ function archRec(L){
   rec.sig=snapHash(JSON.stringify(rec));
   return rec;
 }
-var _archCache={};
+var _archCache={}, _archLast=null, _archLastVer=-1, _archLastSym="";
 function archBuild(){
   var g={}, order=[], out={}, nextCache={};
   data.forEach(function(e){
@@ -4099,7 +4375,9 @@ function archEnq(fn){
 }
 function archSyncJob(){
   var S=archState; if(!S||!archOk()) return Promise.resolve();
-  var A=StarDB.arch, cur=archBuild(), put=[], cl=[];
+  var A=StarDB.arch, cur, put=[], cl=[];
+  if(_archLast && _archLastVer===_dataVer && _archLastSym===curSymbol) cur=_archLast;
+  else { cur=archBuild(); _archLast=cur; _archLastVer=_dataVer; _archLastSym=curSymbol; }
   Object.keys(cur).forEach(function(k){ if(S.sigs[k]!==cur[k].sig) put.push(cur[k]); });
   regArchive.forEach(function(r){ if(r&&r.id!=null&&!S.closes[r.id]) cl.push(r); });
   return A.put("inv_arch",put).then(function(){
@@ -4126,6 +4404,7 @@ function archMarkDel(L){
 function archReset(){
   var S=archState; if(!S) return;
   if(S.timer){ clearTimeout(S.timer); S.timer=null; }
+  _archLast=null;
   archEnq(function(){ return StarDB.arch.clear().then(function(){ S.sigs={}; S.closes={}; }); });
 }
 /* إغلاقات الصندوق: اتحاد ما في الذاكرة وما في الأرشيف الدائم */
@@ -4139,13 +4418,13 @@ function archCloses(){
 /* ---------- البحث ---------- */
 function archSpec(q){
   var s=String(q||"").trim().replace(/^#/,"").trim();
-  if(!s) return {kind:"latest",limit:20};
-  if(/^\d+$/.test(s)) return {kind:"ino",q:s,limit:50};
+  if(!s) return {kind:"latest",limit:INVA_LIMIT};
+  if(/^\d+$/.test(s)) return {kind:"ino",q:s,limit:INVA_LIMIT};
   if(/^\d{4}[-\/]\d{1,2}([-\/]\d{1,2})?$/.test(s)){
     var p=s.split(/[-\/]/);
-    return {kind:"date",q:p[0]+"-"+("0"+p[1]).slice(-2)+(p[2]?("-"+("0"+p[2]).slice(-2)):""),limit:50};
+    return {kind:"date",q:p[0]+"-"+("0"+p[1]).slice(-2)+(p[2]?("-"+("0"+p[2]).slice(-2)):""),limit:INVA_LIMIT};
   }
-  return {kind:"text",q:s,limit:50,test:function(r){
+  return {kind:"text",q:s,limit:INVA_LIMIT,test:function(r){
     return smartMatch(r.cust,s)||r.lines.some(function(l){ return smartMatch(l.name,s); });
   }};
 }
@@ -4179,8 +4458,8 @@ function invArchRender(res){
     return;
   }
   box.innerHTML="";
-  if(!res.spec.q){ hint=en?"Latest 20 invoices":"آخر 20 فاتورة"; }
-  else { hint=(en?"Results: ":"النتائج: ")+list.length+(list.length>=(res.spec.limit||50)?(en?" (showing first matches — refine your search)":" (أول النتائج — حدّد البحث أكثر)"):""); }
+  if(!res.spec.q){ hint=en?("Latest "+list.length+" invoices"):("آخر "+list.length+" فاتورة"); }
+  else { hint=(en?"Results: ":"النتائج: ")+list.length; }
   var h0=document.createElement("p"); h0.className="arch-hint"; h0.textContent=hint; box.appendChild(h0);
   list.forEach(function(r){
     var d=document.createElement("div"), cur=r.curr||curSymbol, tm=new Date(r.ts), h="";
@@ -4198,6 +4477,12 @@ function invArchRender(res){
     d.querySelector('[data-act="print"]').onclick=function(){ printInvoice(invData(r.lines)); };
     box.appendChild(d);
   });
+  if(list.length>=(res.spec.limit||PG.arch)){
+    var mb=document.createElement("button"); mb.className="add sec"; mb.type="button";
+    mb.textContent=en?"Show more":"عرض المزيد";
+    mb.onclick=function(){ INVA_LIMIT+=PG.arch; invArchRefresh(); };
+    box.appendChild(mb);
+  }
 }
 var invSeq=0, invTimer=null;
 function invArchRefresh(){
@@ -4208,11 +4493,11 @@ function invArchRefresh(){
     .then(function(res){ if(seq===invSeq) invArchRender(res); })
     .catch(function(){});
 }
-if($("invFind")) $("invFind").oninput=function(){ clearTimeout(invTimer); invTimer=setTimeout(invArchRefresh,250); };
-if($("regFind")) $("regFind").oninput=function(){ renderRegisterArchive(); };
+if($("invFind")) $("invFind").oninput=function(){ clearTimeout(invTimer); invTimer=setTimeout(function(){ INVA_LIMIT=PG.arch; invArchRefresh(); },250); };
+if($("regFind")) $("regFind").oninput=_deb(function(){ REG_LIMIT=PG.reg; renderRegisterArchive(); },200);
 
 /* ---------- أرشيف إغلاقات الصندوق ---------- */
-function renderRegisterArchive(){
+function renderRegisterArchive(noInv){
   var box=$("regArchiveList"); if(!box) return;
   var en=currentLang==="en", all=archCloses(), rf=$("regFind");
   var f=(rf?rf.value:"").trim().replace(/\//g,"-");
@@ -4221,17 +4506,17 @@ function renderRegisterArchive(){
   if(!list.length){
     box.innerHTML='<div class="empty">'+(f?(en?"No closures match":"لا توجد إغلاقات مطابقة"):(en?"No register closures yet":"لا توجد إغلاقات مسجلة بعد"))+'</div>';
   } else {
-    var h="", shown=list.slice().reverse().slice(0,60);
+    var h="", shown=list.slice().reverse().slice(0,REG_LIMIT);
     shown.forEach(function(reg){
       h += '<div class="item" style="display:block;padding:8px 0">' +
         '<div style="display:flex;justify-content:space-between"><b>' + ic("calendar") + ' ' + reg.date + ' ' + (reg.time||"") + '</b><b class="ok">' + fmt(reg.net) + '</b></div>' +
         '<small>' + (en?"Sales: ":"المبيعات: ") + fmt(reg.sales) + (reg.mnt?' · ' + (en?"Repairs: ":"الصيانة: ") + fmt(reg.mnt):'') + ' · ' + (en?"Expenses: ":"المصاريف: ") + fmt(reg.exp) + (reg.dn?' · '+(en?"New debts: ":"ديون جديدة: ")+fmt(reg.dn):'') + (reg.dp?' · '+(en?"Debts collected: ":"تحصيل ديون: ")+fmt(reg.dp):'') + ' · ' + (en?"Actual Cash: ":"العد الفعلي: ") + fmt(reg.actual) + '</small>' +
       '</div>';
     });
-    if(list.length>shown.length) h+='<p class="arch-hint">'+(en?("Showing latest "+shown.length+" of "+list.length+" — use the filter above to find older closures"):("يعرض أحدث "+shown.length+" من "+list.length+" — استخدم التصفية أعلاه للوصول للأقدم"))+'</p>';
     box.innerHTML=h;
+    if(list.length>shown.length) box.appendChild(_moreBtn(list.length-shown.length,function(){ REG_LIMIT+=PG.reg; renderRegisterArchive(true); }));
   }
-  var vr=$("vRep"); if(vr&&vr.style.display!=="none") invArchRefresh();
+  var vr=$("vRep"); if(!noInv && vr&&vr.style.display!=="none") invArchRefresh();
 }
 
 /* تهيئة الأرشيف: قراءة البصمات (بدون قراءة الفواتير) + ترحيل أولي لكل ما هو موجود + إغلاقات الصندوق */
@@ -4739,7 +5024,8 @@ function renderDebts(){
   order.sort(function(a,b){ return groups[b].rem-groups[a].rem; });
   var C=$("dList"); C.innerHTML="";
   if(!order.length){ C.innerHTML='<div class="empty">'+(en?"No debts to show":"لا توجد ديون لعرضها")+'</div>'; return; }
-  order.forEach(function(k){
+  var dRest=Math.max(0,order.length-DEBT_LIMIT);
+  order.slice(0,DEBT_LIMIT).forEach(function(k){
     var g=groups[k], card=document.createElement("div"); card.className="card dcard";
     var rows=g.list.map(function(d){
       var r=dRem(d), pays=(d.pays||[]).map(function(p){ return '<span>'+esc(ymd(new Date(p.id)))+' · +'+num(p.amt)+'</span>'; }).join("");
@@ -4755,6 +5041,7 @@ function renderDebts(){
     Array.prototype.forEach.call(card.querySelectorAll("[data-del]"),function(b){ b.onclick=function(){ dDel(parseFloat(b.getAttribute("data-del"))); }; });
     C.appendChild(card);
   });
+  if(dRest>0) C.appendChild(_moreBtn(dRest,function(){ DEBT_LIMIT+=PG.debt; renderDebts(); }));
 }
 function dCapLine(d,en){
   if(wkHidePrf()) return "";
@@ -4838,7 +5125,8 @@ $("dnOk").onclick=function(){
   dAdd({cust:name,phone:$("dnPhone").value.trim(),kind:$("dnKind").value,amt:amt,note:$("dnNote").value.trim(),desc:isEn()?"Previous debt":"دين سابق"});
   save(); $("dNewDlg").style.display="none"; renderAll();
 };
-$("dFilter").onchange=renderDebts; $("dSearch").oninput=renderDebts; $("dShowPaid").onchange=renderDebts;
+var _rdD=function(){ DEBT_LIMIT=PG.debt; renderDebts(); };
+$("dFilter").onchange=_rdD; $("dSearch").oninput=_deb(_rdD,200); $("dShowPaid").onchange=_rdD;
 $("nD").onclick=function(){ setView("d"); };
 
 /* ---- دين السلة ---- */
@@ -4975,7 +5263,7 @@ function fillPartsSel(){
   if(q && list.length) $("mPSel").size=Math.min(list.length+1,7); else $("mPSel").removeAttribute("size");
   if(q && list.length===1) $("mPSel").value=String(list[0].id);
 }
-if($("mPFind")) $("mPFind").oninput=fillPartsSel;
+if($("mPFind")) $("mPFind").oninput=_deb(fillPartsSel,120);
 function renderParts(){
   var r=mFind(mPartsId); if(!r){ $("mPartsDlg").style.display="none"; return; }
   $("mPT").textContent=""+r.dev;
@@ -5052,7 +5340,8 @@ function renderMnt(){
     return true;
   }).sort(function(a,b){ return b.id-a.id; });
   var C=$("mList"); C.innerHTML=L.length?"":'<div class="empty">'+t("empty_mnt")+'</div>';
-  L.forEach(function(tItem){
+  var mRest=Math.max(0,L.length-MNT_LIMIT);
+  L.slice(0,MNT_LIMIT).forEach(function(tItem){
     var d=document.createElement("div"); d.className="item"; d.style.display="block";
     var opts=Object.keys(MS).map(function(k){ return '<option value="'+k+'"'+(k===tItem.status?" selected":"")+'>'+MS[k]+'</option>'; }).join("");
     var fin=tItem.status==="delivered";
@@ -5087,11 +5376,13 @@ function renderMnt(){
     var pb=d.querySelector('[data-a="p"]'); if(pb) pb.onclick=function(){ partsOpen(tItem.id); };
     C.appendChild(d);
   });
+  if(mRest>0) C.appendChild(_moreBtn(mRest,function(){ MNT_LIMIT+=PG.mnt; renderMnt(); }));
 }
 $("mNew").onclick=function(){ mClear(); mFormShow(true); $("mName").focus(); };
 $("mCancel").onclick=function(){ mClear(); mFormShow(false); };
 $("mSave").onclick=function(){ repAdd(); };
-$("mFilter").onchange=renderMnt; $("mSearch").oninput=renderMnt;
+var _rdM=function(){ MNT_LIMIT=PG.mnt; renderMnt(); };
+$("mFilter").onchange=_rdM; $("mSearch").oninput=_deb(_rdM,200);
 $("mFP").oninput=dlgHint; $("mPC").oninput=dlgHint; $("mPay").oninput=function(){ mPayTouched=true; dlgHint(); };
 $("mPAdd").onclick=function(){ partsAdd(); };
 $("mPClose").onclick=function(){ $("mPartsDlg").style.display="none"; mPartsId=null; renderAll(); };
@@ -6546,7 +6837,7 @@ setInterval(function(){ checkLicenseStatus(false); }, 60000);
       var sInp = $("iSearch");
       if(sInp){
         sInp.value = item.name || "";
-        INV_LIMIT = 100;
+        INV_LIMIT = PG.inv;
         renderInv();
       }
       var firstItem = document.querySelector("#iList .item");
